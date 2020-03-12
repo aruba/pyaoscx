@@ -1,0 +1,7 @@
+C:\Users\wangder\OneDrive - Hewlett Packard Enterprise\git\packaging\pyaoscx\docs>sphinx-apidoc -o source ..\pyaoscx -f
+
+C:\Users\wangder\OneDrive - Hewlett Packard Enterprise\git\packaging\pyaoscx\docs>sphinx-apidoc -o source ..\pyaoscx -f -e
+
+(after these commands, the pyaoscx.rst file in source should be changed, and all the submodule .rst files as well)
+
+make html
