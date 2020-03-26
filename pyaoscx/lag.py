@@ -308,6 +308,13 @@ def _create_l3_lag_interface(name, phys_ports, ipv4, lacp_mode="passive", mc_lag
 
     if name not in ints_dict:
 
+        # Extract LAG ID from LAG name
+        lag_id = int(re.search('\d+', name).group())
+
+        # For each port, add LAG ID to the Interface table entry, and delete the Port table entry
+        for phys_port in phys_ports:
+            interface.add_port_to_lag(phys_port, lag_id, **kwargs)
+
         interfaces = ["/rest/v10.04/system/interfaces/%s" % common_ops._replace_special_characters(phys_port)
                       for phys_port in phys_ports]
         int_data = {"admin": admin_state,
