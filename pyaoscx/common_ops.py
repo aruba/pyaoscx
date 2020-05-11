@@ -91,6 +91,23 @@ def _dictionary_to_list_values(dictionary):
     return new_list
 
 
+def _dictionary_to_string(dictionary):
+    """
+    Replaces a dictionary with a string of the first value. Note this should only be used on a dictionary with
+    just one value.
+    Example input:
+        "vlan_tag": {
+            "1": "/rest/v10.04/system/vlans/1"
+        }
+    Example output:
+        "vlan_tag": "/rest/v10.04/system/vlans/1"
+
+    :param dictionary: A Non-empty dictionary that will have its values added to a list
+    :return: A string with just the first value in the input dictionary
+    """
+    return list(dictionary.values())[0]
+
+
 def read_yaml(filename):
     """" Reads a YAML file and returns the data in a Python object
 

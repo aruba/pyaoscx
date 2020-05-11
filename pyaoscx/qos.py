@@ -864,7 +864,7 @@ def _set_trust_interface(port_name, trust_mode, **kwargs):
     Perform GET and PUT calls to set QoS trust mode on an interface. If there is a globally applied
     trust mode, this function will override the specified interface with the specified trust mode.
 
-    :param port_name: Alphanumeric name of the Port on which the trust mode is to be set
+    :param port_name: Alphanumeric name of the Interface on which the trust mode is to be set
     :param trust_mode: Trust mode should be one of "none," "cos," or "dscp."
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
@@ -872,7 +872,11 @@ def _set_trust_interface(port_name, trust_mode, **kwargs):
     :return: True if successful, False otherwise
     """
     port_name_percents = common_ops._replace_special_characters(port_name)
-    int_data = interface.get_interface(port_name_percents, 2, "writable", **kwargs)
+    int_data = interface.get_interface(port_name_percents, 1, "writable", **kwargs)
+
+    if port_name.startswith('lag'):
+        if int_data['interfaces']:
+            int_data['interfaces'] = common_ops._dictionary_to_list_values(int_data['interfaces'])
 
     int_data['qos_config'] = {'qos_trust': trust_mode}
 
@@ -1778,9 +1782,7 @@ def _create_policy_entry(policy_name, class_name, class_type, sequence_num, **kw
     if "%d" % sequence_num not in policy_entries_dict:
 
         policy_entry_data = {
-            "class": {
-                "%s,%s" % (class_name, class_type): "/rest/v10.04/system/classes/%s,%s" % (class_name, class_type)
-            },
+            "class": "/rest/v10.04/system/classes/%s,%s" % (class_name, class_type),
             "sequence_number": sequence_num
         }
 
@@ -3088,7 +3090,11 @@ def _clear_trust_interface(port_name, **kwargs):
     """
 
     port_name_percents = common_ops._replace_special_characters(port_name)
-    int_data = interface.get_interface(port_name_percents, 2, "writable", **kwargs)
+    int_data = interface.get_interface(port_name_percents, 1, "writable", **kwargs)
+
+    if port_name.startswith('lag'):
+        if int_data['interfaces']:
+            int_data['interfaces'] = common_ops._dictionary_to_list_values(int_data['interfaces'])
 
     int_data.pop('qos_config', None)
 
@@ -3196,7 +3202,7 @@ def _update_port_rate_limits_v1(port_name, broadcast_limit=None, broadcast_units
               % port_name)
         return True
 
-# This is buggy due to interface API bug
+
 def _update_port_rate_limits(port_name, broadcast_limit=None, broadcast_units=None,
                             multicast_limit=None, multicast_units=None, unknown_unicast_limit=None,
                             unknown_unicast_units=None, **kwargs):
@@ -3304,7 +3310,6 @@ def _update_port_policy_v1(port_name, policy_name, **kwargs):
         return True
 
 
-# This is buggy due to Interface API bug
 def _update_port_policy(port_name, policy_name, **kwargs):
     """
     Perform GET and PUT calls to update a Port's policy
@@ -3318,9 +3323,9 @@ def _update_port_policy(port_name, policy_name, **kwargs):
     """
     port_name_percents = common_ops._replace_special_characters(port_name)
 
-    int_data = interface.get_interface(port_name, 2, "writable", **kwargs)
+    int_data = interface.get_interface(port_name, 1, "writable", **kwargs)
 
-    int_data['policy_in_cfg'] = "/rest/v1/system/policies/%s" % policy_name
+    int_data['policy_in_cfg'] = "/rest/v10.04/system/policies/%s" % policy_name
     int_data['policy_in_cfg_version'] = random.randrange(9007199254740991)
 
     target_url = kwargs["url"] + "system/interfaces/%s" % port_name_percents
@@ -3491,7 +3496,7 @@ def _clear_port_rate_limits(port_name, **kwargs):
 
     int_data.pop('rate_limits', None)
 
-    target_url = kwargs["url"] + "system/ports/%s" % port_name_percents
+    target_url = kwargs["url"] + "system/interfaces/%s" % port_name_percents
     put_data = json.dumps(int_data, sort_keys=True, indent=4)
 
     response = kwargs["s"].put(target_url, data=put_data, verify=False)

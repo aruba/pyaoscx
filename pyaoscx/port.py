@@ -827,7 +827,7 @@ def _create_vxlan_port(port_name, source_ipv4=None, port_desc=None, dest_udp_por
     VXLAN Interface already exists and an IPv4 address is given, the function will update the IPv4 address.
 
     :param port_name: Alphanumeric Interface name
-    :param source_ipv4: Source IPv4 address to assign to the VXLAN interface. Defaults to nothing if not specified.
+    :param source_ipv4: Optional source IPv4 address to assign to the VXLAN interface. Defaults to nothing if not specified.
     :param port_desc: Optional description for the interface. Defaults to nothing if not specified.
     :param dest_udp_port: Optional Destination UDP Port that the VXLAN will use.  Default is set to 4789
     :param kwargs:
@@ -929,19 +929,19 @@ def _enable_disable_port(port_name, state="up", **kwargs):
         return False
 
 
-def _clear_port_acl(port_name, acl_type="aclv4_out", **kwargs):
+def _clear_port_acl(port_name, acl_type, **kwargs):
     """
     Perform GET and PUT calls to clear a Port's Ingress ACL
 
     :param port_name: Alphanumeric name of the Port
-    :param acl_type: Type of ACL, options are between 'aclv4_out', 'aclv4_in', and 'aclv6_in'
+    :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
     :return: True if successful, False otherwise
     """
-    if acl_type not in ['aclv4_out', 'aclv4_in', 'aclv6_in']:
-        raise Exception("ERROR: acl_type should be 'aclv4_out', 'aclv4_in', or 'aclv6_in'")
+    if acl_type not in ['aclv4_out', 'aclv4_in', 'aclv6_in', 'aclv6_out']:
+        raise Exception("ERROR: acl_type should be 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'")
 
     port_name_percents = common_ops._replace_special_characters(port_name)
 

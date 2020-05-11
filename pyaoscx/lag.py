@@ -34,8 +34,13 @@ def create_l2_lag_interface(name, phys_ports, lacp_mode="passive", mc_lag=False,
         return _create_l2_lag_interface_v1(name, phys_ports, lacp_mode, mc_lag, fallback_enabled, vlan_ids_list, desc,
                                            admin_state, **kwargs)
     else:  # Updated else for when version is v10.04
-        return _create_l2_lag_interface(name, phys_ports, lacp_mode, mc_lag, fallback_enabled, vlan_ids_list, desc,
+        success = _create_l2_lag_interface(name, phys_ports, lacp_mode, mc_lag, fallback_enabled, vlan_ids_list, desc,
                                         admin_state, **kwargs)
+
+        if mc_lag or fallback_enabled:
+            return success and _update_l2_lag_interface(name, mc_lag, fallback_enabled, **kwargs)
+        else:
+            return success
 
 
 def _create_l2_lag_interface_v1(name, phys_ports, lacp_mode="passive", mc_lag=False, fallback_enabled=False,
@@ -145,21 +150,9 @@ def _create_l2_lag_interface(name, phys_ports, lacp_mode="passive", mc_lag=False
                     "routing": False,
                     "vlan_trunks": ["/rest/v10.04/system/vlans/%d" % vlan_id for vlan_id in vlan_ids_list],
                     "lacp": lacp_mode,
-                    "other_config": {
-                        "lacp-aggregation-key": lag_id,
-                        "lacp-port-id": 0,
-                        "lacp-port-priority": 0,
-                        "lldp_dot3_macphy_disable": True,
-                        "lldp_dot3_poe_disable": True,
-                        "lldp_enable_dir": "off",
-                        "lldp_med_capability_disable": True,
-                        "lldp_med_network_policy_disable": True,
-                        "lldp_med_poe_disable": True,
-                        "lldp_med_poe_priority_override": True,
-                        "lldp_med_topology_notification_disable": True
-                    },
+                    "other_config": {},
                     "vlan_mode": "native-untagged",
-                    "vlan_tag": {"1": "/rest/v10.04/system/vlans/1"}
+                    "vlan_tag": "/rest/v10.04/system/vlans/1"
                     }
 
         if desc is not None:
@@ -181,6 +174,80 @@ def _create_l2_lag_interface(name, phys_ports, lacp_mode="passive", mc_lag=False
         logging.info("SUCCESS: No need to add Interface table entry '%s' because it already exists"
               % name)
         return True
+
+
+def _update_l2_lag_interface(name, mc_lag=False, fallback_enabled=False, **kwargs):
+    """
+    Perform GET and PUT calls to update the Interface table entry for L2 LAG interface.
+
+    :param name: Alphanumeric name of LAG Port
+    :param mc_lag: Boolean to determine if the LAG is multi-chassis. Defaults to False if not specified.
+    :param fallback_enabled: Boolean to determine if the LAG uses LACP fallback. Defaults to False if not specified.
+    :param kwargs:
+        keyword s: requests.session object with loaded cookie jar
+        keyword url: URL in main() function
+    :return: True if successful, False otherwise
+    """
+
+    int_name_percents = common_ops._replace_special_characters(name)
+
+    int_data = interface.get_interface(name, 1, "writable", **kwargs)
+
+    if int_data['interfaces']:
+        int_data['interfaces'] = common_ops._dictionary_to_list_values(int_data['interfaces'])
+
+    if int_data['vlan_trunks']:
+        int_data['vlan_trunks'] = common_ops._dictionary_to_list_values(int_data['vlan_trunks'])
+
+    if int_data['vlan_tag']:
+        # Convert the dictionary to a URI string
+        int_data['vlan_tag'] = common_ops._dictionary_to_string(int_data['vlan_tag'])
+
+    int_data['other_config']['mclag_enabled'] = mc_lag
+    int_data['other_config']['lacp-fallback'] = fallback_enabled
+
+    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
+    put_data = json.dumps(int_data, sort_keys=True, indent=4)
+
+    response = kwargs["s"].put(target_url, data=put_data, verify=False)
+
+    if not common_ops._response_ok(response, "PUT"):
+        logging.warning("FAIL: Updating LAG Interface entry '%s' "
+                        "failed with status code %d: %s" % (name, response.status_code, response.text))
+        return False
+    else:
+        logging.info("SUCCESS: Updating LAG Interface entry '%s' "
+                     "succeeded" % name)
+        return True
+
+
+def create_l3_lag_interface(name, phys_ports, ipv4, lacp_mode="passive", mc_lag=False, fallback_enabled=False,
+                            desc=None, admin_state="up", vrf="default", **kwargs):
+    """
+    Perform a POST call to create a Port table entry for L3 LAG interface.
+
+    :param name: Alphanumeric Port name
+    :param phys_ports: List of physical ports to aggregate (e.g. ["1/1/1", "1/1/2", "1/1/3"])
+    :param ipv4: IPv4 address to assign to the interface. Defaults to nothing if not specified.
+    :param lacp_mode: Should be either "passive" or "active." Defaults to "passive" if not specified.
+    :param mc_lag: Boolean to determine if the LAG is multi-chassis. Defaults to False if not specified.
+    :param fallback_enabled: Boolean to determine if the LAG uses LACP fallback. Defaults to False if not specified.
+    :param desc: Optional description for the interface. Defaults to nothing if not specified.
+    :param admin_state: Optional administratively-configured state of the port.
+        Defaults to "up" if not specified
+    :param vrf: Name of the VRF to which the Port belongs. Defaults to "default" if not specified.
+    :param kwargs:
+        keyword s: requests.session object with loaded cookie jar
+        keyword url: URL in main() function
+    :return: True if successful, False otherwise
+    """
+
+    if kwargs["url"].endswith("/v1/"):
+        return _create_l3_lag_interface_v1(name, phys_ports, ipv4, lacp_mode, mc_lag, fallback_enabled,
+                                           desc, admin_state, vrf, **kwargs)
+    else:  # Updated else for when version is v10.04
+        return _create_l3_lag_interface(name, phys_ports, ipv4, lacp_mode, mc_lag, fallback_enabled,
+                                        desc, admin_state, vrf, **kwargs)
 
 
 def create_l3_lag_interface(name, phys_ports, ipv4, lacp_mode="passive", mc_lag=False, fallback_enabled=False,

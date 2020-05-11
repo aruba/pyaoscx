@@ -101,7 +101,7 @@ def _create_acl(list_name, list_type, **kwargs):
 
     acls_list = get_all_acls(**kwargs)
 
-    acl_key = "{},{}".format(list_name,list_type)
+    acl_key = "{},{}".format(list_name, list_type)
     acl_value = "/rest/v10.04/system/acls/" + acl_key
 
     # ACL doesn't exist; create it
@@ -138,7 +138,7 @@ def get_all_acl_entries(list_name, list_type, **kwargs):
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
-    :return: Dictionary containing queue profile entry URIs
+    :return: Dictionary containing ACL entry URIs
     """
     if kwargs["url"].endswith("/v1/"):
         acl_entries = _get_all_acl_entries_v1(list_name, list_type, **kwargs)
@@ -157,7 +157,7 @@ def _get_all_acl_entries_v1(list_name, list_type, **kwargs):
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
-    :return: Dictionary containing queue profile entry URIs
+    :return: Dictionary containing ACL entry URIs
     """
     target_url = kwargs["url"] + "system/acls/%s/%s/cfg_aces" % (list_name, list_type)
 
@@ -188,10 +188,10 @@ def _get_all_acl_entries(list_name, list_type, **kwargs):
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
-    :return: Dictionary containing queue profile entry URIs
+    :return: Dictionary containing ACL entry URIs
     """
 
-    target_url = kwargs["url"] + "system/acls/%s,%s?attributes=cfg_aces" % (list_name, list_type)
+    target_url = kwargs["url"] + "system/acls/%s,%s/cfg_aces" % (list_name, list_type)
 
     response = kwargs["s"].get(target_url, verify=False)
 
@@ -344,8 +344,8 @@ def _create_acl_entry(list_name, list_type, sequence_num, action, count=None, ip
     """
     acl_entries_dict = get_all_acl_entries(list_name, list_type, **kwargs)
 
-    ace_key = "{},{}".format(list_name,list_type)
-    ace_value = "/rest/v10.04/system/acls/" + ace_key + "/" + str(sequence_num)
+    ace_key = "{},{}".format(list_name, list_type)
+    ace_value = "/rest/v10.04/system/acls/%s/cfg_aces/%d" % (ace_key, sequence_num)
 
     if ace_value not in acl_entries_dict.values():
         acl_entry_data = {
@@ -564,12 +564,66 @@ def delete_acl(list_name, list_type, **kwargs):
         keyword url: URL in main() function
     :return: True if successful, False otherwise
     """
+    if kwargs["url"].endswith("/v1/"):
+        return _delete_acl_v1(list_name, list_type, **kwargs)
+    else:   # Updated else for when version is v10.04
+        return _delete_acl(list_name, list_type, **kwargs)
+
+
+def _delete_acl_v1(list_name, list_type, **kwargs):
+    """
+    Perform a DELETE call to delete an ACL
+
+    :param list_name: Alphanumeric name of the ACL
+    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
+    :param kwargs:
+        keyword s: requests.session object with loaded cookie jar
+        keyword url: URL in main() function
+    :return: True if successful, False otherwise
+    """
 
     acls_list = get_all_acls(**kwargs)
 
     if "/rest/v1/system/acls/%s/%s" % (list_name, list_type) in acls_list:
 
         target_url = kwargs["url"] + "system/acls/%s/%s" % (list_name, list_type)
+
+        response = kwargs["s"].delete(target_url, verify=False)
+
+        if not common_ops._response_ok(response, "DELETE"):
+            logging.warning("FAIL: Deleting %s ACL '%s' failed with status code %d: %s"
+                  % (list_type, list_name, response.status_code, response.text))
+            return False
+        else:
+            logging.info("SUCCESS: Deleting %s ACL '%s' succeeded" % (list_type, list_name))
+            return True
+    else:
+        logging.info("SUCCESS: No need to delete %s ACL '%s' since it doesn't exist"
+              % (list_type, list_name))
+        return True
+
+
+def _delete_acl(list_name, list_type, **kwargs):
+    """
+    Perform a DELETE call to delete an ACL
+
+    :param list_name: Alphanumeric name of the ACL
+    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
+    :param kwargs:
+        keyword s: requests.session object with loaded cookie jar
+        keyword url: URL in main() function
+    :return: True if successful, False otherwise
+    """
+
+    acls_list = get_all_acls(**kwargs)
+
+    acl_key = "{},{}".format(list_name, list_type)
+    acl_value = "/rest/v10.04/system/acls/" + acl_key
+
+    # ACL exists; delete it
+    if acl_value in acls_list.values():
+
+        target_url = kwargs["url"] + "system/acls/%s,%s" % (list_name, list_type)
 
         response = kwargs["s"].delete(target_url, verify=False)
 
@@ -598,12 +652,67 @@ def delete_acl_entry(list_name, list_type, sequence_num, **kwargs):
         keyword url: URL in main() function
     :return: True if successful, False otherwise
     """
+    if kwargs["url"].endswith("/v1/"):
+        return _delete_acl_entry_v1(list_name, list_type, sequence_num, **kwargs)
+    else:   # Updated else for when version is v10.04
+        return _delete_acl_entry(list_name, list_type, sequence_num, **kwargs)
+
+
+def _delete_acl_entry_v1(list_name, list_type, sequence_num, **kwargs):
+    """
+    Perform a DELETE call to delete an ACL entry
+
+    :param list_name: Alphanumeric name of the ACL
+    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
+    :param sequence_num: Integer ID for the entry.
+    :param kwargs:
+        keyword s: requests.session object with loaded cookie jar
+        keyword url: URL in main() function
+    :return: True if successful, False otherwise
+    """
 
     acl_entries_dict = get_all_acl_entries(list_name, list_type, **kwargs)
 
     if "/rest/v1/system/acls/%s/%s/cfg_aces/%d" % (list_name, list_type, sequence_num) in acl_entries_dict.values():
 
         target_url = kwargs["url"] + "system/acls/%s/%s/cfg_aces/%d" % (list_name, list_type, sequence_num)
+
+        response = kwargs["s"].delete(target_url, verify=False)
+
+        if not common_ops._response_ok(response, "DELETE"):
+            logging.warning("FAIL: Deleting entry %d in %s ACL '%s' failed with status code %d: %s"
+                  % (sequence_num, list_type, list_name, response.status_code, response.text))
+            return False
+        else:
+            logging.info("SUCCESS: Deleting entry %d in %s ACL '%s' succeeded"
+                  % (sequence_num, list_type, list_name))
+            return True
+    else:
+        logging.info("SUCCESS: No need to delete entry %d in %s ACL '%s' since it doesn't exist"
+              % (sequence_num, list_type, list_name))
+        return True
+
+
+def _delete_acl_entry(list_name, list_type, sequence_num, **kwargs):
+    """
+    Perform a DELETE call to delete an ACL entry
+
+    :param list_name: Alphanumeric name of the ACL
+    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
+    :param sequence_num: Integer ID for the entry.
+    :param kwargs:
+        keyword s: requests.session object with loaded cookie jar
+        keyword url: URL in main() function
+    :return: True if successful, False otherwise
+    """
+
+    acl_entries_dict = get_all_acl_entries(list_name, list_type, **kwargs)
+
+    ace_key = "{},{}".format(list_name, list_type)
+    ace_value = "/rest/v10.04/system/acls/%s/cfg_aces/%d" % (ace_key, sequence_num)
+
+    if ace_value in acl_entries_dict.values():
+        target_url = kwargs["url"] + "system/acls/%s,%s/cfg_aces/%d" % (list_name, list_type, sequence_num)
 
         response = kwargs["s"].delete(target_url, verify=False)
 
@@ -695,6 +804,7 @@ def _update_port_acl_in(interface_name, acl_name, list_type, **kwargs):
 
     :param interface_name: Alphanumeric name of the interface on which the ACL is applied to
     :param acl_name: Alphanumeric name of the ACL
+    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
@@ -703,18 +813,18 @@ def _update_port_acl_in(interface_name, acl_name, list_type, **kwargs):
     int_name_percents = common_ops._replace_special_characters(interface_name)
     int_data = interface.get_interface(int_name_percents, depth=1, selector="writable", **kwargs)
 
-    acl_key = "{},{}".format(acl_name,list_type)
-    acl_value = kwargs["url"] + "system/acls/" + acl_key
+    acl_key = "{},{}".format(acl_name, list_type)
+    acl_value = "/rest/v10.04/system/acls/" + acl_key
 
     if interface_name.startswith('lag'):
         if int_data['interfaces']:
             int_data['interfaces'] = common_ops._dictionary_to_list_values(int_data['interfaces'])
 
     if list_type is "ipv6":
-        int_data['aclv6_in_cfg'] = {acl_key: acl_value}
+        int_data['aclv6_in_cfg'] = acl_value
         int_data['aclv6_in_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
     elif list_type is "ipv4":
-        int_data['aclv4_in_cfg'] = {acl_key: acl_value}
+        int_data['aclv4_in_cfg'] = acl_value
         int_data['aclv4_in_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
 
     target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
@@ -732,101 +842,7 @@ def _update_port_acl_in(interface_name, acl_name, list_type, **kwargs):
         return True
 
 
-def clear_port_acl_in(port_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to clear a Port's Ingress ACL
-
-    :param port_name: Alphanumeric name of the Port
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _clear_port_acl_in_v1(port_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _clear_port_acl_in(port_name, list_type, **kwargs)
-
-
-def _clear_port_acl_in_v1(port_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to clear a Port's Ingress ACL
-
-    :param port_name: Alphanumeric name of the Port
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    port_name_percents = common_ops._replace_special_characters(port_name)
-
-    port_data = port.get_port(port_name, depth=0, selector="configuration", **kwargs)
-
-    if not port_data:
-        logging.warning("FAIL: Unable to clear %s Ingress ACL on Port '%s' because Port not found"
-              % (list_type, port_name))
-        return False
-    else:
-        if list_type is "ipv6":
-            port_data.pop('aclv6_in_cfg', None)
-            port_data.pop('aclv6_in_cfg_version', None)
-        elif list_type is "ipv4":
-            port_data.pop('aclv4_in_cfg', None)
-            port_data.pop('aclv4_in_cfg_version', None)
-        # must remove these fields from the data since they can't be modified
-        port_data.pop('name', None)
-        port_data.pop('origin', None)
-
-        target_url = kwargs["url"] + "system/ports/%s" % port_name_percents
-        put_data = json.dumps(port_data, sort_keys=True, indent=4)
-
-        response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-        if not common_ops._response_ok(response, "PUT"):
-            logging.warning("FAIL: Clearing %s Ingress ACL on Port '%s' failed with status code %d: %s"
-                  % (list_type, port_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Clearing %s Ingress ACL on Port '%s' succeeded"
-                  % (list_type, port_name))
-            return True
-
-
-def _clear_port_acl_in(port_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to clear a Port's Ingress ACL
-
-    :param port_name: Alphanumeric name of the Port
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    port_name_percents = common_ops._replace_special_characters(port_name)
-
-    port_data = interface.get_interface(port_name, depth=1, selector="writable", **kwargs)
-    if list_type is "ipv6":
-        port_data.pop('aclv6_in_cfg', None)
-        port_data.pop('aclv6_in_cfg_version', None)
-    elif list_type is "ipv4":
-        port_data.pop('aclv4_in_cfg', None)
-        port_data.pop('aclv4_in_cfg_version', None)
-
-    target_url = kwargs["url"] + "system/interface/%s" % port_name_percents
-    put_data = json.dumps(port_data, sort_keys=True, indent=4)
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Clearing %s Ingress ACL on Port '%s' failed with status code %d: %s"
-              % (list_type, port_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Clearing %s Ingress ACL on Port '%s' succeeded"
-              % (list_type, port_name))
-        return True
-
-
-def update_port_acl_out(interface_name, acl_name, **kwargs):
+def update_port_acl_out(interface_name, acl_name, list_type, **kwargs):
     """
     Perform GET and PUT calls to apply ACL on an L3 interface. This function specifically applies an ACL
     to Egress traffic of the interface, which must be a routing interface
@@ -834,6 +850,7 @@ def update_port_acl_out(interface_name, acl_name, **kwargs):
     :param interface_name: Alphanumeric String that is the name of the interface on which the ACL
         is applied to
     :param acl_name: Alphanumeric String that is the name of the ACL
+    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
@@ -841,12 +858,12 @@ def update_port_acl_out(interface_name, acl_name, **kwargs):
     """
 
     if kwargs["url"].endswith("/v1/"):
-        return _update_port_acl_out_v1(interface_name, acl_name, **kwargs)
+        return _update_port_acl_out_v1(interface_name, acl_name, list_type, **kwargs)
     else:   # Updated else for when version is v10.04
-        return _update_port_acl_out(interface_name, acl_name, **kwargs)
+        return _update_port_acl_out(interface_name, acl_name, list_type, **kwargs)
 
 
-def _update_port_acl_out_v1(interface_name, acl_name, **kwargs):
+def _update_port_acl_out_v1(interface_name, acl_name, list_type, **kwargs):
     """
     Perform GET and PUT calls to apply ACL on an L3 interface. This function specifically applies an ACL
     to Egress traffic of the interface, which must be a routing interface.  This function will set the interface
@@ -869,10 +886,15 @@ def _update_port_acl_out_v1(interface_name, acl_name, **kwargs):
     port_data.pop('name', None)
     port_data.pop('origin', None)
 
-    acl_url = "/rest/v1/system/acls/%s/ipv4" % acl_name
+    acl_url = "/rest/v1/system/acls/%s/%s" % (acl_name, list_type)
 
-    port_data['aclv4_out_cfg'] = acl_url
-    port_data['aclv4_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
+    if list_type is "ipv6":
+        port_data['aclv6_out_cfg'] = acl_url
+        port_data['aclv6_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
+    elif list_type is "ipv4":
+        port_data['aclv4_out_cfg'] = acl_url
+        port_data['aclv4_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
+
     port_data['routing'] = True
 
     target_url = kwargs["url"] + "system/ports/%s" % port_name_percents
@@ -890,7 +912,7 @@ def _update_port_acl_out_v1(interface_name, acl_name, **kwargs):
         return True
 
 
-def _update_port_acl_out(interface_name, acl_name, **kwargs):
+def _update_port_acl_out(interface_name, acl_name, list_type, **kwargs):
     """
     Perform GET and PUT calls to apply ACL on an interface. This function specifically applies an ACL
     to Egress traffic of the interface, which must be a routing interface.  This function will set the interface
@@ -898,22 +920,33 @@ def _update_port_acl_out(interface_name, acl_name, **kwargs):
 
     :param interface_name: Alphanumeric name of the interface on which the ACL is applied to
     :param acl_name: Alphanumeric name of the ACL
+    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
     :return: True if successful, False otherwise
     """
     port_name_percents = common_ops._replace_special_characters(interface_name)
-    port_data = interface.get_interface(port_name_percents, depth=1, selector="writable", **kwargs)
+    int_data = interface.get_interface(port_name_percents, depth=1, selector="writable", **kwargs)
 
-    acl_key = "{},ipv4".format(acl_name)
-    acl_value = kwargs["url"] + "system/acls/" + acl_key
-    port_data['aclv4_out_cfg'] = {acl_key: acl_value}
-    port_data['aclv4_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-    port_data['routing'] = True
+    acl_key = "{},{}".format(acl_name, list_type)
+    acl_value = "/rest/v10.04/system/acls/" + acl_key
+
+    if interface_name.startswith('lag'):
+        if int_data['interfaces']:
+            int_data['interfaces'] = common_ops._dictionary_to_list_values(int_data['interfaces'])
+
+    if list_type is "ipv6":
+        int_data['aclv6_out_cfg'] = acl_value
+        int_data['aclv6_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
+    elif list_type is "ipv4":
+        int_data['aclv4_out_cfg'] = acl_value
+        int_data['aclv4_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
+
+    int_data['routing'] = True
 
     target_url = kwargs["url"] + "system/interfaces/%s" % port_name_percents
-    put_data = json.dumps(port_data, sort_keys=True, indent=4)
+    put_data = json.dumps(int_data, sort_keys=True, indent=4)
 
     response = kwargs["s"].put(target_url, data=put_data, verify=False)
 
@@ -927,12 +960,12 @@ def _update_port_acl_out(interface_name, acl_name, **kwargs):
         return True
 
 
-def clear_interface_acl(interface_name, acl_type="aclv4_out", **kwargs):
+def clear_interface_acl(interface_name, acl_type, **kwargs):
     """
     Perform GET and PUT calls to clear an interface's ACL
 
     :param interface_name: Alphanumeric name of the interface
-    :param acl_type: Type of ACL, options are between 'aclv4_out', 'aclv4_in', and 'aclv6_in'
+    :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function

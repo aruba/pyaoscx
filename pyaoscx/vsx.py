@@ -204,9 +204,9 @@ def _create_vsx(role, isl_port, keepalive_peer, keepalive_src, keepalive_vrf, vs
         keyword url: URL in main() function
     :return: True if successful, False otherwise
     """
-    current_vsx = system.get_system_info(**kwargs)
+    system_info_dict = system.get_system_info(**kwargs)
 
-    if 'vsx' in current_vsx:
+    if system_info_dict['vsx'] is not None:
         logging.warning("FAIL: Creating VSX Role '%s' on vrf %s.  There is already an existing VSX setup."
               % (role, keepalive_vrf))
         return False
@@ -220,13 +220,18 @@ def _create_vsx(role, isl_port, keepalive_peer, keepalive_src, keepalive_vrf, vs
 
         isl_port_uri = "/rest/v10.04/system/interfaces/" + isl_port
 
+        ip_src_subnet = keepalive_src.find('/')
+        ip_peer_subnet = keepalive_peer.find('/')
+        if ip_src_subnet >= 0:
+            keepalive_src = keepalive_src[0:ip_src_subnet]
+        if ip_peer_subnet >= 0:
+            keepalive_peer = keepalive_peer[0:ip_peer_subnet]
+
         vsx_data = {
                 "config_sync_disable": False,
                 "config_sync_features": [],
                 "device_role": role,
-                "isl_port": {
-                    isl_port: isl_port_uri
-                },
+                "isl_port": isl_port_uri,
                 "isl_timers": {
                     "hello_interval": 1,
                     "hold_time": 0,
@@ -250,6 +255,7 @@ def _create_vsx(role, isl_port, keepalive_peer, keepalive_src, keepalive_vrf, vs
 
         target_url = kwargs["url"] + "system/vsx"
         post_data = json.dumps(vsx_data, sort_keys=True, indent=4)
+
         response = kwargs["s"].post(target_url, data=post_data, verify=False, timeout=2)
 
         if not common_ops._response_ok(response, "POST"):
@@ -362,7 +368,7 @@ def _update_vsx_interface_vlan(vlan_id, active_forwarding, vsx_sync, act_gw_mac,
               "VLAN Interface doesn't exist" % vlan_id)
         return False
     else:
-        interface_vsx_data = interface.get_interface(vlan_name, depth=2, selector="writable", **kwargs)
+        interface_vsx_data = interface.get_interface(vlan_name, depth=1, selector="writable", **kwargs)
 
         vsx_sync_set = []
         if "active-gateways" in vsx_sync:
@@ -371,6 +377,10 @@ def _update_vsx_interface_vlan(vlan_id, active_forwarding, vsx_sync, act_gw_mac,
             vsx_sync_set.append(".irdp.*")
         if "policies" in vsx_sync:
             vsx_sync_set.append("^policy.*")
+
+        if interface_vsx_data['vrf']:
+            # Convert the dictionary to a URI string
+            interface_vsx_data['vrf'] = list(interface_vsx_data['vrf'].values())[0]
 
         interface_vsx_data["vsx_active_forwarding_enable"] = active_forwarding
         interface_vsx_data["vsx_sync"] = vsx_sync_set

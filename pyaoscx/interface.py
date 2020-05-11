@@ -437,7 +437,7 @@ def _add_l3_ipv4_interface(interface_name, ip_address=None, interface_desc=None,
         "interfaces": ["/rest/v10.04/system/interfaces/%s" % interface_name_percents],
         "routing": True,
         "ip4_address": ip_address,
-        "vrf": {vrf: "/rest/v10.04/system/vrfs/%s" % vrf}
+        "vrf": "/rest/v10.04/system/vrfs/%s" % vrf
     }
 
     if interface_desc is not None:
@@ -652,7 +652,7 @@ def _create_loopback_interface_v1(interface_name, vrf, ipv4=None, interface_desc
 
 def _create_loopback_interface(interface_name, vrf, ipv4=None, interface_desc=None, **kwargs):
     """
-    Perform a PUT and/or POST call to create a Loopback Interface table entry for a logical L3 Interface. If the
+    Perform a POST call to create a Loopback Interface table entry for a logical L3 Interface. If the
     Loopback Interface already exists and an IPv4 address is given, the function will update the IPv4 address.
 
     :param interface_name: Alphanumeric Interface name
@@ -668,22 +668,26 @@ def _create_loopback_interface(interface_name, vrf, ipv4=None, interface_desc=No
 
     interface_data = {
         "name": interface_name,
-        "referenced_by": "/rest/v1/system/ports/%s" % interface_name,
         "type": "loopback",
         "user_config": {
             "admin": "up"
-        }
+        },
+        "ospf_if_type": "ospf_iftype_loopback",
+        "vrf": "/rest/v10.04/system/vrfs/%s" % vrf
     }
+
+    if ipv4 is not None:
+        interface_data['ip4_address'] = ipv4
 
     if interface_desc is not None:
         interface_data['description'] = interface_desc
 
-    target_url = kwargs["url"] + "system/interfaces/" + interface_name_percents
-    put_data = json.dumps(interface_data, sort_keys=True, indent=4)
+    target_url = kwargs["url"] + "system/interfaces"
+    post_data = json.dumps(interface_data, sort_keys=True, indent=4)
 
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
+    response = kwargs["s"].post(target_url, data=post_data, verify=False)
 
-    if not common_ops._response_ok(response, "PUT"):
+    if not common_ops._response_ok(response, "POST"):
         logging.warning("FAIL: Adding Interface table entry '%s' failed with status code %d: %s"
               % (interface_name, response.status_code, response.text))
         return False
@@ -694,11 +698,11 @@ def _create_loopback_interface(interface_name, vrf, ipv4=None, interface_desc=No
 
 def _create_vxlan_interface(interface_name, source_ipv4=None, port_desc=None, dest_udp_port=4789, **kwargs):
     """
-    Perform POST calls to create a VXLAN table entry for a logical L3 Interface. If the
+    Perform POST call to create a VXLAN table entry for a logical L3 Interface. If the
     VXLAN Interface already exists and an IPv4 address is given, the function will update the IPv4 address.
 
     :param interface_name: Alphanumeric Interface name
-    :param source_ipv4: Source IPv4 address to assign to the VXLAN interface. Defaults to nothing if not specified.
+    :param source_ipv4: Optional source IPv4 address to assign to the VXLAN interface. Defaults to nothing if not specified.
     :param port_desc: Optional description for the interface. Defaults to nothing if not specified.
     :param dest_udp_port: Optional Destination UDP Port that the VXLAN will use.  Default is set to 4789
     :param kwargs:
@@ -706,52 +710,39 @@ def _create_vxlan_interface(interface_name, source_ipv4=None, port_desc=None, de
         keyword url: URL in main() function
     :return: True if successful, False otherwise
     """
-    interfaces_list = get_all_interfaces(**kwargs)
+    interfaces_dict = get_all_interfaces(**kwargs)
 
-    if "/rest/v1/system/ports/%s" % interface_name not in interfaces_list:
-        port_data = {
-            "admin": "up",
-            "interfaces": [],
+    if interface_name not in interfaces_dict:
+        interface_data = {
             "name": interface_name,
+            "options": {
+                "local_ip": source_ipv4,
+                "vxlan_dest_udp_port": str(dest_udp_port)
+            },
+            "type": "vxlan",
+            "user_config": {
+                "admin": "up"
+            },
+
+            "admin": "up",
             "routing": False
-            }
+        }
 
         if port_desc is not None:
-            port_data['description'] = port_desc
+            interface_data['description'] = port_desc
 
-        port_url = kwargs["url"] + "system/ports"
-        post_data = json.dumps(port_data, sort_keys=True, indent=4)
+        interface_url = kwargs["url"] + "system/interfaces"
+        post_data = json.dumps(interface_data, sort_keys=True, indent=4)
 
-        response = kwargs["s"].post(port_url, data=post_data, verify=False)
+        response = kwargs["s"].post(interface_url, data=post_data, verify=False)
 
         if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Adding VXLAN Port table entry '%s' failed with status code %d: %s"
+            logging.warning("FAIL: Adding VXLAN Interface table entry '%s' failed with status code %d: %s"
                   % (interface_name, response.status_code, response.text))
             return False
         else:
-            interface_data = {
-                "name": interface_name,
-                "options": {
-                    "local_ip": source_ipv4,
-                    "vxlan_dest_udp_port": str(dest_udp_port)
-                },
-                "type": "vxlan",
-                "user_config": {
-                    "admin": "up"
-                }
-            }
-            interface_url = kwargs["url"] + "system/interfaces"
-            post_data = json.dumps(interface_data, sort_keys=True, indent=4)
-
-            response = kwargs["s"].post(interface_url, data=post_data, verify=False)
-
-            if not common_ops._response_ok(response, "POST"):
-                logging.warning("FAIL: Adding VXLAN Interface table entry '%s' failed with status code %d: %s"
-                      % (interface_name, response.status_code, response.text))
-                return False
-            else:
-                logging.info("SUCCESS: Adding VXLAN Port and Interface table entries '%s' succeeded" % interface_name)
-                return True
+            logging.info("SUCCESS: Adding VXLAN Interface table entry '%s' succeeded" % interface_name)
+            return True
     else:
         return update_interface_ipv4(interface_name, source_ipv4, **kwargs)
 
@@ -1100,7 +1091,7 @@ def _port_set_untagged_vlan(l2_port_name, vlan_id, **kwargs):
 
     response = kwargs["s"].put(target_url, data=put_data, verify=False)
 
-    if not (common_ops._response_ok(response, "PUT") or common_ops._response_ok(response, "POST")):
+    if not common_ops._response_ok(response, "PUT"):
         logging.warning("FAIL: Setting Port '%s' access VLAN to VLAN ID '%d' failed with status code %d: %s"
               % (l2_port_name, vlan_id, response.status_code, response.text))
         return False
@@ -1133,7 +1124,11 @@ def _port_add_vlan_trunks(l2_port_name, vlan_trunk_ids={}, **kwargs):
     port_data = get_interface(l2_port_name, depth=1, selector="writable", **kwargs)
 
     if not port_data['vlan_tag']:
-        port_data['vlan_tag'] = {"1": "/rest/v10.04/system/vlans/1"}
+        port_data['vlan_tag'] = "/rest/v10.04/system/vlans/1"
+    else:
+        # Convert the dictionary to a URI string
+        port_data['vlan_tag'] = common_ops._dictionary_to_string(port_data['vlan_tag'])
+
     if not port_data['vlan_mode']:
         port_data['vlan_mode'] = "native-untagged"
     port_data['routing'] = False
@@ -1147,9 +1142,10 @@ def _port_add_vlan_trunks(l2_port_name, vlan_trunk_ids={}, **kwargs):
 
     target_url = kwargs["url"] + "system/interfaces/%s" % l2_port_name_percents
     put_data = json.dumps(port_data, sort_keys=True, indent=4)
+
     response = kwargs["s"].put(target_url, data=put_data, verify=False)
 
-    if not (common_ops._response_ok(response, "PUT") or common_ops._response_ok(response, "POST")):
+    if not common_ops._response_ok(response, "PUT"):
         logging.warning("FAIL: Adding VLANs '%s' to Port '%s' trunk failed with status code %d: %s"
               % (vlan_trunk_ids, l2_port_name, response.status_code, response.text))
         return False
@@ -1179,10 +1175,11 @@ def _port_set_native_vlan(l2_port_name, vlan_id, tagged=True, **kwargs):
         vlan_mode = "native-untagged"
 
     l2_port_name_percents = common_ops._replace_special_characters(l2_port_name)
-    vlan_key = {str(vlan_id): "/rest/v10.04/system/vlans/%d" % vlan_id}
+    vlan_uri = "/rest/v10.04/system/vlans/%d" % vlan_id
+    vlan_key = {str(vlan_id): vlan_uri}
     port_data = get_interface(l2_port_name_percents, depth=1, selector="writable", **kwargs)
 
-    port_data['vlan_tag'] = vlan_key
+    port_data['vlan_tag'] = vlan_uri
     port_data['routing'] = False
     port_data['vlan_mode'] = vlan_mode
 
@@ -1191,9 +1188,10 @@ def _port_set_native_vlan(l2_port_name, vlan_id, tagged=True, **kwargs):
 
     target_url = kwargs["url"] + "system/interfaces/%s" % l2_port_name_percents
     put_data = json.dumps(port_data, sort_keys=True, indent=4)
+
     response = kwargs["s"].put(target_url, data=put_data, verify=False)
 
-    if not (common_ops._response_ok(response, "PUT") or common_ops._response_ok(response, "POST")):
+    if not common_ops._response_ok(response, "PUT"):
         logging.warning("FAIL: Setting native VLAN ID '%d' to Port '%s' failed with status code %d: %s"
               % (vlan_id, l2_port_name, response.status_code, response.text))
         return False
@@ -1411,23 +1409,27 @@ def _remove_port_from_lag(int_name, lag_id, **kwargs):
         return True
 
 
-def _clear_interface_acl(interface_name, acl_type="aclv4_out", **kwargs):
+def _clear_interface_acl(interface_name, acl_type, **kwargs):
     """
     Perform GET and PUT calls to clear an interface's ACL
 
     :param port_name: Alphanumeric name of the Port
-    :param acl_type: Type of ACL, options are between 'aclv4_out', 'aclv4_in', and 'aclv6_in'
+    :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'
     :param kwargs:
         keyword s: requests.session object with loaded cookie jar
         keyword url: URL in main() function
     :return: True if successful, False otherwise
     """
-    if acl_type not in ['aclv4_out', 'aclv4_in', 'aclv6_in']:
-        raise Exception("ERROR: acl_type should be 'aclv4_out', 'aclv4_in', or 'aclv6_in'")
+    if acl_type not in ['aclv4_out', 'aclv4_in', 'aclv6_in', 'aclv6_out']:
+        raise Exception("ERROR: acl_type should be 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'")
 
     int_name_percents = common_ops._replace_special_characters(interface_name)
 
     interface_data = get_interface(interface_name, depth=1, selector="writable", **kwargs)
+
+    if interface_name.startswith('lag'):
+        if interface_data['interfaces']:
+            interface_data['interfaces'] = common_ops._dictionary_to_list_values(interface_data['interfaces'])
 
     cfg_type = acl_type + '_cfg'
     cfg_version = acl_type + '_cfg_version'

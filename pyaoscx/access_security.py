@@ -408,7 +408,7 @@ def _configure_dot1x_interface(port_name, auth_enable=True, cached_reauth_enable
     port_name_percents = common_ops._replace_special_characters(port_name)
 
     port_access_auth_data = {
-        "authentication_method": "802.1x",
+        "authentication_method": "dot1x",
         "auth_enable": auth_enable,
         "cached_reauth_enable": cached_reauth_enable,
         "reauth_enable": reauth_enable

@@ -348,10 +348,10 @@ def _update_ospf_interface_authentication(vrf, ospf_id, interface_name, auth_typ
     interface_data = interface.get_interface(interface_name, depth=1, selector="writable", **kwargs)
 
     interface_data['ospf_auth_type'] = auth_type
-    interface_data['ospf_auth_md5_keys'] = {digest_key: auth_pass}
+    interface_data['ospf_auth_md5_keys'] = {str(digest_key): auth_pass}
     interface_data['ospf_if_type'] = "ospf_iftype_broadcast"
     interface_data['routing'] = True
-    interface_data['vrf'] = "/rest/v10.04/system/vrfs/" + vrf
+    interface_data['vrf'] = "/rest/v10.04/system/vrfs/%s" % vrf
 
     target_url = kwargs["url"] + "system/interfaces/%s" % interface_name_percents
     put_data = json.dumps(interface_data, sort_keys=True, indent=4)
