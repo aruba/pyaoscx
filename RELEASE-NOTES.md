@@ -1,3 +1,8 @@
+# 0.2.1
+
+## Notable Changes
+* Modified setup.py to mandate the Python3 requirement
+
 # 0.2.0
 
 ## Notable Changes
