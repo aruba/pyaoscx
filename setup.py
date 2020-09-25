@@ -15,6 +15,7 @@ setup(name='pyaoscx',
       author='Aruba Switching Automation',
       author_email='aruba-switching-automation@hpe.com',
       license='Apache 2.0',
+      python_requires='>=3',
     classifiers=[
 
         'Development Status :: 4 - Beta',
