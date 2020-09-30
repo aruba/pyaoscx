@@ -42,10 +42,10 @@ def get_chassis_info(params={}, **kwargs):
     """
 
     if kwargs["url"].endswith("/v1/"):
-        target_url = kwargs["url"] + "/system/subsystems/chassis/1"
+        target_url = kwargs["url"] + "system/subsystems/chassis/1"
     else:
         # Else logic designed for v10.04 and later
-        target_url = kwargs["url"] + "/system/subsystems/chassis,1"
+        target_url = kwargs["url"] + "system/subsystems/chassis,1"
 
     response = kwargs["s"].get(target_url, params=params, verify=False)
 
@@ -71,10 +71,10 @@ def get_product_info(params={}, **kwargs):
     """
 
     if kwargs["url"].endswith("/v1/"):
-        target_url = kwargs["url"] + "/system/subsystems/chassis/1?attributes=product_info"
+        target_url = kwargs["url"] + "system/subsystems/chassis/1?attributes=product_info"
     else:
         # Else logic designed for v10.04 and later
-        target_url = kwargs["url"] + "/system/subsystems/chassis,1?attributes=product_info"
+        target_url = kwargs["url"] + "system/subsystems/chassis,1?attributes=product_info"
 
     response = kwargs["s"].get(target_url, params=params, verify=False)
 

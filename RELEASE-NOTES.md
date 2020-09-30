@@ -1,3 +1,7 @@
+# 0.2.2
+## Notable Changes
+* Minor bug fix in system.py module
+
 # 0.2.1
 
 ## Notable Changes
