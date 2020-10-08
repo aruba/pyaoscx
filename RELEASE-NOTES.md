@@ -1,4 +1,11 @@
+# 0.3.0
+
+## Notable Changes
+* Added nae.py, a new module to provide functionality for interacting with NAE scripts and agents.
+* Added a function 'create_first_password' to setup.py to support logging into a factory default switch and handling the mandatory password creation.
+
 # 0.2.2
+
 ## Notable Changes
 * Minor bug fix in system.py module
 

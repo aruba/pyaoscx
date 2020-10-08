@@ -30,6 +30,7 @@ def get_system_info(params={}, **kwargs):
 
     return system_info_dict
 
+
 def get_chassis_info(params={}, **kwargs):
     """
     Perform a GET call to get the chassis information, such as product info, reboot statistics, selftest info, and more.
@@ -58,6 +59,7 @@ def get_chassis_info(params={}, **kwargs):
         chassis_info_dict = response.json()
 
     return chassis_info_dict
+
 
 def get_product_info(params={}, **kwargs):
     """

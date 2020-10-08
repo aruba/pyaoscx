@@ -61,7 +61,7 @@ def _response_ok(response, call_type):
     ok_codes = {
         "GET": [200],
         "PUT": [200, 204],
-        "POST": [201],
+        "POST": [201, 268],
         "DELETE": [204]
     }
 

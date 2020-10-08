@@ -19,6 +19,7 @@ Submodules
    pyaoscx.lldp
    pyaoscx.loop_protect
    pyaoscx.mac
+   pyaoscx.nae
    pyaoscx.ospf
    pyaoscx.port
    pyaoscx.qos
