@@ -1,977 +1,526 @@
-# (C) Copyright 2019-2020 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx import common_ops, interface, port
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+
+from pyaoscx.utils.connection import connected
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 import json
-import random
 import logging
+import re
+import pyaoscx.utils.util as utils
+from pyaoscx.utils.list_attributes import ListDescriptor
 
 
-def get_all_acls(**kwargs):
-    """
-    Perform a GET call to get a list of all ACLs
+class ACL(PyaoscxModule):
+    '''
+    Provide configuration management for ACL on AOS-CX devices.
+    '''
 
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: List of all ACLs in the table
-    """
-    target_url = kwargs["url"] + "system/acls"
+    base_uri = "system/acls"
+    resource_uri_name = 'acls'
 
-    response = kwargs["s"].get(target_url, verify=False)
+    indices = ['name', 'list_type']
 
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting list of all ACLs failed with status code %d: %s"
-              % (response.status_code, response.text))
-    else:
-        logging.info("SUCCESS: Getting list of all ACLs succeeded")
+    cfg_aces = ListDescriptor('cfg_aces')
 
-    acls_list = response.json()
-    return acls_list
+    def __init__(self, session, name, list_type, uri=None, **kwargs):
+        self.session = session
+        # Assign IDs
+        self.name = name
+        self.list_type = list_type
+        self._uri = uri
+        # List used to determine attributes related to the ACL configuration
+        self.config_attrs = []
+        self.materialized = False
+        # Attribute dictionary used to manage the original data
+        # obtained from the GET
+        self.__original_attributes = {}
+        # Set arguments needed for correct creation
+        utils.set_creation_attrs(self, **kwargs)
+        # Use to manage ACL Entries
+        self.cfg_aces = []
+        # Attribute used to know if object was changed recently
+        self.__modified = False
 
+    @connected
+    def get(self, depth=None, selector=None):
+        '''
+        Perform a GET call to retrieve data for an ACL table entry and fill
+        the object with the incoming attributes
 
-def create_acl(list_name, list_type, **kwargs):
-    """
-    Perform a POST call to create an ACL with no entries
+        :param depth: Integer deciding how many levels into the API JSON that
+            references will be returned.
+        :param selector: Alphanumeric option to select specific information to
+            return.
+        :return: Returns True if there is not an exception raised
+        '''
+        logging.info("Retrieving the switch ACLs")
 
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _create_acl_v1(list_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _create_acl(list_name, list_type, **kwargs)
+        depth = self.session.api_version.default_depth\
+            if depth is None else depth
+        selector = self.session.api_version.default_selector\
+            if selector is None else selector
 
+        if not self.session.api_version.valid_depth(depth):
+            depths = self.session.api_version.valid_depths
+            raise Exception("ERROR: Depth should be {}".format(depths))
 
-def _create_acl_v1(list_name, list_type, **kwargs):
-    """
-    Perform a POST call to create an ACL with no entries
+        if selector not in self.session.api_version.valid_selectors:
+            selectors = ' '.join(self.session.api_version.valid_selectors)
+            raise Exception(
+                "ERROR: Selector should be one of {}".format(selectors))
 
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    acls_list = get_all_acls(**kwargs)
-
-    # ACL doesn't exist; create it
-    if "/rest/v1/system/acls/%s/%s" % (list_name, list_type) not in acls_list:
-
-        acl_data = {
-            "name": list_name,
-            "list_type": list_type
+        payload = {
+            "depth": depth,
+            "selector": selector
         }
 
-        target_url = kwargs["url"] + "system/acls"
+        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
+            base_url=self.session.base_url,
+            class_uri=ACL.base_uri,
+            id1=self.name,
+            separator=self.session.api_version.compound_index_separator,
+            id2=self.list_type
+        )
+        try:
+            response = self.session.s.get(
+                uri, verify=False, params=payload, proxies=self.session.proxy)
+
+        except Exception as e:
+            raise ResponseError('GET', e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        data = json.loads(response.text)
+
+        # Remove fields because they are not needed for the PUT request
+        if 'name' in data:
+            data.pop('name')
+        if 'list_type' in data:
+            data.pop('list_type')
+        # Delete unwanted data
+        if 'cfg_aces' in data:
+            data.pop('cfg_aces')
+
+        # Add dictionary as attributes for the object
+        utils.create_attrs(self, data)
+
+        # Determines if the ACL is configurable
+        if selector in self.session.api_version.configurable_selectors:
+            # Set self.config_attrs and delete ID from it
+            utils.set_config_attrs(
+                self, data, 'config_attrs', ['name', 'list_type'])
+
+        # Set original attributes
+        self.__original_attributes = data
+
+        # Sets object as materialized
+        # Information is loaded from the Device
+        self.materialized = True
+
+        # Clean ACL Entries settings
+        if self.cfg_aces == []:
+            # Set ACL Entries if any
+            # Adds ACL Entries to parent ACL already
+            from pyaoscx.acl_entry import AclEntry
+            AclEntry.get_all(self.session, self)
+        return True
+
+    @classmethod
+    def get_all(cls, session):
+        '''
+        Perform a GET call to retrieve all system ACLs,
+        and create a dictionary containing them
+        :param cls: Object's class
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :return: Dictionary containing ACLs IDs as keys and a
+            Acl objects as values
+        '''
+
+        logging.info("Retrieving the switch ACL")
+
+        uri = "{base_url}{class_uri}".format(
+            base_url=session.base_url,
+            class_uri=ACL.base_uri)
+
+        try:
+            response = session.s.get(uri, verify=False, proxies=session.proxy)
+        except Exception as e:
+            raise ResponseError('GET', e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        data = json.loads(response.text)
+
+        acl_dict = {}
+        # Get all URI elements in the form of a list
+        uri_list = session.api_version.get_uri_from_data(data)
+
+        for uri in uri_list:
+            # Create a Acl object
+            indices, acl = ACL.from_uri(
+                session, uri)
+            acl_dict[indices] = acl
+
+        return acl_dict
+
+    @connected
+    def apply(self):
+        '''
+        Main method used to either create or update an existing
+        ACL table entry.
+        Checks whether the ACL exists in the switch
+        Calls self.update() if ACL being updated
+        Calls self.create() if a new ACL is being created
+
+        :return modified: Boolean, True if object was created or modified
+            False otherwise
+        '''
+        modified = False
+        if self.materialized:
+            modified = self.update()
+        else:
+            modified = self.create()
+        # Set internal attribute
+        self.__modified = modified
+        return modified
+
+    @connected
+    def update(self):
+        '''
+        Perform a PUT call to apply changes to an existing ACL table entry
+
+        :return modified: True if Object was modified and a PUT request was made.
+            False otherwise
+
+        '''
+        # Variable returned
+        modified = False
+        acl_data = {}
+
+        acl_data = utils.get_attrs(self, self.config_attrs)
+
+        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
+            base_url=self.session.base_url,
+            class_uri=ACL.base_uri,
+            id1=self.name,
+            separator=self.session.api_version.compound_index_separator,
+            id2=self.list_type
+        )
+
+        # Compare dictionaries
+        if acl_data == self.__original_attributes:
+            # Object was not modified
+            modified = False
+
+        else:
+            post_data = json.dumps(acl_data, sort_keys=True, indent=4)
+
+            try:
+                response = self.session.s.put(
+                    uri, verify=False, data=post_data, proxies=self.session.proxy)
+
+            except Exception as e:
+                raise ResponseError('PUT', e)
+
+            if not utils._response_ok(response, "PUT"):
+                raise GenericOperationError(
+                    response.text, response.status_code)
+
+            else:
+                logging.info(
+                    "SUCCESS: Update ACL table entry {} succeeded")
+            # Set new original attributes
+            self.__original_attributes = acl_data
+            modified = True
+        return modified
+
+    @connected
+    def create(self):
+        '''
+        Perform a POST call to create a new ACL table entry
+        Only returns if an exception is not raise
+
+        :return modified: Boolean, True if entry was created.
+        '''
+
+        acl_data = {}
+
+        acl_data = utils.get_attrs(self, self.config_attrs)
+        acl_data['name'] = self.name
+        acl_data['list_type'] = self.list_type
+
+        uri = "{base_url}{class_uri}".format(
+            base_url=self.session.base_url,
+            class_uri=ACL.base_uri
+        )
         post_data = json.dumps(acl_data, sort_keys=True, indent=4)
 
-        response = kwargs["s"].post(target_url, data=post_data, verify=False, timeout=2)
+        try:
+            response = self.session.s.post(
+                uri, verify=False, data=post_data, proxies=self.session.proxy)
 
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Creating %s ACL '%s' failed with status code %d: %s"
-                  % (list_type, list_name, response.status_code, response.text))
-            return False
+        except Exception as e:
+            raise ResponseError('POST', e)
+
+        if not utils._response_ok(response, "POST"):
+            raise GenericOperationError(response.text, response.status_code)
+
         else:
-            logging.info("SUCCESS: Creating %s ACL '%s' succeeded" % (list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to create %s ACL '%s' since it already exists"
-              % (list_type, list_name))
+            logging.info(
+                "SUCCESS: Adding ACL table entry {} succeeded\
+                    ".format(self.name))
+
+        # Get all object's data
+        self.get()
+
+        # Object was modified, as it was created
         return True
 
+    @connected
+    def delete(self):
+        '''
+        Perform DELETE call to delete ACL table entry.
 
-def _create_acl(list_name, list_type, **kwargs):
-    """
-    Perform a POST call to create an ACL with no entries
+        '''
 
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
+        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
+            base_url=self.session.base_url,
+            class_uri=ACL.base_uri,
+            id1=self.name,
+            separator=self.session.api_version.compound_index_separator,
+            id2=self.list_type
+        )
 
-    acls_list = get_all_acls(**kwargs)
+        try:
+            response = self.session.s.delete(
+                uri, verify=False, proxies=self.session.proxy)
 
-    acl_key = "{},{}".format(list_name, list_type)
-    acl_value = "/rest/v10.04/system/acls/" + acl_key
+        except Exception as e:
+            raise ResponseError('DELETE', e)
 
-    # ACL doesn't exist; create it
-    if acl_value not in acls_list.values():
-        acl_data = {
-            "name": list_name,
-            "list_type": list_type
-        }
+        if not utils._response_ok(response, "DELETE"):
+            raise GenericOperationError(response.text, response.status_code)
 
-        target_url = kwargs["url"] + "system/acls"
-        post_data = json.dumps(acl_data, sort_keys=True, indent=4)
-
-        response = kwargs["s"].post(target_url, data=post_data, verify=False, timeout=2)
-
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Creating %s ACL '%s' failed with status code %d: %s"
-                  % (list_type, list_name, response.status_code, response.text))
-            return False
         else:
-            logging.info("SUCCESS: Creating %s ACL '%s' succeeded" % (list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to create %s ACL '%s' since it already exists"
-              % (list_type, list_name))
+            logging.info(
+                "SUCCESS: Delete ACL table entry {} succeeded\
+                    ".format(self.name))
+
+        # Delete object attributes
+        utils.delete_attrs(self, self.config_attrs)
+
+    @classmethod
+    def from_response(cls, session, response_data):
+        '''
+        Create a Acl object given a response_data
+        :param cls: Object's class
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :param response_data: The response can be either a
+            dictionary: {
+                    id: "/rest/v10.04/system/
+                        /acls/{name},{list_type}"
+                }
+            or a
+            string: "/rest/v10.04/system/acls/{name},{list_type}"
+        :return: Acl object
+        '''
+        acl_arr = session.api_version.get_keys(
+            response_data, ACL.resource_uri_name)
+        list_type = acl_arr[1]
+        name = acl_arr[0]
+
+        return ACL(
+            session, name, list_type)
+
+    @classmethod
+    def from_uri(cls, session, uri):
+        '''
+        Create a Acl object given a URI
+        :param cls: Object's class
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :param uri: a String with a URI
+
+        :return indices, acl: tuple containing both the indices and
+            Acl object
+        '''
+        # Obtain ID from URI
+        index_pattern = \
+            re.compile(
+                r'(.*)acls/(?P<index1>.+)[,./-](?P<index2>.+)')
+        name = index_pattern.match(uri).group('index1')
+        list_type = index_pattern.match(uri).group('index2')
+
+        # Create Acl object
+        acl = ACL(session, name, list_type)
+        indices = "{},{}".format(name, list_type)
+
+        return indices, acl
+
+    def __str__(self):
+        return "ACL name:{}, list_type:{}".format(self.name, self.list_type)
+
+    def get_uri(self):
+        '''
+        Method used to obtain the specific ACL URI
+        return: Object's URI
+        '''
+
+        if self._uri is None:
+            self._uri = \
+                '{resource_prefix}{class_uri}/{id1}{separator}{id2}'.format(
+                    resource_prefix=self.session.resource_prefix,
+                    class_uri=ACL.base_uri,
+                    id1=self.name,
+                    separator=self.session.api_version.compound_index_separator,
+                    id2=self.list_type
+                )
+
+        return self._uri
+
+    def get_info_format(self):
+        '''
+        Method used to obtain correct object format for referencing inside
+        other objects
+        return: Object format depending on the API Version
+        '''
+        return self.session.api_version.get_index(self)
+
+    def was_modified(self):
+        """
+        Getter method for the __modified attribute
+        :return: Boolean True if the object was recently modified, False otherwise.
+        """
+
+        return self.__modified
+
+    ####################################################################
+    # IMPERATIVES FUNCTIONS
+    ####################################################################
+
+    def add_acl_entry(self, sequence_num, action, count=None,
+                      protocol=None, src_ip=None, dst_ip=None,
+                      dst_l4_port_min=None, dst_l4_port_max=None,
+                      src_mac=None, dst_mac=None, ethertype=None):
+        """
+        Create an AclEntry object, ACL Entry already exists, value passed
+        won't update the entry
+
+        :param sequence_num: Integer number of the sequence
+        :param action: Action should be either "permit" or "deny"
+        :param count: Optional boolean flag that when true, will make entry
+            increment hit count for matched packets
+        :param protocol: Optional integer IP protocol number
+        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are supported.
+            Example:
+                10.10.12.11/255.255.255.255
+                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are supported.
+            Example:
+                10.10.12.11/255.255.255.255
+                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+        :param dst_l4_port_min: Optional minimum L4 port number in range; used
+            in conjunction with dst_l4_port_max.
+        :param dst_l4_port_max: Optional maximum L4 port number in range; used
+            in conjunction with dst_l4_port_min.
+        :param src_mac: Optional source MAC address
+            Example:
+                '01:02:03:04:05:06'
+        :param dst_mac: Optional destination MAC address
+            Example:
+                '01:02:03:04:05:06'
+        :param ethertype: Optional integer EtherType number
+
+        :return acl_entry: A AclEntry object
+
+        """
+
+        # Create ACL Entry
+        acl_entry_obj = self.session.api_version.get_module(
+            self.session, 'AclEntry', sequence_num, parent_acl=self,
+            action=action, count=count, protocol=protocol, src_ip=src_ip,
+            dst_ip=dst_ip, dst_l4_port_min=dst_l4_port_min,
+            dst_l4_port_max=dst_l4_port_max, src_mac=src_mac,
+            dst_mac=dst_mac, ethertype=ethertype)
+
+        # Try to obtain data; if not, create
+        try:
+            acl_entry_obj.get()
+        except GenericOperationError:
+            # Create object inside switch
+            acl_entry_obj.apply()
+
+        return acl_entry_obj
+
+    def modify_acl_entry(self, sequence_num, action, count=None,
+                         src_ip=None, dst_ip=None,
+                         dst_l4_port_min=None, dst_l4_port_max=None,
+                         src_mac=None, dst_mac=None, ethertype=None):
+        """
+        Modify an existing ACL Entry
+
+        :param sequence_num: Integer number of the sequence
+        :param action: Action should be either "permit" or "deny"
+        :param count: Optional boolean flag that when true, will make entry
+            increment hit count for matched packets
+        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are supported.
+            Example:
+                10.10.12.11/255.255.255.255
+                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are supported.
+            Example:
+                10.10.12.11/255.255.255.255
+                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+        :param dst_l4_port_min: Optional minimum L4 port number in range; used
+            in conjunction with dst_l4_port_max.
+        :param dst_l4_port_max: Optional maximum L4 port number in range; used
+            in conjunction with dst_l4_port_min.
+        :param src_mac: Optional source MAC address
+            Example:
+                '01:02:03:04:05:06'
+        :param dst_mac: Optional destination MAC address
+            Example:
+                '01:02:03:04:05:06'
+        :param ethertype: Optional integer EtherType number
+
+        :return acl_entry: A AclEntry object
+
+        """
+
+        # Create ACL Entry
+        acl_entry_obj = self.session.api_version.get_module(
+            self.session, 'AclEntry', sequence_num, parent_acl=self)
+        # Get AclEntry object data
+        acl_entry_obj.get()
+
+        # Modify data
+        acl_entry_obj.modify(
+            action, count,
+            src_ip, dst_ip,
+            dst_l4_port_min, dst_l4_port_max,
+            src_mac, dst_mac, ethertype)
+
+        return acl_entry_obj
+
+    def delete_all_acl_entries(self):
+        """
+        Delete all ACL Entries within an ACL
+        :return: True if object was changed
+        """
+        # Verify ACL has the latest data
+        self.get()
+
+        # Delete all entries
+        self.cfg_aces = []
+
+        # ACL Entries deleted
+        # Object modified
         return True
-
-
-def get_all_acl_entries(list_name, list_type, **kwargs):
-    """
-    Perform a GET call to get all entries of an ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing ACL entry URIs
-    """
-    if kwargs["url"].endswith("/v1/"):
-        acl_entries = _get_all_acl_entries_v1(list_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        acl_entries = _get_all_acl_entries(list_name, list_type, **kwargs)
-
-    return acl_entries
-
-
-def _get_all_acl_entries_v1(list_name, list_type, **kwargs):
-    """
-    Perform a GET call to get all entries of an ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing ACL entry URIs
-    """
-    target_url = kwargs["url"] + "system/acls/%s/%s/cfg_aces" % (list_name, list_type)
-
-    response = kwargs["s"].get(target_url, verify=False)
-
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting dictionary of URIS of entries in %s ACL '%s' failed with status code %d: %s"
-              % (list_type, list_name, response.status_code, response.text))
-        acl_entries = {}
-    else:
-        logging.info("SUCCESS: Getting dictionary of URIs of entries in %s ACL '%s' succeeded" % (list_type, list_name))
-        acl_entries = response.json()
-
-    # for some reason, this API returns a list when empty, and a dictionary when there is data
-    # make this function always return a dictionary,
-    if not acl_entries:
-        return {}
-    else:
-        return acl_entries
-
-
-def _get_all_acl_entries(list_name, list_type, **kwargs):
-    """
-    Perform a GET call to get all entries of an ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing ACL entry URIs
-    """
-
-    target_url = kwargs["url"] + "system/acls/%s,%s/cfg_aces" % (list_name, list_type)
-
-    response = kwargs["s"].get(target_url, verify=False)
-
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting dictionary of URIS of entries in %s ACL '%s' failed with status code %d: %s"
-              % (list_type, list_name, response.status_code, response.text))
-    else:
-        logging.info("SUCCESS: Getting dictionary of URIs of entries in %s ACL '%s' succeeded" % (list_type, list_name))
-
-    acl_entries = response.json()
-
-    # for some reason, this API returns a list when empty, and a dictionary when there is data
-    # make this function always return a dictionary,
-    if not acl_entries:
-        return {}
-    else:
-        return acl_entries
-
-
-def create_acl_entry(list_name, list_type, sequence_num, action, count=None, ip_protocol=None, src_ip=None, dst_ip=None,
-                     dst_l4_port_min=None, dst_l4_port_max=None, src_mac=None, dst_mac=None, ethertype=None, **kwargs):
-    """
-    Perform a POST call to create an ACL entry
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param sequence_num: Integer number of the sequence
-    :param action: Action should be either "permit" or "deny"
-    :param count: Optional boolean flag that when true, will make entry increment hit count for matched packets
-    :param ip_protocol: Optional integer IP protocol number
-    :param src_ip: Optional source IP address
-    :param dst_ip: Optional destination IP address
-    :param dst_l4_port_min: Optional minimum L4 port number in range; used in conjunction with dst_l4_port_max.
-    :param dst_l4_port_max: Optional maximum L4 port number in range; used in conjunction with dst_l4_port_min.
-    :param src_mac: Optional source MAC address
-    :param dst_mac: Optional destination MAC address
-    :param ethertype: Optional integer EtherType number
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    if kwargs["url"].endswith("/v1/"):
-        return _create_acl_entry_v1(list_name, list_type, sequence_num, action, count, ip_protocol, src_ip, dst_ip,
-                     dst_l4_port_min, dst_l4_port_max, src_mac, dst_mac, ethertype, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _create_acl_entry(list_name, list_type, sequence_num, action, count, ip_protocol, src_ip, dst_ip,
-                     dst_l4_port_min, dst_l4_port_max, src_mac, dst_mac, ethertype, **kwargs)
-
-
-def _create_acl_entry_v1(list_name, list_type, sequence_num, action, count=None, ip_protocol=None, src_ip=None, dst_ip=None,
-                     dst_l4_port_min=None, dst_l4_port_max=None, src_mac=None, dst_mac=None, ethertype=None, **kwargs):
-    """
-    Perform a POST call to create an ACL entry
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param sequence_num: Integer number of the sequence
-    :param action: Action should be either "permit" or "deny"
-    :param count: Optional boolean flag that when true, will make entry increment hit count for matched packets
-    :param ip_protocol: Optional integer IP protocol number
-    :param src_ip: Optional source IP address
-    :param dst_ip: Optional destination IP address
-    :param dst_l4_port_min: Optional minimum L4 port number in range; used in conjunction with dst_l4_port_max.
-    :param dst_l4_port_max: Optional maximum L4 port number in range; used in conjunction with dst_l4_port_min.
-    :param src_mac: Optional source MAC address
-    :param dst_mac: Optional destination MAC address
-    :param ethertype: Optional integer EtherType number
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    acl_entries_dict = get_all_acl_entries(list_name, list_type, **kwargs)
-
-    if "/rest/v1/system/acls/%s/%s/cfg_aces/%d" % (list_name, list_type, sequence_num) not in acl_entries_dict.values():
-        acl_entry_data = {
-            "sequence_number": sequence_num,
-            "action": action
-        }
-
-        if count is not None:
-            acl_entry_data["count"] = count
-
-        if ip_protocol is not None:
-            acl_entry_data["protocol"] = ip_protocol
-
-        if src_ip is not None:
-            acl_entry_data["src_ip"] = src_ip
-
-        if dst_ip is not None:
-            acl_entry_data["dst_ip"] = dst_ip
-
-        if dst_l4_port_min is not None:
-            acl_entry_data["dst_l4_port_min"] = dst_l4_port_min
-
-        if dst_l4_port_max is not None:
-            acl_entry_data["dst_l4_port_max"] = dst_l4_port_max
-
-        if src_mac is not None:
-            acl_entry_data["src_mac"] = src_mac
-
-        if dst_mac is not None:
-            acl_entry_data["dst_mac"] = dst_mac
-
-        if ethertype is not None:
-            acl_entry_data["ethertype"] = ethertype
-
-        target_url = kwargs["url"] + "system/acls/%s/%s/cfg_aces" % (list_name, list_type)
-        post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
-
-        response = kwargs["s"].post(target_url, data=post_data, verify=False, timeout=2)
-
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Creating entry %d for %s ACL '%s' failed with status code %d: %s"
-                  % (sequence_num, list_type, list_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Creating entry %d for %s ACL '%s' succeeded" % (sequence_num, list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to create entry %d for %s ACL '%s' since it already exists"
-              % (sequence_num, list_type, list_name))
-        return True
-
-
-def _create_acl_entry(list_name, list_type, sequence_num, action, count=None, ip_protocol=None, src_ip=None, dst_ip=None,
-                     dst_l4_port_min=None, dst_l4_port_max=None, src_mac=None, dst_mac=None, ethertype=None, **kwargs):
-    """
-    Perform a POST call to create an ACL entry
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param sequence_num: Integer number of the sequence
-    :param action: Action should be either "permit" or "deny"
-    :param count: Optional boolean flag that when true, will make entry increment hit count for matched packets
-    :param ip_protocol: Optional integer IP protocol number
-    :param src_ip: Optional source IP address
-    :param dst_ip: Optional destination IP address
-    :param dst_l4_port_min: Optional minimum L4 port number in range; used in conjunction with dst_l4_port_max.
-    :param dst_l4_port_max: Optional maximum L4 port number in range; used in conjunction with dst_l4_port_min.
-    :param src_mac: Optional source MAC address
-    :param dst_mac: Optional destination MAC address
-    :param ethertype: Optional integer EtherType number
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    acl_entries_dict = get_all_acl_entries(list_name, list_type, **kwargs)
-
-    ace_key = "{},{}".format(list_name, list_type)
-    ace_value = "/rest/v10.04/system/acls/%s/cfg_aces/%d" % (ace_key, sequence_num)
-
-    if ace_value not in acl_entries_dict.values():
-        acl_entry_data = {
-            "sequence_number": sequence_num,
-            "action": action,
-        }
-
-        if count is not None:
-            acl_entry_data["count"] = count
-
-        if ip_protocol is not None:
-            acl_entry_data["protocol"] = ip_protocol
-
-        if src_ip is not None:
-            acl_entry_data["src_ip"] = src_ip
-
-        if dst_ip is not None:
-            acl_entry_data["dst_ip"] = dst_ip
-
-        if dst_l4_port_min is not None:
-            acl_entry_data["dst_l4_port_min"] = dst_l4_port_min
-
-        if dst_l4_port_max is not None:
-            acl_entry_data["dst_l4_port_max"] = dst_l4_port_max
-
-        if src_mac is not None:
-            acl_entry_data["src_mac"] = src_mac
-
-        if dst_mac is not None:
-            acl_entry_data["dst_mac"] = dst_mac
-
-        if ethertype is not None:
-            acl_entry_data["ethertype"] = ethertype
-
-        target_url = kwargs["url"] + "system/acls/%s/cfg_aces" % ace_key
-        post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
-
-        response = kwargs["s"].post(target_url, data=post_data, verify=False, timeout=2)
-
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Creating entry %d for %s ACL '%s' failed with status code %d: %s"
-                  % (sequence_num, list_type, list_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Creating entry %d for %s ACL '%s' succeeded" % (sequence_num, list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to create entry %d for %s ACL '%s' since it already exists"
-              % (sequence_num, list_type, list_name))
-        return True
-
-
-def get_acl(list_name, list_type, **kwargs):
-    """
-    Perform a GET call to get details of a particular ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing data about a particular ACL
-    """
-
-    if kwargs["url"].endswith("/v1/"):
-        acl = _get_acl_v1(list_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        acl = _get_acl(list_name, list_type, **kwargs)
-    return acl
-
-
-def _get_acl_v1(list_name, list_type, **kwargs):
-    """
-    Perform a GET call to get details of a particular ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing data about a particular ACL
-    """
-    target_url = kwargs["url"] + "system/acls/%s/%s" % (list_name, list_type)
-
-    payload = {"selector": "configuration"}
-
-    response = kwargs["s"].get(target_url, params=payload, verify=False)
-
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting %s ACL '%s' failed with status code %d: %s"
-              % (list_type, list_name, response.status_code, response.text))
-    else:
-        logging.info("SUCCESS: Getting %s ACL '%s' succeeded" % (list_type, list_name))
-
-    acl = response.json()
-    return acl
-
-
-def _get_acl(list_name, list_type, **kwargs):
-    """
-    Perform a GET call to get details of a particular ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing data about a particular ACL
-    """
-    acl_key = "{},{}".format(list_name, list_type)
-    target_url = kwargs["url"] + "system/acls/%s?depth=2&selector=writable" % acl_key
-
-    response = kwargs["s"].get(target_url, verify=False)
-
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting %s ACL '%s' failed with status code %d: %s"
-              % (list_type, list_name, response.status_code, response.text))
-    else:
-        logging.info("SUCCESS: Getting %s ACL '%s' succeeded" % (list_type, list_name))
-
-    acl = response.json()
-    return acl
-
-
-def update_acl(list_name, list_type, **kwargs):
-    """
-    Perform a PUT call to version-up an ACL. This is required whenever entries of an ACL are changed
-    in any way.
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _update_acl_v1(list_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _update_acl(list_name, list_type, **kwargs)
-
-
-def _update_acl_v1(list_name, list_type, **kwargs):
-    """
-    Perform a PUT call to version-up an ACL. This is required whenever entries of an ACL are changed
-    in any way.
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    acl_data = get_acl(list_name, list_type, **kwargs)
-
-    # must remove these fields from the data since they can't be modified
-    acl_data.pop('name', None)
-    acl_data.pop('list_type', None)
-
-    acl_data['cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-
-    target_url = kwargs["url"] + "system/acls/%s/%s" % (list_name, list_type)
-    put_data = json.dumps(acl_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Updating %s ACL '%s' failed with status code %d: %s"
-              % (list_type, list_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Updating %s ACL '%s' succeeded" % (list_type, list_name))
-        return True
-
-
-def _update_acl(list_name, list_type, **kwargs):
-    """
-    Perform a PUT call to version-up an ACL. This is required whenever entries of an ACL are changed
-    in any way.
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    acl_data = get_acl(list_name, list_type, **kwargs)
-    acl_key = "{},{}".format(list_name, list_type)
-
-    acl_data['cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-    target_url = kwargs["url"] + "system/acls/%s" % acl_key
-    put_data = json.dumps(acl_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Updating %s ACL '%s' failed with status code %d: %s"
-              % (list_type, list_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Updating %s ACL '%s' succeeded" % (list_type, list_name))
-        return True
-
-
-def delete_acl(list_name, list_type, **kwargs):
-    """
-    Perform a DELETE call to delete an ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _delete_acl_v1(list_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _delete_acl(list_name, list_type, **kwargs)
-
-
-def _delete_acl_v1(list_name, list_type, **kwargs):
-    """
-    Perform a DELETE call to delete an ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    acls_list = get_all_acls(**kwargs)
-
-    if "/rest/v1/system/acls/%s/%s" % (list_name, list_type) in acls_list:
-
-        target_url = kwargs["url"] + "system/acls/%s/%s" % (list_name, list_type)
-
-        response = kwargs["s"].delete(target_url, verify=False)
-
-        if not common_ops._response_ok(response, "DELETE"):
-            logging.warning("FAIL: Deleting %s ACL '%s' failed with status code %d: %s"
-                  % (list_type, list_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Deleting %s ACL '%s' succeeded" % (list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to delete %s ACL '%s' since it doesn't exist"
-              % (list_type, list_name))
-        return True
-
-
-def _delete_acl(list_name, list_type, **kwargs):
-    """
-    Perform a DELETE call to delete an ACL
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    acls_list = get_all_acls(**kwargs)
-
-    acl_key = "{},{}".format(list_name, list_type)
-    acl_value = "/rest/v10.04/system/acls/" + acl_key
-
-    # ACL exists; delete it
-    if acl_value in acls_list.values():
-
-        target_url = kwargs["url"] + "system/acls/%s,%s" % (list_name, list_type)
-
-        response = kwargs["s"].delete(target_url, verify=False)
-
-        if not common_ops._response_ok(response, "DELETE"):
-            logging.warning("FAIL: Deleting %s ACL '%s' failed with status code %d: %s"
-                  % (list_type, list_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Deleting %s ACL '%s' succeeded" % (list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to delete %s ACL '%s' since it doesn't exist"
-              % (list_type, list_name))
-        return True
-
-
-def delete_acl_entry(list_name, list_type, sequence_num, **kwargs):
-    """
-    Perform a DELETE call to delete an ACL entry
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param sequence_num: Integer ID for the entry.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _delete_acl_entry_v1(list_name, list_type, sequence_num, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _delete_acl_entry(list_name, list_type, sequence_num, **kwargs)
-
-
-def _delete_acl_entry_v1(list_name, list_type, sequence_num, **kwargs):
-    """
-    Perform a DELETE call to delete an ACL entry
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param sequence_num: Integer ID for the entry.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    acl_entries_dict = get_all_acl_entries(list_name, list_type, **kwargs)
-
-    if "/rest/v1/system/acls/%s/%s/cfg_aces/%d" % (list_name, list_type, sequence_num) in acl_entries_dict.values():
-
-        target_url = kwargs["url"] + "system/acls/%s/%s/cfg_aces/%d" % (list_name, list_type, sequence_num)
-
-        response = kwargs["s"].delete(target_url, verify=False)
-
-        if not common_ops._response_ok(response, "DELETE"):
-            logging.warning("FAIL: Deleting entry %d in %s ACL '%s' failed with status code %d: %s"
-                  % (sequence_num, list_type, list_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Deleting entry %d in %s ACL '%s' succeeded"
-                  % (sequence_num, list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to delete entry %d in %s ACL '%s' since it doesn't exist"
-              % (sequence_num, list_type, list_name))
-        return True
-
-
-def _delete_acl_entry(list_name, list_type, sequence_num, **kwargs):
-    """
-    Perform a DELETE call to delete an ACL entry
-
-    :param list_name: Alphanumeric name of the ACL
-    :param list_type: Type should be one of "ipv4," "ipv6," or "mac"
-    :param sequence_num: Integer ID for the entry.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    acl_entries_dict = get_all_acl_entries(list_name, list_type, **kwargs)
-
-    ace_key = "{},{}".format(list_name, list_type)
-    ace_value = "/rest/v10.04/system/acls/%s/cfg_aces/%d" % (ace_key, sequence_num)
-
-    if ace_value in acl_entries_dict.values():
-        target_url = kwargs["url"] + "system/acls/%s,%s/cfg_aces/%d" % (list_name, list_type, sequence_num)
-
-        response = kwargs["s"].delete(target_url, verify=False)
-
-        if not common_ops._response_ok(response, "DELETE"):
-            logging.warning("FAIL: Deleting entry %d in %s ACL '%s' failed with status code %d: %s"
-                  % (sequence_num, list_type, list_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Deleting entry %d in %s ACL '%s' succeeded"
-                  % (sequence_num, list_type, list_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to delete entry %d in %s ACL '%s' since it doesn't exist"
-              % (sequence_num, list_type, list_name))
-        return True
-
-
-def update_port_acl_in(interface_name, acl_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to apply ACL on an interface. This function specifically applies an ACL
-    to Ingress traffic of the interface
-
-    :param interface_name: Alphanumeric String that is the name of the interface on which the ACL
-        is applied to
-    :param acl_name: Alphanumeric String that is the name of the ACL
-    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    if kwargs["url"].endswith("/v1/"):
-        return _update_port_acl_in_v1(interface_name, acl_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _update_port_acl_in(interface_name, acl_name, list_type, **kwargs)
-
-
-def _update_port_acl_in_v1(interface_name, acl_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to apply ACL on an interface. This function specifically applies an ACL
-    to Ingress traffic of the interface
-
-    :param interface_name: Alphanumeric String that is the name of the interface on which the ACL
-        is applied to
-    :param acl_name: Alphanumeric String that is the name of the ACL
-    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    port_name_percents = common_ops._replace_special_characters(interface_name)
-
-    port_data = port.get_port(port_name_percents, depth=0, selector="configuration", **kwargs)
-
-    # must remove these fields from the data since they can't be modified
-    port_data.pop('name', None)
-    port_data.pop('origin', None)
-
-    acl_url = "/rest/v1/system/acls/%s/%s" % (acl_name, list_type)
-
-    if list_type is "ipv6":
-        port_data['aclv6_in_cfg'] = acl_url
-        port_data['aclv6_in_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-    elif list_type is "ipv4":
-        port_data['aclv4_in_cfg'] = acl_url
-        port_data['aclv4_in_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-
-    target_url = kwargs["url"] + "system/ports/%s" % port_name_percents
-    put_data = json.dumps(port_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Applying ACL '%s' to Ingress of Interface '%s' failed with status code %d: %s"
-              % (acl_name, interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Applying ACL '%s' to Ingress of Interface '%s' succeeded"
-              % (acl_name, interface_name))
-        return True
-
-
-def _update_port_acl_in(interface_name, acl_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to apply ACL on an interface. This function specifically applies an ACL
-    to Ingress traffic of the interface.  This function's minimum supported version is v10.04 and later
-
-    :param interface_name: Alphanumeric name of the interface on which the ACL is applied to
-    :param acl_name: Alphanumeric name of the ACL
-    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    int_name_percents = common_ops._replace_special_characters(interface_name)
-    int_data = interface.get_interface(int_name_percents, depth=1, selector="writable", **kwargs)
-
-    acl_key = "{},{}".format(acl_name, list_type)
-    acl_value = "/rest/v10.04/system/acls/" + acl_key
-
-    if interface_name.startswith('lag'):
-        if int_data['interfaces']:
-            int_data['interfaces'] = common_ops._dictionary_to_list_values(int_data['interfaces'])
-
-    if list_type is "ipv6":
-        int_data['aclv6_in_cfg'] = acl_value
-        int_data['aclv6_in_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-    elif list_type is "ipv4":
-        int_data['aclv4_in_cfg'] = acl_value
-        int_data['aclv4_in_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Updating ACL %s on Ingress for Port '%s' failed with status code %d: %s"
-              % (acl_name, interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Updating ACL %s on Ingress for Port '%s' succeeded"
-              % (acl_name, interface_name))
-        return True
-
-
-def update_port_acl_out(interface_name, acl_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to apply ACL on an L3 interface. This function specifically applies an ACL
-    to Egress traffic of the interface, which must be a routing interface
-
-    :param interface_name: Alphanumeric String that is the name of the interface on which the ACL
-        is applied to
-    :param acl_name: Alphanumeric String that is the name of the ACL
-    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    if kwargs["url"].endswith("/v1/"):
-        return _update_port_acl_out_v1(interface_name, acl_name, list_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _update_port_acl_out(interface_name, acl_name, list_type, **kwargs)
-
-
-def _update_port_acl_out_v1(interface_name, acl_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to apply ACL on an L3 interface. This function specifically applies an ACL
-    to Egress traffic of the interface, which must be a routing interface.  This function will set the interface
-    to enable routing.
-
-    :param interface_name: Alphanumeric String that is the name of the interface on which the ACL
-        is applied to
-    :param acl_name: Alphanumeric String that is the name of the ACL
-    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    port_name_percents = common_ops._replace_special_characters(interface_name)
-
-    port_data = port.get_port(port_name_percents, depth=0, selector="configuration", **kwargs)
-
-    # must remove these fields from the data since they can't be modified
-    port_data.pop('name', None)
-    port_data.pop('origin', None)
-
-    acl_url = "/rest/v1/system/acls/%s/%s" % (acl_name, list_type)
-
-    if list_type is "ipv6":
-        port_data['aclv6_out_cfg'] = acl_url
-        port_data['aclv6_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-    elif list_type is "ipv4":
-        port_data['aclv4_out_cfg'] = acl_url
-        port_data['aclv4_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-
-    port_data['routing'] = True
-
-    target_url = kwargs["url"] + "system/ports/%s" % port_name_percents
-    put_data = json.dumps(port_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Applying ACL '%s' to Egress on Interface '%s' failed with status code %d: %s"
-              % (acl_name, interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Applying ACL '%s' to Egress on Interface '%s' succeeded"
-              % (acl_name, interface_name))
-        return True
-
-
-def _update_port_acl_out(interface_name, acl_name, list_type, **kwargs):
-    """
-    Perform GET and PUT calls to apply ACL on an interface. This function specifically applies an ACL
-    to Egress traffic of the interface, which must be a routing interface.  This function will set the interface
-    to enable routing.
-
-    :param interface_name: Alphanumeric name of the interface on which the ACL is applied to
-    :param acl_name: Alphanumeric name of the ACL
-    :param list_type: Alphanumeric String of ipv4 or ipv6 to specify the type of ACL
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    port_name_percents = common_ops._replace_special_characters(interface_name)
-    int_data = interface.get_interface(port_name_percents, depth=1, selector="writable", **kwargs)
-
-    acl_key = "{},{}".format(acl_name, list_type)
-    acl_value = "/rest/v10.04/system/acls/" + acl_key
-
-    if interface_name.startswith('lag'):
-        if int_data['interfaces']:
-            int_data['interfaces'] = common_ops._dictionary_to_list_values(int_data['interfaces'])
-
-    if list_type is "ipv6":
-        int_data['aclv6_out_cfg'] = acl_value
-        int_data['aclv6_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-    elif list_type is "ipv4":
-        int_data['aclv4_out_cfg'] = acl_value
-        int_data['aclv4_out_cfg_version'] = random.randint(-9007199254740991, 9007199254740991)
-
-    int_data['routing'] = True
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % port_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Applying ACL '%s' to Egress on Interface '%s' failed with status code %d: %s"
-              % (acl_name, interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Applying ACL '%s' to Egress on Interface '%s' succeeded"
-              % (acl_name, interface_name))
-        return True
-
-
-def clear_interface_acl(interface_name, acl_type, **kwargs):
-    """
-    Perform GET and PUT calls to clear an interface's ACL
-
-    :param interface_name: Alphanumeric name of the interface
-    :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return port._clear_port_acl(interface_name, acl_type, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return interface._clear_interface_acl(interface_name, acl_type, **kwargs)

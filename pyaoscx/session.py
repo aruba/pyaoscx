@@ -1,60 +1,284 @@
-# (C) Copyright 2019-2020 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx import common_ops
+from pyaoscx.api import API
+from pyaoscx.exceptions.login_error import LoginError
+import pyaoscx.utils.util as utils
 
-import getpass
-import requests
 import json
+import getpass
 import logging
+import re
+import requests
+
+# Global Variables
+ZEROIZED = 268
+UNAUTHORIZED = 401
 
 
-def login(base_url, username=None, password=None):
-    """
+class Session:
+    '''
+    Represents a logical connection to the device. It keeps all the information
+    needed to login/logout to an AOS-CX device, including parameters like the
+    proxy, device's IP address (both IPv4 and IPv6 are supported), and the API
+    version.
+    IP address should be:
+        '1.1.1.1'
+        or
+        '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+    '''
 
-    Perform a POST call to login and gain access to other API calls.
-    If either username or password is not specified, user will be prompted to enter the missing credential(s).
+    def __init__(self, ip_address, api_version, proxy=None):
 
-    :param base_url: URL in main() function
-    :param username: username
-    :param password: password
-    :return: requests.session object with loaded cookie jar
-    """
-    if username is None and password is None:
-        username = input('Enter username: ')
-        password = getpass.getpass()
+        self.api_version = API.create(api_version)
+        self.connected = False
+        self.ip = ip_address
+        self.proxy = {
+            'no_proxy': self.ip
+        } if proxy is None else {
+            'https': proxy
+        }
+        self.base_url = "https://{}/rest/v{}/".format(
+            self.ip, self.api_version)
+        self.resource_prefix = "/rest/v{}/".format(self.api_version)
+        self.s = requests.Session()
+        self.s.verify = False
+        self.__username = self.__password = ''
 
-    login_data = {"username": username, "password": password}
+    def is_connected(self):
+        return self.connected
 
-    s = requests.Session()
-    try:
-        response = s.post(base_url + "login", data=login_data, verify=False, timeout=5)
-    except requests.exceptions.ConnectTimeout:
-        logging.warning('ERROR: Error connecting to host: connection attempt timed out.')
-        exit(-1)
-    # Response OK check needs to be passed "PUT" since this POST call returns 200 instead of conventional 201
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Login failed with status code %d: %s" % (response.status_code, response.text))
-        exit(-1)
-    else:
-        logging.info("SUCCESS: Login succeeded")
-        return s
+    def cookies(self):
+        '''
+        Return the cookie stored in the requests' session
+        '''
+        return self.s.cookies._cookies
 
+    @classmethod
+    def from_session(cls, req_session, base_url, credentials=None):
+        '''
+        Create a session from an existing request Session. It allows to create
+        an internal session from an already-authenticated and serialized session
+        :param req_session: Existing Request Session object
+        :param base_url: Url needed to create Session Object
+        :param credentials: Dictionary with user and password credentials
+            Example: {
+                username: <username>,
+                password: <password>
+            }
+        :return session: Request Session Object
+        '''
+        ip_address = version = ''
 
-def logout(**kwargs):
-    """
-    Perform a POST call to logout and end session.
+        # From base url retrieve the ip address and the version
+        url_pattern = re.compile(
+            r'https://(?P<ip_address>.+)/rest/v(?P<version>.+)/')
+        match = url_pattern.match(base_url)
+        if match:
+            ip_address = match.group('ip_address')
+            version = match.group('version')
 
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    response = kwargs["s"].post(kwargs["url"] + "logout", verify=False)
-    # Response OK check needs to be passed "PUT" since this POST call returns 200 instead of conventional 201
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Logout failed with status code %d: %s" % (response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Logout succeeded")
-        return True
+        else:
+            raise Exception("Error creating Session")
+
+        # Create Session
+        session = Session(ip_address, version)
+
+        # Determine proxy
+        # If the proxy is not {} then it would replace the proxy
+        # previously created inside the __init__ method
+        if req_session.proxies != {}:
+            session.proxy = req_session.proxies
+
+        # Set request.Session()
+        session.s.cookies = req_session.cookies
+        session.connected = True
+
+        # Set credentials
+        if credentials is not None:
+            session.__username = credentials['username']
+            session.__password = credentials['password']
+
+        return session
+
+    def open(self, username=None, password=None):
+        '''
+        Perform a POST call to login and gain access to other API calls.
+        If either username or password is not specified, user will be prompted
+        to enter the missing credential(s).
+
+        :param username: username
+        :param password: password
+        '''
+        if self.__username is None:
+            if username is None:
+                username = input('Enter username: ')
+            else:
+                self.__username = username
+        else:
+            if username is None:
+                username = input('Enter username: ')
+
+        if self.__password is None:
+            if password is None:
+                password = getpass.getpass()
+            else:
+                self.__password = password
+        else:
+            if password is None:
+                password = getpass.getpass()
+
+        login_data = {'username': username, 'password': password}
+        self.__username = username
+        self.__password = password
+        try:
+            login_uri = '%s%s' % (self.base_url, 'login')
+            response = self.s.post(login_uri, data=login_data, verify=False,
+                                   timeout=5, proxies=self.proxy)
+        except requests.exceptions.ConnectTimeout:
+            raise Exception(
+                'ERROR: Error connecting to host: connection attempt timed out.')
+
+        if response.status_code != 200:
+            raise Exception('FAIL: Login failed with status code %d: %s' %
+                            (response.status_code, response.text))
+
+        logging.info('SUCCESS: Login succeeded')
+        self.connected = True
+
+    def close(self):
+        '''
+        Perform a POST call to logout and end the session.
+        Given all the required information to perform the operation is already
+        stored within the session, no parameters are required.
+        '''
+        if self.connected:
+            logout_uri = "%s%s" % (self.base_url, 'logout')
+
+            try:
+                response = self.s.post(
+                    logout_uri, verify=False, proxies=self.proxy)
+            except BaseException:
+                raise Exception("Unable to process the request: (%u) %s" %
+                                (response.status_code, response.text))
+
+            if response.status_code != 200:
+                raise Exception('FAIL: Logout failed with status code %d: %s' %
+                                (response.status_code, response.text))
+
+            logging.info('SUCCESS: Logout succeeded')
+            self.connected = False
+
+    # Session Login and Logout
+    # Used for Connection within Ansible
+
+    @classmethod
+    def login(cls, base_url, username=None, password=None, use_proxy=True,
+              handle_zeroized_device=False):
+        """
+
+        Perform a POST call to login and gain access to other API calls.
+        If either username or password is not specified, user will be
+        prompted to enter the missing credential(s).
+
+        :param base_url: URL in main() function
+        :param username: username
+        :param password: password
+        :param use_proxy: Whether the system proxy should be used, defaults
+            to True.
+        :param handle_zeroized_device: Whether a zeroized device should
+            be initialized, if so sets the admin password to the provided one,
+            defaults to False.
+        :return: requests.session object with loaded cookie jar
+        """
+        if username is None and password is None:
+            username = input('Enter username: ')
+            password = getpass.getpass()
+
+        login_data = {"username": username, "password": password}
+
+        s = requests.Session()
+
+        if use_proxy is False:
+            s.proxies["https"] = None
+            s.proxies["http"] = None
+        try:
+            print(base_url + 'login')
+            response = s.post(
+                base_url + "login", data=login_data, verify=False,
+                timeout=5, proxies=s.proxies)
+        except requests.exceptions.ConnectTimeout:
+            logging.warning('ERROR: Error connecting to host: connection\
+                attempt timed out.')
+            raise LoginError('ERROR: Error connecting to host:\
+                connection attempt timed out.')
+        except requests.exceptions.ProxyError as err:
+            logging.warning('ERROR: %s' % str(err))
+            raise LoginError('ERROR: %s' % err)
+        # Response OK check needs to be passed "PUT" since this
+        # POST call returns 200 instead of conventional 201
+        if not utils._response_ok(response, "PUT"):
+            if response.status_code == UNAUTHORIZED \
+                    and handle_zeroized_device:
+                # Try to login with default credentials:
+                ztp_login_data = {"username": username}
+                response = s.post(
+                    base_url + "login", data=ztp_login_data, verify=False,
+                    timeout=5, proxies=s.proxies)
+                if response.status_code == ZEROIZED:
+                    data = {
+                        "password": password
+                    }
+                    response = s.put(
+                        base_url + "system/users/admin", data=json.dumps(data),
+                        verify=False, timeout=5, proxies=s.proxies)
+                    if utils._response_ok(response, "PUT"):
+                        logging.info("SUCCESS: Login succeeded")
+                        return s
+            logging.warning("FAIL: Login failed\
+                with status code %d: %s" % (
+                response.status_code, response.text))
+            raise LoginError("FAIL: Login failed with\
+                status code %d: %s" % (
+                response.status_code, response.text), response.status_code)
+        else:
+            logging.info("SUCCESS: Login succeeded")
+            return s
+
+    @classmethod
+    def logout(cls, **kwargs):
+        """
+        Perform a POST call to logout and end session.
+
+        :param kwargs:
+            keyword s: requests.session object with loaded cookie jar
+            keyword url: URL in main() function
+        :return: True if successful, False otherwise
+        """
+        response = kwargs["s"].post(
+            kwargs["url"] + "logout", verify=False,
+            proxies=kwargs["s"].proxies)
+        # Response OK check needs to be passed "PUT" since this POST
+        # call returns 200 instead of conventional 201
+        if not utils._response_ok(response, "PUT"):
+            logging.warning(
+                "FAIL: Logout failed with status code %d: %s" % (
+                    response.status_code, response.text))
+            return False
+        else:
+            logging.info("SUCCESS: Logout succeeded")
+            return True
+
+    def username(self):
+        """
+        Get username
+        :return username
+        """
+        return self.__username
+
+    def password(self):
+        """
+        Get password
+        :return password
+        """
+        return self.__password

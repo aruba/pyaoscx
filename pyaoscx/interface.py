@@ -1,1500 +1,2066 @@
-# (C) Copyright 2019-2020 Hewlett Packard Enterprise Development LP.
+
+# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx import common_ops, port
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.verification_error import VerificationError
+
+
+from pyaoscx.ipv6 import Ipv6
+from pyaoscx.pyaoscx_module import PyaoscxModule
+from pyaoscx.vlan import Vlan
+from pyaoscx.vrf import Vrf
+from pyaoscx.utils.connection import connected
 
 import json
-import random
 import logging
+import re
+import pyaoscx.utils.util as utils
+from pyaoscx.utils.list_attributes import ListDescriptor
 
 
-def get_interface(int_name, depth=0, selector=None, **kwargs):
-    """
-    Perform a GET call to retrieve data for an Interface table entry
+class Interface(PyaoscxModule):
+    '''
+    Provide configuration management for Interface on AOS-CX devices.
+    '''
 
-    :param int_name: Alphanumeric name of the interface
-    :param depth: Integer deciding how many levels into the API JSON that references will be returned.
-    :param selector: Alphanumeric option to select specific information to return.  The options are 'configuration',
-        'status', or 'statistics'.  If running v10.04 or later, an additional option 'writable' is included.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing data for Interface entry
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _get_interface_v1(int_name, depth, selector, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _get_interface(int_name, depth, selector, **kwargs)
+    base_uri = "system/interfaces"
+    indices = ['name']
+    resource_uri_name = 'interfaces'
 
+    ip6_addresses = ListDescriptor('ip6_addresses')
 
-def _get_interface_v1(int_name, depth=0, selector=None, **kwargs):
-    """
-    Perform a GET call to retrieve data for an Interface table entry
+    def __init__(self, session, name, uri=None, ip6_addresses=[], **kwargs):
+        self.session = session
+        self._uri = uri
 
-    :param int_name: Alphanumeric name of the interface
-    :param depth: Integer deciding how many levels into the API JSON that references will be returned.
-    :param selector: Alphanumeric option to select specific information to return.  The options are 'configuration',
-        'status', or 'statistics'.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing data for Interface entry
-    """
-    int_name_percents = common_ops._replace_special_characters(int_name)
+        # List used to determine attributes related to the configuration
+        self.config_attrs = []
+        self.materialized = False
 
-    if selector not in ['configuration', 'status', 'statistics', None]:
-        raise Exception("ERROR: Selector should be 'configuration', 'status', or 'statistics'")
+        # Attribute dictionary used to manage the original data
+        # obtained from the GET
+        self.__original_attributes = {}
 
-    target_url = kwargs["url"] + "system/interfaces/%s?" % int_name_percents
-    payload = {
-        "depth": depth,
-        "selector": selector
-    }
-    response = kwargs["s"].get(target_url, verify=False, params=payload, timeout=3)
+        # Set name, percents name and determine if Interface is a LAG
+        self.name = ""
+        self.__set_name(name)
 
-    result = []
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting Interface table entry '%s' failed with status code %d: %s"
-              % (int_name, response.status_code, response.text))
-    else:
-        logging.info("SUCCESS: Getting Interface table entry '%s' succeeded" % int_name)
-        result = response.json()
-    return result
+        # List of previous interfaces before update
+        # used to verify if an interface is deleted from lag
+        self.__prev_interfaces = []
 
+        # Set ip6 addresses
+        self.ip6_addresses = ip6_addresses
 
-def _get_interface(int_name, depth=0, selector=None, **kwargs):
-    """
-    Perform a GET call to retrieve data for an Interface table entry
+        # Type required for configuration
+        self.type = None
+        # Set type
+        self.__set_type()
 
-    :param int_name: Alphanumeric name of the interface
-    :param depth: Integer deciding how many levels into the API JSON that references will be returned.
-    :param selector: Alphanumeric option to select specific information to return.  The options are 'configuration',
-        'status', 'statistics' or 'writable'.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: Dictionary containing data for Interface entry
-    """
-    int_name_percents = common_ops._replace_special_characters(int_name)
+        # Check if data should be added to object
+        if self.__is_special_type:
+            utils.set_creation_attrs(self, **kwargs)
+        # Attribute used to know if object was changed recently
+        self.__modified = False
 
-    if selector not in ['configuration', 'status', 'statistics', 'writable', None]:
-        raise Exception("ERROR: Selector should be 'configuration', 'status', 'statistics', or 'writable'")
+    def __set_name(self, name):
+        '''
+        Set name attribute in the proper form for Interface object
+        Also sets the "percents name"-the name with any special characters
+        replaced with percent-encodings
+        :param name: Interface name
+        '''
 
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    payload = {
-        "depth": depth,
-        "selector": selector
-    }
-    response = kwargs["s"].get(target_url, verify=False, params=payload, timeout=3)
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting Interface table entry '%s' failed with status code %d: %s"
-              % (int_name, response.status_code, response.text))
-        result = {}
-    else:
-        logging.info("SUCCESS: Getting Interface table entry '%s' succeeded" % int_name)
-        result = response.json()
+        # Add attributes to class
+        self.name = None
+        self.percents_name = None
 
-    return result
-
-
-def get_all_interfaces(**kwargs):
-    """
-    Perform a GET call to get a list (or dictionary) of all entries in the Interface table
-
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: List/dict of all Interfaces in the table
-    """
-    target_url = kwargs["url"] + "system/interfaces"
-
-    response = kwargs["s"].get(target_url, verify=False)
-
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting list/dict of all Interface table entries failed with status code %d: %s"
-              % (response.status_code, response.text))
-        interface_list = []
-    else:
-        logging.info("SUCCESS: Getting list/dict of all Interface table entries succeeded")
-        interface_list = response.json()
-
-    return interface_list
-
-
-def get_all_interface_names(**kwargs):
-    """
-    Perform a GET call to get a list of all of the names for each interface in the Interface table
-
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: List of all Interface names in the table
-    """
-    target_url = kwargs["url"] + "system/interfaces"
-
-    response = kwargs["s"].get(target_url, verify=False)
-    interface_list = []
-
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting list of Interface names failed with status code %d: %s"
-              % (response.status_code, response.text))
-    else:
-        logging.info("SUCCESS: Getting list of Interface names succeeded")
-        uri_list = response.json()
-        if kwargs["url"].endswith("/v1/"):
-            for interface_uri in uri_list:
-                interface_name = interface_uri[(interface_uri.rfind('/')+1):]  # Takes string after last '/'
-                if interface_name != "bridge_normal":  # Ignore bridge_normal interface
-                    interface_list.append(common_ops._replace_percents(interface_name))
-        else:  # Updated else for when version is v10.04
-            for interface_key in uri_list:
-                interface_list.append(interface_key)
-    return interface_list
-
-
-def get_ipv6_addresses(int_name, depth=0, **kwargs):
-    """
-    Perform a GET call to retrieve the list of IPv6 addresses for an Interface table entry
-
-    :param int_name: Alphanumeric name of the interface
-    :param depth: Integer deciding how many levels into the API JSON that references will be returned.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: List of all ipv6 addresses for the Interface entry
-    """
-    int_name_percents = common_ops._replace_special_characters(int_name)
-
-    if kwargs["url"].endswith("/v1/"):
-        target_url = kwargs["url"] + "system/ports/%s/ip6_addresses" % int_name_percents
-        logport = "Port"
-    else:  # Updated else for when version is v10.04
-        target_url = kwargs["url"] + "system/interfaces/%s/ip6_addresses" % int_name_percents
-        logport = "Interface"
-
-    payload = {
-        "depth": depth
-    }
-    response = kwargs["s"].get(target_url, verify=False, params=payload, timeout=3)
-    if not common_ops._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting IPv6 list for %s table entry '%s' failed with status code %d: %s"
-              % (logport, int_name, response.status_code, response.text))
-        result = []
-    else:
-        logging.info("SUCCESS: Getting IPv6 list for %s table entry '%s' succeeded" % (logport, int_name))
-        result = response.json()
-
-    return result
-
-
-def add_vlan_interface(vlan_int_name, vlan_port_name, vlan_id, ipv4, vrf_name, vlan_port_desc, int_type="vlan",
-                       user_config=None, **kwargs):
-    """
-    Perform a POST call to add Interface table entry for a VLAN.
-
-    :param vlan_int_name: Alphanumeric name for the VLAN interface
-    :param vlan_port_name: Alphanumeric Port name to associate with the interface
-    :param vlan_id: Numeric ID of VLAN
-    :param ipv4: Optional IPv4 address to assign to the interface. Defaults to nothing if not specified.
-    :param vrf_name: VRF to attach the SVI to. Defaults to "default" if not specified
-    :param vlan_port_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param int_type: Type of interface; generally should be "vlan" for SVI's.
-        As such, defaults to "internal" if not specified.
-    :param user_config: User configuration to apply to interface. Defaults to {"admin": "up"} if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _add_vlan_interface_v1(vlan_int_name, vlan_port_name, int_type, user_config, **kwargs)
-    else:  # Updated else for when version is v10.04
-        return _add_vlan_interface(vlan_int_name, vlan_id, ipv4, vrf_name, vlan_port_desc, int_type, user_config, **kwargs)
-
-
-def _add_vlan_interface_v1(vlan_int_name, vlan_port_name, int_type="vlan", user_config=None, **kwargs):
-    """
-    Perform a POST call to add Interface table entry for a VLAN.
-
-    :param vlan_int_name: Alphanumeric name for the VLAN interface
-    :param vlan_port_name: Alphanumeric Port name to associate with the interface
-    :param int_type: Type of interface; generally should be "vlan" for SVI's.
-        As such, defaults to "internal" if not specified.
-    :param user_config: User configuration to apply to interface. Defaults to {"admin": "up"} if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    ints_list = get_all_interfaces(**kwargs)
-
-    if "/rest/v1/system/interfaces/%s" % vlan_int_name not in ints_list:
-        if user_config is None:
-            # optional argument can't default to a dictionary type,
-            # so make it None and change it to the dictionary {"admin": "up"} if it was None
-            user_config = {"admin": "up"}
-
-        vlan_int_data = {"name": vlan_int_name,
-                         "referenced_by": "/rest/v1/system/ports/%s" % vlan_port_name,
-                         "type": int_type,  # API says: "vlan: generally represents SVI - L3 VLAN interfaces."
-                         "user_config": user_config
-                         }
-
-        target_url = kwargs["url"] + "system/interfaces"
-
-        post_data = json.dumps(vlan_int_data, sort_keys=True, indent=4)
-
-        response = kwargs["s"].post(target_url, data=post_data, verify=False)
-
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Adding Interface table entry '%s' for SVI failed with status code %d: %s"
-                  % (vlan_int_name, response.status_code, response.text))
-            return False
+        if r'%2F' in name or r'%2C' in name or r'%3A' in name:
+            self.name = utils._replace_percents(name)
+            self.percents_name = name
         else:
-            logging.info("SUCCESS: Adding Interface table entry '%s' for SVI succeeded" % vlan_int_name)
-            return True
-    else:
-        logging.info("SUCCESS: No need to create Interface table entry '%s' for SVI since it already exists"
-              % vlan_int_name)
-        return True
+            self.name = name
+            self.percents_name = utils._replace_special_characters(self.name)
 
+    def __set_type(self):
+        '''
+        Set Interface type when creating an Interface Object
+        '''
+        # Define all patterns
+        lag_pattern = re.compile(r'lag[0-9]+$')
+        loopback_pattern = re.compile(r'loopback[0-9]+$')
+        tunnel_pattern = re.compile(r'tunnel(.*)')
+        vlan_pattern = re.compile(r'vlan[0-9]+$')
+        vxlan_pattern = re.compile(r'vxlan(.*)')
 
-def _add_vlan_interface(vlan_int_name, vlan_id=None, ipv4=None, vrf_name="default", vlan_port_desc=None,
-                        int_type="vlan", user_config=None, **kwargs):
-    """
-    Perform a POST call to add Interface table entry for a VLAN.
+        # Sets interface as a special type
+        self.__is_special_type = True
 
-    :param vlan_int_name: Alphanumeric name for the VLAN interface
-    :param vlan_port_name: Alphanumeric Port name to associate with the interface
-    :param int_type: Type of interface; generally should be "vlan" for SVI's.
-        As such, defaults to "internal" if not specified.
-    :param user_config: User configuration to apply to interface. Defaults to {"admin": "up"} if not speicifed.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    ints_dict = get_all_interfaces(**kwargs)
-
-    if vlan_int_name not in ints_dict:
-        if user_config is None:
-            # optional argument can't default to a dictionary type,
-            # so make it None and change it to the dictionary {"admin": "up"} if it was None
-            user_config = {"admin": "up"}
-
-        vlan_int_data = {"name": vlan_int_name,
-                         "type": int_type,  # API says: "vlan: generally represents SVI - L3 VLAN interfaces."
-                         "user_config": user_config,
-                         "vrf": "/rest/v10.04/system/vrfs/%s" % vrf_name,
-                         "vlan_tag": "/rest/v10.04/system/vlans/%s" % vlan_id
-                         }
-
-        if vlan_port_desc is not None:
-            vlan_int_data['description'] = vlan_port_desc
-
-        if ipv4 is not None:
-            vlan_int_data['ip4_address'] = ipv4
-
-        target_url = kwargs["url"] + "system/interfaces"
-
-        post_data = json.dumps(vlan_int_data, sort_keys=True, indent=4)
-
-        response = kwargs["s"].post(target_url, data=post_data, verify=False)
-
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Adding Interface table entry '%s' for SVI failed with status code %d: %s"
-                  % (vlan_int_name, response.status_code, response.text))
-            return False
+        if lag_pattern.match(self.name):
+            self.type = 'lag'
+        elif loopback_pattern.match(self.name):
+            self.type = 'loopback'
+        elif tunnel_pattern.match(self.name):
+            self.type = 'tunnel'
+        elif vlan_pattern.match(self.name):
+            self.type = 'vlan'
+        elif vxlan_pattern.match(self.name):
+            self.type = 'vxlan'
         else:
-            logging.info("SUCCESS: Adding Interface table entry '%s' for SVI succeeded" % vlan_int_name)
-            return True
-    else:
-        logging.info("SUCCESS: No need to create Interface table entry '%s' for SVI since it already exists"
-              % vlan_int_name)
-        return True
+            self.__is_special_type = False
 
+    @connected
+    def get(self, depth=None, selector=None):
+        '''
+        Perform a GET call to retrieve data for a Interface table entry
 
-def add_l2_interface(interface_name, interface_desc=None, interface_admin_state="up", **kwargs):
-    """
-    Perform a POST call to create an Interface table entry for physical L2 interface.
+        :param depth: Integer deciding how many levels into the API JSON
+            that references will be returned.
+        :param selector: Alphanumeric option to select specific
+            information to return.
+        :return: Returns True if there is not an exception raised
+        '''
+        logging.info("Retrieving Interface")
 
-    :param interface_name: Alphanumeric Interface name
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return port.add_l2_port(interface_name, interface_desc, interface_admin_state, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _add_l2_interface(interface_name, interface_desc, interface_admin_state, **kwargs)
+        depth = self.session.api_version.default_depth \
+            if depth is None else depth
+        selector = self.session.api_version.default_selector \
+            if selector is None else selector
 
+        if not self.session.api_version.valid_depth(depth):
+            depths = self.session.api_version.valid_depths
+            raise Exception("ERROR: Depth should be {}".format(depths))
 
-def _add_l2_interface(interface_name, interface_desc=None, interface_admin_state="up", **kwargs):
-    """
-    Perform a PUT call to create an Interface table entry for physical L2 interface.
-    :param interface_name: Alphanumeric Interface name
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    interface_name_percents = common_ops._replace_special_characters(interface_name)
+        if selector not in self.session.api_version.valid_selectors:
+            selectors = ' '.join(self.session.api_version.valid_selectors)
+            raise Exception(
+                "ERROR: Selector should be one of {}".format(selectors))
 
-    interface_data = {
-        "admin": "up",
-        "description": interface_desc,
-        "routing": False,
-        "user_config": {
-            "admin": interface_admin_state
-        },
-    }
-
-    target_url = kwargs["url"] + "system/interfaces/" + interface_name_percents
-    post_data = json.dumps(interface_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=post_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Adding Interface table entry '%s' failed with status code %d: %s"
-              % (interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Adding Interface table entry '%s' succeeded" % interface_name)
-        return True
-
-
-def add_l3_ipv4_interface(interface_name, ip_address=None, interface_desc=None, interface_admin_state="up",
-                          vrf="default", **kwargs):
-    """
-    Perform a PUT or POST call to create an Interface table entry for a physical L3 Interface. If the Interface already
-    exists, the function will enable routing on the Interface and update the IPv4 address if given.
-
-    :param interface_name: Alphanumeric Interface name
-    :param ip_address: IPv4 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param vrf: Name of the VRF to which the Port belongs. Defaults to "default" if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _add_l3_ipv4_interface_v1(interface_name, ip_address, interface_desc, interface_admin_state, vrf, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _add_l3_ipv4_interface(interface_name, ip_address, interface_desc, interface_admin_state, vrf, **kwargs)
-
-
-def _add_l3_ipv4_interface_v1(interface_name, ip_address=None, interface_desc=None, interface_admin_state="up",
-                              vrf="default", **kwargs):
-    """
-    Perform a PUT or POST call to create an Interface table entry for a physical L3 Interface. If the Interface already
-    exists, the function will enable routing on the Interface and update the IPv4 address if given.
-
-    :param interface_name: Alphanumeric Interface name
-    :param ip_address: IPv4 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param vrf: Name of the VRF to which the Port belongs. Defaults to "default" if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    return port.add_l3_ipv4_port(interface_name, ip_address, interface_desc, interface_admin_state, vrf, **kwargs)
-
-
-def _add_l3_ipv4_interface(interface_name, ip_address=None, interface_desc=None, interface_admin_state="up",
-                           vrf="default", **kwargs):
-    """
-    Perform a PUT call to update an Interface table entry for a physical L3 Interface. If the Interface already
-    exists, the function will enable routing on the Interface and update the IPv4 address if given.
-
-    :param interface_name: Alphanumeric Interface name
-    :param ip_address: IPv4 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param vrf: Name of the VRF to which the Port belongs. Defaults to "default" if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    interface_name_percents = common_ops._replace_special_characters(interface_name)
-
-    interface_data = {
-        "admin": interface_admin_state,
-        "interfaces": ["/rest/v10.04/system/interfaces/%s" % interface_name_percents],
-        "routing": True,
-        "ip4_address": ip_address,
-        "vrf": "/rest/v10.04/system/vrfs/%s" % vrf
-    }
-
-    if interface_desc is not None:
-        interface_data['description'] = interface_desc
-
-    target_url = kwargs["url"] + "system/interfaces/" + interface_name_percents
-    put_data = json.dumps(interface_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Adding Interface table entry '%s' failed with status code %d: %s"
-              % (interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Configuring Interface table entry '%s' succeeded" % interface_name)
-        return True
-
-
-def add_l3_ipv6_interface(interface_name, ip_address=None, interface_desc=None, interface_admin_state="up",
-                          vrf="default", **kwargs):
-    """
-    Perform a PUT or POST call to create an Interface table entry for a physical L3 Interface. If the Interface already
-    exists, the function will enable routing on the Interface and update the IPv6 address if given.
-
-    :param interface_name: Alphanumeric Interface name
-    :param ip_address: IPv6 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param vrf: Name of the VRF to which the Port belongs. Defaults to "default" if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _add_l3_ipv6_interface_v1(interface_name, ip_address, interface_desc, interface_admin_state, vrf, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _add_l3_ipv6_interface(interface_name, ip_address, interface_desc, interface_admin_state, vrf, **kwargs)
-
-
-def _add_l3_ipv6_interface_v1(interface_name, ip_address=None, interface_desc=None, interface_admin_state="up",
-                              vrf="default", **kwargs):
-    """
-    Perform a PUT or POST call to create an Interface table entry for a physical L3 Interface. If the Interface already
-    exists, the function will enable routing on the Interface and update the IPv6 address if given.
-
-    :param interface_name: Alphanumeric Interface name
-    :param ip_address: IPv6 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param vrf: Name of the VRF to which the Port belongs. Defaults to "default" if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    return port.add_l3_ipv6_port(interface_name, ip_address, interface_desc, interface_admin_state, vrf, **kwargs)
-
-
-def _add_l3_ipv6_interface(interface_name, ip_address=None, interface_desc=None, interface_admin_state="up",
-                           vrf="default", **kwargs):
-    """
-    Perform a PUT call to update an Interface table entry for a physical L3 Interface, then a POST call to add an IPv6
-    mapping. If the Interface already exists, the function will enable routing on the Interface and update the
-    IPv6 address if given.
-
-    :param interface_name: Alphanumeric Interface name
-    :param ip_address: IPv6 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param interface_admin_state: Optional administratively-configured state of the interface.
-        Defaults to "up" if not specified
-    :param vrf: Name of the VRF to which the Port belongs. Defaults to "default" if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    interface_name_percents = common_ops._replace_special_characters(interface_name)
-
-    interface_data = {
-        "admin": interface_admin_state,
-        "interfaces": ["/rest/v10.04/system/interfaces/%s" % interface_name_percents],
-        "routing": True,
-        "vrf": {vrf: "/rest/v10.04/system/vrfs/%s" % vrf}
-    }
-
-    if interface_desc is not None:
-        interface_data['description'] = interface_desc
-
-    target_url = kwargs["url"] + "system/interfaces/" + interface_name_percents
-    put_data = json.dumps(interface_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Initial configuration of L3 IPv6 Interface table entry '%s' failed with status code %d: %s"
-              % (interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Initial configuration of L3 IPv6 Interface table entry '%s' succeeded" % interface_name)
-        # IPv6 defaults
-        ipv6_data = {
-          "address": ip_address,
-          "node_address": True,
-          "origin": "configuration",
-          "ra_prefix": True,
-          "route_tag": 0,
-          "type": "global-unicast"
+        payload = {
+            "depth": depth,
+            "selector": selector
         }
 
-        target_url = kwargs["url"] + "system/interfaces/%s/ip6_addresses" % interface_name_percents
-        post_data = json.dumps(ipv6_data, sort_keys=True, indent=4)
+        uri = "{base_url}{class_uri}/{name}".format(
+            base_url=self.session.base_url,
+            class_uri=Interface.base_uri,
+            name=self.percents_name
+        )
 
-        response = kwargs["s"].post(target_url, data=post_data, verify=False)
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Final configuration of L3 IPv6 Interface table entry '%s' failed with status code %d: %s"
-                  % (interface_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Final configuration of L3 IPv6 Interface table entry '%s' succeeded" % interface_name)
-            return True
+        try:
+            response = self.session.s.get(
+                uri, verify=False, params=payload, proxies=self.session.proxy
+            )
 
+        except Exception as e:
+            raise ResponseError('GET', e)
 
-def delete_ipv6_address(interface_name, ip, **kwargs):
-    """
-    Perform a DELETE call to remove an IPv6 address from an Interface.
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
 
-    :param interface_name: Alphanumeric Interface name
-    :param ip: IPv6 address assigned to the interface that will be removed.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return port._delete_ipv6_address(interface_name, ip, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _delete_ipv6_address(interface_name, ip, **kwargs)
+        data = json.loads(response.text)
 
+        # Add dictionary as attributes for the object
+        utils.create_attrs(self, data)
 
-def _delete_ipv6_address(interface_name, ip, **kwargs):
-    """
-    Perform a DELETE call to remove an IPv6 address from an Interface.
+        # Determines if the module is configurable
+        if selector in self.session.api_version.configurable_selectors:
+            # Set self.config_attrs and delete ID from it
+            utils.set_config_attrs(
+                self, data, 'config_attrs', ['name', 'type']
+            )
 
-    :param interface_name: Alphanumeric Interface name
-    :param ip: IPv6 address assigned to the interface that will be removed.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if ip in get_ipv6_addresses(interface_name, **kwargs):
-        interface_name_percents = common_ops._replace_special_characters(interface_name)
-        ip_address = common_ops._replace_special_characters(ip)
-        target_url = kwargs["url"] + "system/interfaces/%s/ip6_addresses/%s" % (interface_name_percents, ip_address)
+        # Set original attributes
+        self.__original_attributes = data
 
-        response = kwargs["s"].delete(target_url, verify=False)
+        # Set a list of interfaces as an attribute
+        if hasattr(self, 'interfaces') and self.interfaces is not None:
+            interfaces_list = []
+            # Get all URI elements in the form of a list
+            uri_list = self.session.api_version.get_uri_from_data(
+                self.interfaces)
 
-        if not common_ops._response_ok(response, "DELETE"):
-            logging.warning("FAIL: Deleting IPv6 Address '%s' from Interface table entry '%s' failed with status code %d: %s"
-                  % (ip, interface_name, response.status_code, response.text))
-            return False
-        else:
-            logging.info("SUCCESS: Deleting IPv6 Address '%s' from Interface table entry '%s' succeeded"
-                  % (ip, interface_name))
-            return True
-    else:
-        logging.info("SUCCESS: No need to delete IPv6 Address '%s' from Interface table entry '%s' since it does not exist"
-              % (ip, interface_name))
+            for uri in uri_list:
+                # Create an Interface object
+                name, interface = Interface.from_uri(self.session, uri)
+
+                # Check for circular reference
+                # No need to get() if it's circular; it is already
+                # materialized. Just set flag
+                if name == self.name:
+                    interface.materialized = True
+                else:
+                    # Materialize interface
+                    interface.get()
+
+                # Add interface to list
+                interfaces_list.append(interface)
+
+            # Set list as Interfaces
+            self.interfaces = interfaces_list
+            # Set list of previous Interfaces
+            self.__prev_interfaces = list(self.interfaces)
+
+        # Set VRF
+        if hasattr(self, 'vrf') and self.vrf is not None:
+            # Set VRF as a Vrf object
+            vrf_obj = Vrf.from_response(self.session, self.vrf)
+            self.vrf = vrf_obj
+            # Materialized VRF
+            self.vrf.get()
+
+        # Set VLAN
+        if hasattr(self, 'vlan_tag') and self.vlan_tag is not None:
+            # Set vlan_tag as a Vlan object
+            vlan_obj = Vlan.from_response(self.session, self.vlan_tag)
+            self.vlan_tag = vlan_obj
+            # Materialized Vlan
+            self.vlan_tag.get()
+
+        # vlan_trunks
+        # Set a list of VLANs as an attribute
+        if hasattr(self, 'vlan_trunks') and self.vlan_trunks is not None:
+            vlan_trunks = []
+            # Get all URI elements in the form of a list
+            uri_list = self.session.api_version.get_uri_from_data(
+                self.vlan_trunks)
+
+            for uri in uri_list:
+                # Create a Vlan object
+                vlan_id, vlan = Vlan.from_uri(self.session, uri)
+                # Materialize VLAN
+                vlan.get()
+                # Add VLAN to dictionary
+                vlan_trunks.append(vlan)
+            # Set list as VLANs
+            self.vlan_trunks = vlan_trunks
+
+        # Set all ACLs
+        from pyaoscx.acl import ACL
+        if hasattr(self, 'aclmac_in_cfg') and self.aclmac_in_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclmac_in_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclmac_in_cfg = acl
+
+        if hasattr(self, 'aclmac_out_cfg') and self.aclmac_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclmac_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclmac_out_cfg = acl
+
+        if hasattr(self, 'aclv4_in_cfg') and self.aclv4_in_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv4_in_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv4_in_cfg = acl
+
+        if hasattr(self, 'aclv4_out_cfg') and self.aclv4_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv4_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv4_out_cfg = acl
+
+        if hasattr(
+                self,
+                'aclv4_routed_in_cfg') and self.aclv4_routed_in_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv4_routed_in_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv4_routed_in_cfg = acl
+
+        if hasattr(
+                self,
+                'aclv4_routed_out_cfg') and self.aclv4_routed_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv4_routed_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv4_routed_out_cfg = acl
+
+        if hasattr(self, 'aclv6_in_cfg') and self.aclv6_in_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv6_in_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv6_in_cfg = acl
+
+        if hasattr(self, 'aclv6_out_cfg') and self.aclv6_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv6_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv6_out_cfg = acl
+
+        if hasattr(
+                self,
+                'aclv6_routed_in_cfg') and self.aclv6_routed_in_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv6_routed_in_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv6_routed_in_cfg = acl
+
+        if hasattr(
+                self,
+                'aclv6_routed_out_cfg') and self.aclv6_routed_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv6_routed_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv6_routed_out_cfg = acl
+
+        # Sets object as materialized
+        # Information is loaded from the Device
+        self.materialized = True
+
+        if self.ip6_addresses == []:
+            # Set IPv6 addresses if any
+            # Loads IPv6 objects already into the Interface
+            Ipv6.get_all(self.session, self)
         return True
 
+    @classmethod
+    def get_all(cls, session):
+        '''
+        Perform a GET call to retrieve all system Interfaces and create
+        a dictionary containing each Interface as a Interface Object
+        :param cls: Object's class
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :return: Dictionary containing Interface's name as key and a Interface
+            objects as values
+        '''
 
-def create_loopback_interface(interface_name, vrf="default", ipv4=None, interface_desc=None, **kwargs):
-    """
-    Perform a PUT and/or POST call to create a Loopback Interface table entry for a logical L3 Interface. If the
-    Loopback Interface already exists and an IPv4 address is given, the function will update the IPv4 address.
+        logging.info("Retrieving the switch Interfaces")
 
-    :param interface_name: Alphanumeric Interface name
-    :param vrf: VRF to attach the SVI to. Defaults to "default" if not specified
-    :param ipv4: IPv4 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _create_loopback_interface_v1(interface_name, vrf, ipv4, interface_desc, **kwargs)
-    else:   # Updated else for when version is v10.04
-        return _create_loopback_interface(interface_name, vrf, ipv4, interface_desc, **kwargs)
+        uri = '{base_url}{class_uri}'.format(
+            base_url=session.base_url,
+            class_uri=Interface.base_uri)
 
+        try:
+            response = session.s.get(uri, verify=False, proxies=session.proxy)
+        except Exception as e:
+            raise ResponseError('GET', e)
 
-def _create_loopback_interface_v1(interface_name, vrf, ipv4=None, interface_desc=None, **kwargs):
-    """
-    Perform a PUT and/or POST call to create a Loopback Interface table entry for a logical L3 Interface. If the
-    Loopback Interface already exists and an IPv4 address is given, the function will update the IPv4 address.
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
 
-    :param interface_name: Alphanumeric Interface name
-    :param vrf: VRF to attach the SVI to. Defaults to "default" if not specified
-    :param ipv4: IPv4 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    port.create_loopback_port(interface_name, vrf, ipv4, interface_desc, **kwargs)
+        data = json.loads(response.text)
 
+        interfaces_dict = {}
+        # Get all URI elements in the form of a list
+        uri_list = session.api_version.get_uri_from_data(data)
 
-def _create_loopback_interface(interface_name, vrf, ipv4=None, interface_desc=None, **kwargs):
-    """
-    Perform a POST call to create a Loopback Interface table entry for a logical L3 Interface. If the
-    Loopback Interface already exists and an IPv4 address is given, the function will update the IPv4 address.
+        for uri in uri_list:
+            # Create an Interface object
+            name, interface = Interface.from_uri(session, uri)
 
-    :param interface_name: Alphanumeric Interface name
-    :param vrf: VRF to attach the SVI to. Defaults to "default" if not specified
-    :param ipv4: IPv4 address to assign to the interface. Defaults to nothing if not specified.
-    :param interface_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    interface_name_percents = common_ops._replace_special_characters(interface_name)
+            interfaces_dict[name] = interface
 
-    interface_data = {
-        "name": interface_name,
-        "type": "loopback",
-        "user_config": {
-            "admin": "up"
-        },
-        "ospf_if_type": "ospf_iftype_loopback",
-        "vrf": "/rest/v10.04/system/vrfs/%s" % vrf
-    }
+        return interfaces_dict
 
-    if ipv4 is not None:
-        interface_data['ip4_address'] = ipv4
+    @classmethod
+    def from_response(cls, session, response_data):
+        '''
+        Create an Interface object given a response_data related to the
+            Interface object
+        :param cls: Object's class
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :param response_data: The response can be either a
+            dictionary: {
+                    1: "/rest/v10.04/system/interfaces/1"
+                }
+            or a
+            string: "/rest/v1/system/interfaces/1"
+        :return: Interface object
 
-    if interface_desc is not None:
-        interface_data['description'] = interface_desc
+        '''
+        interfaces_id_arr = session.api_version.get_keys(
+            response_data, Interface.resource_uri_name)
+        interface_name = interfaces_id_arr[0]
+        return session.api_version.get_module(
+            session, 'Interface',
+            interface_name)
 
-    target_url = kwargs["url"] + "system/interfaces"
-    post_data = json.dumps(interface_data, sort_keys=True, indent=4)
+    @classmethod
+    def from_uri(cls, session, uri):
+        '''
+        Create an Interface object given a interface URI
+        :param cls: Object's class
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :param uri: a String with a URI
 
-    response = kwargs["s"].post(target_url, data=post_data, verify=False)
+        :return name, interface_obj: tuple containing both the Interface's name
+            and an Interface object
+        '''
+        # Obtain ID from URI
+        index_pattern = re.compile(r'(.*)/(?P<index>.+)')
+        name_percents = index_pattern.match(uri).group('index')
+        name = utils._replace_percents(name_percents)
+        # Create Interface object
+        interface_obj = session.api_version.get_module(
+            session, 'Interface',
+            name, uri=uri)
 
-    if not common_ops._response_ok(response, "POST"):
-        logging.warning("FAIL: Adding Interface table entry '%s' failed with status code %d: %s"
-              % (interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Configuring Interface table entry '%s' succeeded" % interface_name)
-        return True
+        return name, interface_obj
 
 
-def _create_vxlan_interface(interface_name, source_ipv4=None, port_desc=None, dest_udp_port=4789, **kwargs):
-    """
-    Perform POST call to create a VXLAN table entry for a logical L3 Interface. If the
-    VXLAN Interface already exists and an IPv4 address is given, the function will update the IPv4 address.
+    @classmethod
+    def get_facts(cls, session):
+        '''
+        Perform a GET call to retrieve all Interfaces and their respective data
+        :param cls: Class reference.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :return facts: Dictionary containing Interface IDs as keys and Interface 
+            objects as values
+        '''
+        # Log
+        logging.info("Retrieving the switch interfaces facts")
 
-    :param interface_name: Alphanumeric Interface name
-    :param source_ipv4: Optional source IPv4 address to assign to the VXLAN interface. Defaults to nothing if not specified.
-    :param port_desc: Optional description for the interface. Defaults to nothing if not specified.
-    :param dest_udp_port: Optional Destination UDP Port that the VXLAN will use.  Default is set to 4789
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    interfaces_dict = get_all_interfaces(**kwargs)
+        # Set depth
+        interface_depth = session.api_version.default_facts_depth
 
-    if interface_name not in interfaces_dict:
-        interface_data = {
-            "name": interface_name,
-            "options": {
-                "local_ip": source_ipv4,
-                "vxlan_dest_udp_port": str(dest_udp_port)
-            },
-            "type": "vxlan",
-            "user_config": {
-                "admin": "up"
-            },
+        # Build URI
+        uri =\
+        '{base_url}{class_uri}?depth={depth}'.format(
+            base_url=session.base_url,
+            class_uri=Interface.base_uri,
+            depth=interface_depth
+        )
+        
+        try:
+            # Try to get facts via GET method
+            response = session.s.get(
+                uri,
+                verify=False, 
+                proxies=session.proxy
+            )
+            
+        except Exception as e:
+            raise ResponseError('GET', e)
 
-            "admin": "up",
-            "routing": False
-        }
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+        
+        # Load into json format
+        facts = json.loads(response.text)
+        
+        return facts
 
-        if port_desc is not None:
-            interface_data['description'] = port_desc
+    @connected
+    def create(self):
+        """
+        Perform a POST call to create a Port table entry
+        and a Interface table entry for Interface Object.
+        Only returns if an exception is not raise
 
-        interface_url = kwargs["url"] + "system/interfaces"
+        :return True if entry was created inside Device
+        """
+
+        interface_data = {}
+
+        interface_data = utils.get_attrs(self, self.config_attrs)
+
+        interface_data['name'] = self.name
+        # Set Type
+        if self.type is not None:
+            interface_data['type'] = self.type
+
+        uri = "{base_url}{class_uri}".format(
+            base_url=self.session.base_url,
+            class_uri=Interface.base_uri
+        )
+
         post_data = json.dumps(interface_data, sort_keys=True, indent=4)
 
-        response = kwargs["s"].post(interface_url, data=post_data, verify=False)
+        try:
+            response = self.session.s.post(
+                uri, verify=False, data=post_data, proxies=self.session.proxy)
 
-        if not common_ops._response_ok(response, "POST"):
-            logging.warning("FAIL: Adding VXLAN Interface table entry '%s' failed with status code %d: %s"
-                  % (interface_name, response.status_code, response.text))
-            return False
+        except Exception as e:
+            raise ResponseError('POST', e)
+
+        if not utils._response_ok(response, "POST"):
+            raise GenericOperationError(response.text, response.status_code)
+
         else:
-            logging.info("SUCCESS: Adding VXLAN Interface table entry '%s' succeeded" % interface_name)
-            return True
-    else:
-        return update_interface_ipv4(interface_name, source_ipv4, **kwargs)
+            logging.info("SUCCESS: Adding {} table entry succeeded".format(
+                self.name))
 
+        # Get all objects data
+        self.get()
 
-def update_interface_ipv4(interface_name, ipv4, interface_admin_state, vrf, **kwargs):
-    """
-    Perform GET and PUT calls to update an L3 interface's ipv4 address
-
-    :param interface_name: Alphanumeric name of the Port
-    :param ipv4: IPv4 address to associate with the VLAN Port
-    :param interface_admin_state: Administratively-configured state of the port.
-    :param vrf: Name of the VRF to which the Port belongs.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    interface_name_percents = common_ops._replace_special_characters(interface_name)
-    interface_data = get_interface(interface_name, depth=1, selector="writable", **kwargs)
-
-    interface_data['ip4_address'] = ipv4
-    interface_data['routing'] = True
-    interface_data['admin'] = interface_admin_state
-    interface_data['vrf'] = "/rest/v10.04/system/vrfs/%s" % vrf
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % interface_name_percents
-    put_data = json.dumps(interface_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Updating IPv4 addresses for Port '%s' to '%s' failed with status code %d: %s"
-              % (interface_name, repr(ipv4), response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Updating IPv4 addresses for Port '%s' to '%s' succeeded"
-              % (interface_name, repr(ipv4)))
         return True
 
+    @connected
+    def apply(self):
+        '''
+        Main method used to update or create a Interface or Port table entry.
+        Checks whether the Interface exists in the switch
+        Calls self.update() if Interface is being updated
+        Calls self.create() if a Interface table entry is being created
+        :return modified: Boolean, True if object was created or modified
+            False otherwise
 
-def update_port_ipv6(interface_name, ipv6, addr_type="global-unicast", **kwargs):
-    """
-    Perform a POST call to update an L3 interface's ipv6 address
-
-    :param interface_name: Alphanumeric name of the Port
-    :param ipv6: IPv6 address to associate with the VLAN Port
-    :param addr_type: Type of IPv6 address. Defaults to "global-unicast" if not specified.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    ipv6_data = {"address": ipv6,
-                 "type": addr_type}
-
-    target_url = kwargs["url"] + "system/interfaces/%s/ip6_addresses" % interface_name
-    post_data = json.dumps(ipv6_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].post(target_url, data=post_data, verify=False)
-
-    if not common_ops._response_ok(response, "POST"):
-        logging.warning("FAIL: Updating IPv6 address for Port '%s' to '%s' failed with status code %d: %s"
-              % (interface_name, ipv6, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Updating IPv6 address for Port '%s' to '%s' succeeded"
-              % (interface_name, ipv6))
-        return True
-
-
-def enable_disable_interface(int_name, state="up", **kwargs):
-    """
-    Perform GET and PUT calls to either enable or disable the interface by setting Interface's admin_state to
-        "up" or "down"
-
-    :param int_name: Alphanumeric name of the interface
-    :param state: State to set the interface to
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _enable_disable_interface_v1(int_name, state, **kwargs)
-    else:  # Updated else for when version is v10.04
-        return _enable_disable_interface(int_name, state, **kwargs)
-
-
-def _enable_disable_interface_v1(int_name, state="up", **kwargs):
-    """
-    Perform GET and PUT calls to either enable or disable the interface by setting Interface's admin_state to
-        "up" or "down"
-
-    :param int_name: Alphanumeric name of the interface
-    :param state: State to set the interface to
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if state not in ['up', 'down']:
-        raise Exception("Administratively-configured state of interface should be 'up' or 'down'")
-
-    int_name_percents = common_ops._replace_special_characters(int_name)
-
-    interface_list = get_all_interfaces(**kwargs)
-
-    if "/rest/v1/system/interfaces/%s" % int_name_percents in interface_list:
-        int_data = get_interface(int_name, 0, "configuration", **kwargs)
-        int_data['user_config'] = {"admin": state}
-
-        target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-        put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-        response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-        if not common_ops._response_ok(response, "PUT"):
-            logging.warning("FAIL: Updating Interface '%s' with admin-configured state '%s' "
-                  "failed with status code %d: %s" % (int_name, state, response.status_code, response.text))
-            success = False
+        '''
+        modified = False
+        if self.materialized:
+            modified = self.update()
         else:
-            logging.info("SUCCESS: Updating Interface '%s' with admin-configured state '%s' "
-                  "succeeded" % (int_name, state))
-            success = True
-        port._enable_disable_port(int_name, state, **kwargs)
-        return success
-    else:
-        logging.warning("FAIL: Unable to update Interface '%s' because operation could not find interface" % int_name)
-        return False
+            modified = self.create()
+        # Set internal attribute
+        self.__modified = modified
+        return modified
 
+    @connected
+    def delete(self):
+        '''
+        Perform DELETE call to delete Interface table entry.
 
-def _enable_disable_interface(int_name, state="up", **kwargs):
-    """
-    Perform GET and PUT calls to either enable or disable the interface by setting Interface's admin_state to
-        "up" or "down"
-
-    :param int_name: Alphanumeric name of the interface
-    :param state: State to set the interface to
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if state not in ['up', 'down']:
-        raise Exception("Administratively-configured state of interface should be 'up' or 'down'")
-
-    int_name_percents = common_ops._replace_special_characters(int_name)
-
-    int_data = get_interface(int_name, 1, "writable", **kwargs)
-    int_data['user_config'] = {"admin": state}
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Updating Interface '%s' with admin-configured state '%s' "
-              "failed with status code %d: %s" % (int_name, state, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Updating Interface '%s' with admin-configured state '%s' "
-              "succeeded" % (int_name, state))
-        return True
-
-
-def delete_interface(interface_name, **kwargs):
-    """
-    Perform a DELETE call to either the Interface Table or Port Table to delete an interface
-
-    :param interface_name: Name of interface's reference entry in Interface table
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _delete_interface_v1(interface_name, **kwargs)
-    else:  # Updated else for when version is v10.04
-        return _delete_interface(interface_name, **kwargs)
-
-
-def _delete_interface_v1(interface_name, **kwargs):
-    """
-    Perform DELETE call to Port Table to delete an interface
-
-    Note: Interface API does not have delete methods.
-    To delete an Interface, you remove its reference port.
-
-    :param name: Name of interface's reference entry in Port table
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    return port.delete_port(interface_name, **kwargs)
-
-
-def _delete_interface(name, **kwargs):
-    """
-    Perform DELETE call to Interface table to delete an interface
-    :param name: Name of interface
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    ints_dict = get_all_interfaces(**kwargs)
-
-    if name in ints_dict:
-
-        target_url = kwargs["url"] + "system/interfaces/%s" % name
-
-        response = kwargs["s"].delete(target_url, verify=False)
-
-        if not common_ops._response_ok(response, "DELETE"):
-            logging.warning("FAIL: Deleting Interface table entry '%s' failed with status code %d: %s"
-                  % (name, response.status_code, response.text))
-            return False
+        '''
+        if not self.__is_special_type:
+            self.initialize_interface_entry()
         else:
-            logging.info("SUCCESS: Deleting Interface table entry '%s' succeeded" % name)
-            return True
-    else:
-        logging.info("SUCCESS: No need to delete Interface table entry '%s' because it doesn't exist"
-              % name)
+            # Delete Interface via a DELETE REQUEST
+            uri = "{base_url}{class_uri}/{id}".format(
+                base_url=self.session.base_url,
+                class_uri=Interface.base_uri,
+                id=self.name
+            )
+
+            try:
+                response = self.session.s.delete(
+                    uri, verify=False, proxies=self.session.proxy)
+
+            except Exception as e:
+                raise ResponseError('DELETE', e)
+
+            if not utils._response_ok(response, "DELETE"):
+                raise GenericOperationError(
+                    response.text, response.status_code)
+
+            # Clean LAG from interfaces
+            # Delete interface references
+            for interface in self.__prev_interfaces:
+                # If interface name is not the same as the current one
+                if interface.name != self.name and self.type == 'lag':
+                    interface.__delete_lag(self)
+
+            # Delete object attributes
+        utils.delete_attrs(self, self.config_attrs)
+
+    @connected
+    def update(self):
+        '''
+        Perform a PUT call to apply changes to an existing Interface or Port
+        table entry
+
+        :return modified: True if Object was modified and a PUT request was made.
+            False otherwise
+
+        '''
+        # Variable returned
+        modified = False
+
+        interface_data = {}
+        # Get interface PUT data depending on the configuration attributes
+        # list
+        interface_data = utils.get_attrs(self, self.config_attrs)
+
+        # Check if VRF is inside the data related to interface
+        if hasattr(self, 'vrf') and self.vrf is not None:
+            # Set VRF in the correct format for PUT
+            interface_data['vrf'] = self.vrf.get_info_format()
+
+        # Check if vlan_tag is inside the data related to interface
+        if hasattr(self, 'vlan_tag') and self.vlan_tag is not None:
+            # Set VLAN in the correct format for PUT
+            interface_data["vlan_tag"] = self.vlan_tag.get_info_format()
+
+        # Set interfaces into correct form
+        if hasattr(self, 'interfaces') and self.interfaces is not None:
+            formatted_interfaces = {}
+
+            # Check for interfaces no longer in LAG
+            if self.__is_special_type and self.type == 'lag':
+                for element in self.__prev_interfaces:
+                    # If element was deleted from interfaces
+                    if element not in self.interfaces:
+                        # Delete element reference to current LAG
+                        element.__delete_lag(self)
+
+            # Set prev interfaces with current ones
+            # Copies interfaces
+            self.__prev_interfaces = list(self.interfaces)
+
+            # Set interfaces into correct form
+            for element in self.interfaces:
+                # If element is the same as current, ignore
+                if element.name == self.name and self.type == 'lag':
+                    pass
+                else:
+                    # Verify object is materialized
+                    if not element.materialized:
+                        raise VerificationError(
+                            'Interface {}'.format(element.name),
+                            'Object inside interfaces not materialized')
+                    formated_element = element.get_info_format()
+                    formatted_interfaces.update(formated_element)
+
+                    if self.type == 'lag':
+                        # New element being added to LAG
+                        element.__add_member_to_lag(self)
+
+            # Set values in correct form
+            interface_data["interfaces"] = formatted_interfaces
+
+        # Set VLANs into correct form
+        if "vlan_trunks" in interface_data:
+            formated_vlans = {}
+            # Set VLANs into correct form
+            for element in self.vlan_trunks:
+                # Verify object is materialized
+                if not element.materialized:
+                    raise VerificationError(
+                        'Vlan {}'.format(element),
+                        'Object inside vlan trunks not materialized')
+                formated_element = element.get_info_format()
+                formated_vlans.update(formated_element)
+
+            # Set values in correct form
+            interface_data["vlan_trunks"] = formated_vlans
+
+        # Set all ACLs
+        if "aclmac_in_cfg" in interface_data and self.aclmac_in_cfg is not None:
+            # Set values in correct form
+            interface_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
+
+        if "aclmac_out_cfg" in interface_data and self.aclmac_out_cfg is not None:
+            # Set values in correct form
+            interface_data["aclmac_out_cfg"] = self.aclmac_out_cfg.get_info_format()
+
+        if "aclv4_in_cfg" in interface_data and self.aclv4_in_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv4_in_cfg"] = self.aclv4_in_cfg.get_info_format()
+
+        if "aclv4_out_cfg" in interface_data and self.aclv4_out_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
+
+        if "aclv4_routed_in_cfg" in interface_data and self.aclv4_routed_in_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv4_routed_in_cfg"] = self.aclv4_routed_in_cfg.get_info_format(
+            )
+
+        if "aclv4_routed_out_cfg" in interface_data and self.aclv4_routed_out_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv4_routed_out_cfg"] = self.aclv4_routed_out_cfg.get_info_format(
+            )
+
+        if "aclv6_in_cfg" in interface_data and self.aclv6_in_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv6_in_cfg"] = self.aclv6_in_cfg.get_info_format()
+
+        if "aclv6_out_cfg" in interface_data and self.aclv6_out_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
+
+        if "aclv6_routed_in_cfg" in interface_data and self.aclv6_routed_in_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv6_routed_in_cfg"] = self.aclv6_routed_in_cfg.get_info_format(
+            )
+
+        if "aclv6_routed_out_cfg" in interface_data and self.aclv6_routed_out_cfg is not None:
+            # Set values in correct form
+            interface_data["aclv6_routed_out_cfg"] = self.aclv6_routed_out_cfg.get_info_format(
+            )
+
+        uri = "{base_url}{class_uri}/{name}".format(
+            base_url=self.session.base_url,
+            class_uri=Interface.base_uri,
+            name=self.percents_name
+        )
+
+        # Compare dictionaries
+        if interface_data == self.__original_attributes:
+            # Object was not modified
+            modified = False
+        else:
+
+            put_data = json.dumps(interface_data, sort_keys=True, indent=4)
+
+            try:
+                response = self.session.s.put(
+                    uri, verify=False, data=put_data, proxies=self.session.proxy)
+
+            except Exception as e:
+                raise ResponseError('PUT', e)
+
+            if not utils._response_ok(response, "PUT"):
+                raise GenericOperationError(
+                    response.text, response.status_code)
+
+            else:
+                logging.info(
+                    "SUCCESS: Updating Interface table and Port table '{}' succeeded".format(
+                        self.name))
+            # Set new original attributes
+            self.__original_attributes = interface_data
+            # Object was modified
+            modified = True
+        return modified
+
+    @connected
+    def __add_member_to_lag(self, lag):
+        """
+        Perform PUT calls to configure a Port as a LAG member,
+        and also enable the port
+
+        :param lag: pyaoscx.Interface object, to which the current port is
+            being assigned to
+        """
+
+        if not lag.materialized:
+            raise VerificationError(
+                'LAG {}'.format(lag.name),
+                'Object is not materialized - Perform get()')
+
+        lag_name = lag.name
+        # Extract LAG ID from LAG name
+        lag_id = int(re.search('\\d+', lag_name).group())
+
+        # Update Values
+        try:
+            self.user_config["admin"] = "down"
+        except AttributeError:
+            pass
+        try:
+            self.other_config['lacp-aggregation-key'] = lag_id
+        except AttributeError:
+            pass
+
+        # Make a POST call and update values
+        self.update()
+
+    @connected
+    def __delete_lag(self, lag):
+        """
+        Perform PUT calls to update Interface, deleting the LAG
+        reference inside of the Port that was assigned to that
+        LAG
+
+        :param lag: pyaoscx.Interface object
+        """
+
+        if not lag.materialized:
+            raise VerificationError(
+                'LAG {}'.format(lag.name),
+                'Object is not materialized - Perform get()')
+
+        # Update Values
+        try:
+            self.user_config["admin"] = "down"
+        except AttributeError:
+            pass
+        self.other_config.pop('lacp-aggregation-key', None)
+
+        # Make a PUT call and update values
+        self.update()
+
+    def get_uri(self):
+        '''
+        Method used to obtain the specific Interface URI
+        return: Object's URI
+        '''
+        if self._uri is None:
+            self._uri = '{resource_prefix}{class_uri}/{name}'.format(
+                resource_prefix=self.session.resource_prefix,
+                class_uri=Interface.base_uri,
+                name=self.percents_name
+            )
+
+        return self._uri
+
+    def get_info_format(self):
+        '''
+        Method used to obtain correct object format for referencing inside
+            other objects
+        return: Object format depending on the API Version
+        '''
+        return self.session.api_version.get_index(self)
+
+    def __str__(self):
+        """
+        String containing the Interface name
+        :return: String
+        """
+        return "Interface Object, name: '{}'".format(self.name)
+
+    def __set_to_default(self):
+        '''
+        Perform a PUT call to set Interface to default settings
+        :return: True if object was changed
+        '''
+        # Check for IPv6 addresses and delete them
+        for address in self.ip6_addresses:
+            address.delete()
+        # Clean Attribute
+        self.ip6_addresses = []
+
+        interface_data = {}
+        # Clear Interfaces
+        if hasattr(self, 'interfaces') and self.interfaces is not None:
+            if self.__is_special_type and self.name == 'lag':
+                self.interfaces = []
+                for element in self.__prev_interfaces:
+                    # If element was deleted from interfaces
+                    if element not in self.interfaces:
+                        # Delete element reference to current LAG
+                        try:
+                            element.__delete_lag(self)
+                        except AttributeError:
+                            # Ignore error
+                            pass
+            else:
+                self.interfaces = [self]
+
+            # Set prev interfaces with current ones
+            # Copies interfaces
+            self.__prev_interfaces = list(self.interfaces)
+
+        uri = "{base_url}{class_uri}/{name}".format(
+            base_url=self.session.base_url,
+            class_uri=Interface.base_uri,
+            name=self.percents_name
+        )
+
+        put_data = json.dumps(interface_data, sort_keys=True, indent=4)
+
+        try:
+            response = self.session.s.put(
+                uri, verify=False, data=put_data, proxies=self.session.proxy)
+
+        except Exception as e:
+            raise ResponseError('PUT', e)
+
+        if not utils._response_ok(response, "PUT"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        else:
+            logging.info(
+                "SUCCESS: Set Interface to default settings '{}' \
+                    succeeded".format(self.name))
+
+        # Update values with new ones
+        self.get()
         return True
 
-
-def delete_l2_interface(interface_name, **kwargs):
-    """
-    Perform either a PUT call to the Interface Table or DELETE call to Port Table to delete an interface
-    If trying to re-initialize an L2 interface, use the function initialize_l2_interface()
-
-    :param interface_name: Name of interface's reference entry in Interface table
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _delete_l2_interface_v1(interface_name, **kwargs)
-    else:  # Updated else for when version is v10.04
-        return _delete_l2_interface(interface_name, **kwargs)
-
-
-def _delete_l2_interface_v1(interface_name, **kwargs):
-    """
-    Perform DELETE call to Port Table to delete an L2 interface
-
-    Note: Interface API does not have delete methods.
-    To delete an Interface, you remove its reference port.
-
-    :param name: Name of interface's reference entry in Port table
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    return port.delete_port(interface_name, **kwargs)
-
-
-def _delete_l2_interface(interface_name, **kwargs):
-    """
-    Perform a PUT call to the Interface Table to reset an interface to it's default values
-
-    :param interface_name: Name of interface's reference entry in Interface table
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    interface_name_percents = common_ops._replace_special_characters(interface_name)
-    target_url = kwargs["url"] + "system/interfaces/%s" % interface_name_percents
-
-    interface_data = {}
-    interface_data = json.dumps(interface_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=interface_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Deleting Interface '%s' failed with status code %d: %s"
-                        % (interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Deleting Interface '%s' succeeded" % interface_name)
-        return True
-
-
-def _port_set_vlan_mode(l2_port_name, vlan_mode, **kwargs):
-    """
-    Perform GET and PUT calls to set an L2 interface's VLAN mode (native-tagged, native-untagged, or access)
-
-    :param l2_port_name: L2 interface's Interface table entry name
-    :param vlan_mode: A string, either 'native-tagged', 'native-untagged', or 'access', specifying the desired VLAN
-        mode
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if vlan_mode not in ['native-tagged', 'native-untagged', 'access']:
-        raise Exception("ERROR: VLAN mode should be 'native-tagged', 'native-untagged', or 'access'")
-
-    l2_port_name_percents = common_ops._replace_special_characters(l2_port_name)
-    int_data = get_interface(l2_port_name_percents, depth=1, selector="writable", **kwargs)
-
-    int_data['vlan_mode'] = vlan_mode
-    int_data['routing'] = False
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % l2_port_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Setting port '%s' VLAN mode to '%s' failed with status code %d: %s"
-              % (l2_port_name, vlan_mode, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Setting port '%s' VLAN mode to '%s' succeeded" % (l2_port_name, vlan_mode))
-        return True
-
-
-def _port_set_untagged_vlan(l2_port_name, vlan_id, **kwargs):
-    """
-    Perform GET and PUT/POST calls to set a VLAN on an access port
-
-    :param l2_port_name: L2 interface's Port table entry name
-    :param vlan_id: Numeric ID of VLAN to set on access port
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    l2_port_name_percents = common_ops._replace_special_characters(l2_port_name)
-
-    int_data = get_interface(l2_port_name_percents, depth=1, selector="writable", **kwargs)
-
-    int_data['vlan_mode'] = "access"
-    int_data['vlan_tag'] = "/rest/v10.04/system/vlans/%s" % vlan_id
-    int_data['routing'] = False
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % l2_port_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Setting Port '%s' access VLAN to VLAN ID '%d' failed with status code %d: %s"
-              % (l2_port_name, vlan_id, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Setting Port '%s' access VLAN to VLAN ID '%d' succeeded"
-              % (l2_port_name, vlan_id))
-        return True
-
-
-def _port_add_vlan_trunks(l2_port_name, vlan_trunk_ids={}, **kwargs):
-    """
-    Perform GET and PUT/POST calls to add specified VLANs to a trunk port. By default, this will also set the port to
-    have 'no routing' and if there is not a native VLAN, will set the native VLAN to VLAN 1.
-
-    :param l2_port_name: L2 interface's Port table entry name
-    :param vlan_trunk_ids: Dictionary of VLANs to specify as allowed on the trunk port.  If empty, the interface will
-        allow all VLANs on the trunk.
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    l2_port_name_percents = common_ops._replace_special_characters(l2_port_name)
-
-    trunk_list = {}
-    for x in vlan_trunk_ids:
-        x_keys = {str(x): "/rest/v10.04/system/vlans/%d" % x}
-        trunk_list.update(x_keys)
-
-    port_data = get_interface(l2_port_name, depth=1, selector="writable", **kwargs)
-
-    if not port_data['vlan_tag']:
-        port_data['vlan_tag'] = "/rest/v10.04/system/vlans/1"
-    else:
-        # Convert the dictionary to a URI string
-        port_data['vlan_tag'] = common_ops._dictionary_to_string(port_data['vlan_tag'])
-
-    if not port_data['vlan_mode']:
-        port_data['vlan_mode'] = "native-untagged"
-    port_data['routing'] = False
-
-    if not trunk_list:
-        port_data['vlan_trunks'] = []
-    else:
-        for key in trunk_list:
-            if key not in port_data['vlan_trunks']:
-                port_data['vlan_trunks'].append("/rest/v10.04/system/vlans/%s" % key)
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % l2_port_name_percents
-    put_data = json.dumps(port_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Adding VLANs '%s' to Port '%s' trunk failed with status code %d: %s"
-              % (vlan_trunk_ids, l2_port_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Adding VLANs '%s' to Port '%s' trunk succeeded"
-              % (vlan_trunk_ids, l2_port_name))
-        return True
-
-
-def _port_set_native_vlan(l2_port_name, vlan_id, tagged=True, **kwargs):
-    """
-    Perform GET and PUT/POST calls to set a VLAN to be the native VLAN on the trunk. Also gives the option to set
-    the VLAN as tagged.
-
-    :param l2_port_name: L2 interface's Port table entry name
-    :param vlan_id: Numeric ID of VLAN to add to trunk port
-    :param tagged: Boolean to determine if the native VLAN will be set as the tagged VLAN.  If False, the VLAN
-        will be set as the native untagged VLAN
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if tagged:
-        vlan_mode = "native-tagged"
-    else:
-        vlan_mode = "native-untagged"
-
-    l2_port_name_percents = common_ops._replace_special_characters(l2_port_name)
-    vlan_uri = "/rest/v10.04/system/vlans/%d" % vlan_id
-    vlan_key = {str(vlan_id): vlan_uri}
-    port_data = get_interface(l2_port_name_percents, depth=1, selector="writable", **kwargs)
-
-    port_data['vlan_tag'] = vlan_uri
-    port_data['routing'] = False
-    port_data['vlan_mode'] = vlan_mode
-
-    if (port_data['vlan_trunks']) and (vlan_key not in port_data['vlan_trunks']):
-        port_data['vlan_trunks'].update(vlan_key)
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % l2_port_name_percents
-    put_data = json.dumps(port_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Setting native VLAN ID '%d' to Port '%s' failed with status code %d: %s"
-              % (vlan_id, l2_port_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Setting native VLAN ID '%d' to Port '%s' succeeded"
-              % (vlan_id, l2_port_name))
-        return True
-
-
-def _delete_vlan_port(l2_port_name, vlan_id, **kwargs):
-    """
-    Perform GET and PUT calls to remove a VLAN from a trunk port
-
-    :param l2_port_name: L2 interface's Port table entry name
-    :param vlan_id: Numeric ID of VLAN to remove from trunk port
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    l2_port_name_percents = common_ops._replace_special_characters(l2_port_name)
-
-    port_data = get_interface(l2_port_name, depth=1, selector="writable", **kwargs)
-
-    if str(vlan_id) in port_data['vlan_trunks']:
-        # remove vlan from 'vlan_trunks'
-        port_data['vlan_trunks'].pop(str(vlan_id))
-
-    target_url = kwargs["url"] + "system/interface/%s" % l2_port_name_percents
-    put_data = json.dumps(port_data, sort_keys=True, indent=4)
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Removing VLAN ID '%d' from Port '%s' trunk failed with status code %d: %s"
-              % (vlan_id, l2_port_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Removing VLAN ID '%d' from Port '%s' trunk succeeded"
-              % (vlan_id, l2_port_name))
-        return True
-
-
-def add_port_to_lag(int_name, lag_id, **kwargs):
-    """
-    Perform GET and PUT calls to configure a Port as a LAG member, and also enable the port. For v1,
-    also perform DELETE call to remove the Port table entry for the port.
-
-    :param int_name: Alphanumeric name of the interface
-    :param lag_id: Numeric ID of the LAG to which the port is to be added
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _add_port_to_lag_v1(int_name, lag_id, **kwargs)
-    else:  # Updated else for when version is v10.04
-        return _add_port_to_lag(int_name, lag_id, **kwargs)
-
-
-def _add_port_to_lag_v1(int_name, lag_id, **kwargs):
-    """
-    Perform GET and PUT calls to configure a Port as a LAG member, and also enable the port.
-    Also perform DELETE call to remove the Port table entry for the port.
-
-    :param int_name: Alphanumeric name of the interface
-    :param lag_id: Numeric ID of the LAG to which the port is to be added
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    int_name_percents = common_ops._replace_special_characters(int_name)
-
-    int_data = get_interface(int_name, 0, "configuration", **kwargs)
-
-    int_data['user_config'] = {"admin": "up"}
-    int_data['other_config']['lacp-aggregation-key'] = lag_id
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Adding Interface '%s' to LAG '%d' "
-              "failed with status code %d: %s" % (int_name, lag_id, response.status_code, response.text))
-        success = False
-    else:
-        logging.info("SUCCESS: Adding Interface '%s' to LAG '%d' "
-              "succeeded" % (int_name, lag_id))
-        success = True
-    # Delete Port Table entry for the port
-    return success and port.delete_port(int_name_percents, **kwargs)
-
-
-def _add_port_to_lag(int_name, lag_id, **kwargs):
-    """
-    Perform GET and PUT calls to configure a Port as a LAG member, and also enable the port
-
-    :param int_name: Alphanumeric name of the interface
-    :param lag_id: Numeric ID of the LAG to which the port is to be added
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    int_name_percents = common_ops._replace_special_characters(int_name)
-
-    int_data = get_interface(int_name, 1, "writable", **kwargs)
-
-    int_data['user_config'] = {"admin": "up"}
-    int_data['other_config']['lacp-aggregation-key'] = lag_id
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Adding Interface '%s' to LAG '%d' "
-              "failed with status code %d: %s" % (int_name, lag_id, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Adding Interface '%s' to LAG '%d' "
-              "succeeded" % (int_name, lag_id))
-        return True
-
-
-def remove_port_from_lag(int_name, lag_id, **kwargs):
-    """
-    Perform GET and PUT calls to configure a Port as a LAG member, and also disable the port
-
-    :param int_name: Alphanumeric name of the interface
-    :param lag_id: Numeric ID of the LAG to which the port is to be added
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return _remove_port_from_lag_v1(int_name, lag_id, **kwargs)
-    else:  # Updated else for when version is v10.04
-        return _remove_port_from_lag(int_name, lag_id, **kwargs)
-
-
-def _remove_port_from_lag_v1(int_name, lag_id, **kwargs):
-    """
-    Perform GET and PUT calls to remove a Port from a LAG, and also disable the port
-
-    :param int_name: Alphanumeric name of the interface
-    :param lag_id: Numeric ID of the LAG to which the port is to be added
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-
-    # Create Port Table entry for the port
-    add_l2_interface(int_name, **kwargs)
-
-    int_name_percents = common_ops._replace_special_characters(int_name)
-
-    int_data = get_interface(int_name, 0, "configuration", **kwargs)
-
-    int_data['user_config'] = {"admin": "down"}
-    int_data['other_config'].pop('lacp-aggregation-key', None)
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Removing interface '%s' from LAG '%d' "
-              "failed with status code %d: %s" % (int_name, lag_id, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Removing interface '%s' from LAG '%d' "
-              "succeeded" % (int_name, lag_id))
-        return True
-
-
-def _remove_port_from_lag(int_name, lag_id, **kwargs):
-    """
-    Perform GET and PUT calls to remove a Port from a LAG, and also disable the port
-
-    :param int_name: Alphanumeric name of the interface
-    :param lag_id: Numeric ID of the LAG to which the port is to be added
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    int_name_percents = common_ops._replace_special_characters(int_name)
-
-    int_data = get_interface(int_name, 1, "writable", **kwargs)
-
-    int_data['user_config'] = {"admin": "down"}
-    int_data['other_config'].pop('lacp-aggregation-key', None)
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Removing interface '%s' from LAG '%d' "
-              "failed with status code %d: %s" % (int_name, lag_id, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Removing interface '%s' from LAG '%d' "
-              "succeeded" % (int_name, lag_id))
-        return True
-
-
-def _clear_interface_acl(interface_name, acl_type, **kwargs):
-    """
-    Perform GET and PUT calls to clear an interface's ACL
-
-    :param port_name: Alphanumeric name of the Port
-    :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if acl_type not in ['aclv4_out', 'aclv4_in', 'aclv6_in', 'aclv6_out']:
-        raise Exception("ERROR: acl_type should be 'aclv4_out', 'aclv4_in', 'aclv6_in', or 'aclv6_out'")
-
-    int_name_percents = common_ops._replace_special_characters(interface_name)
-
-    interface_data = get_interface(interface_name, depth=1, selector="writable", **kwargs)
-
-    if interface_name.startswith('lag'):
-        if interface_data['interfaces']:
-            interface_data['interfaces'] = common_ops._dictionary_to_list_values(interface_data['interfaces'])
-
-    cfg_type = acl_type + '_cfg'
-    cfg_version = acl_type + '_cfg_version'
-
-    interface_data.pop(cfg_type, None)
-    interface_data.pop(cfg_version, None)
-
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(interface_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Clearing %s ACL on Interface '%s' failed with status code %d: %s"
-              % (cfg_type, interface_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Clearing %s ACL on Interface '%s' succeeded"
-              % (cfg_type, interface_name))
-        return True
-
-
-def initialize_interface_entry(int_name, **kwargs):
-    """
-    Perform a PUT call on the interface to initialize it to it's default state.
-
-    :param int_name: Alphanumeric name of the system interface
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    int_name_percents = common_ops._replace_special_characters(int_name)
-    int_data = {}
-    target_url = kwargs["url"] + "system/interfaces/%s" % int_name_percents
-    put_data = json.dumps(int_data, sort_keys=True, indent=4)
-
-    response = kwargs["s"].put(target_url, data=put_data, verify=False)
-
-    if not common_ops._response_ok(response, "PUT"):
-        logging.warning("FAIL: Initializing interface '%s' failed with status code %d: %s"
-                        % (int_name, response.status_code, response.text))
-        return False
-    else:
-        logging.info("SUCCESS: Initializing interface '%s' succeeded" % int_name)
-        success = True
-        # Remove all IPv6 entries for this interface
-        ipv6_list = get_ipv6_addresses(int_name, **kwargs)
-        if ipv6_list:
-            for ipv6_address in ipv6_list:
-                success = success and delete_ipv6_address(int_name, ipv6_address, **kwargs)
-        return success
-
-
-def initialize_interface(interface_name, **kwargs):
-    """
-    Perform a PUT call to the Interface Table or Port Table to initialize an interface to factory settings
-
-    :param interface_name: Name of interface's reference entry in Interface table
-    :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function
-    :return: True if successful, False otherwise
-    """
-    if kwargs["url"].endswith("/v1/"):
-        return port.initialize_port_entry(interface_name, **kwargs)
-    else:  # Updated else for when version is v10.04
-        return initialize_interface_entry(interface_name, **kwargs)
+    def was_modified(self):
+        """
+        Getter method for the __modified attribute
+        :return: Boolean True if the object was recently modified, False otherwise.
+        """
+
+        return self.__modified
+
+    ####################################################################
+    # IMPERATIVES FUNCTIONS
+    ####################################################################
+
+    def configure_l2(self, phys_ports=None, ipv4=None, vlan_ids_list=None,
+                     vlan_tag=1, lacp="passive", description=None,
+                     admin="up", fallback_enabled=False, mc_lag=False,
+                     vlan_mode='native-untagged',
+                     trunk_allowed_all=False,
+                     native_vlan_tag=True):
+        """
+        Configure a Interface object, set the attributes to a L2 LAG
+        and apply() changes inside Switch
+
+        :param phys_ports: List of physical ports to aggregate (e.g. ["1/1/1",
+            "1/1/2", "1/1/3"]) or list of Interface Objects.
+        :param ipv4: Optional list of IPv4 address to assign
+            to the interface. If more than one is specified,
+            all addresses except for the first are added as secondary_ip4
+            Defaults to nothing if not specified.
+            Example:
+                ['1.1.1.1', '2.2.2.2']
+        :param vlan_ids_list: Optional list of integer VLAN IDs or VLAN
+            objects to add as trunk VLANS. Defaults to empty list if not
+            specified.
+        :param vlan_tag: Optional VLAN ID or Vlan object to be added as
+            vlan_tag. Defaults to VLAN 1.
+        :param lacp: Should be either "passive" or "active." Defaults to
+            "passive" if not specified
+        :param description: Optional description for the interface. Defaults
+            to nothing if not specified.
+        :param admin: Optional administratively-configured state of the port.
+            Defaults to "up" if not specified
+        :param fallback_enabled: Boolean to determine if the LAG uses LACP
+            fallback. Defaults to False if not specified.
+        :param mc_lag: Boolean to determine if the LAG is multi-chassis.
+            Defaults to False if not specified.
+        :param vlan_mode: Vlan mode on Interface, should be access or trunk
+            Defaults to 'native-untagged'
+        :param trunk_allowed_all: Flag for vlan trunk allowed all on L2
+            interface, vlan_mode must be set to trunk.
+        :param native_vlan_tag: Flag for accepting only tagged packets on
+            VLAN trunk native, vlan_mode must be set to trunk.
+
+        :return: True if object was changed
+
+        """
+
+        if not self.materialized:
+            raise VerificationError('Interface {}'.format(
+                self.name), 'Object not materialized')
+
+        '''
+        Set ALL incoming attributes
+        '''
+
+        # Set Physical Ports
+        if phys_ports is not None:
+            self.interfaces = []
+            for port in phys_ports:
+                port_obj = self.session.api_version.get_module(
+                    self.session, 'Interface',
+                    port)
+                # Materialize Port
+                port_obj.get()
+                self.interfaces.append(port_obj)
+        # Set lacp
+        self.lacp = lacp
+
+        # Set Mode
+        self.vlan_mode = vlan_mode
+
+        if self.vlan_mode == 'access':
+            # Set VLAN Tag into Object
+            if isinstance(vlan_tag, int):
+                # Create Vlan object
+                vlan_tag = Vlan(self.session, vlan_tag)
+                # Try to get data; if non-existent, throw error
+                vlan_tag.get()
+                self.vlan_tag = vlan_tag
+
+        # Modify if trunk
+        elif self.vlan_mode == 'trunk':
+            if vlan_tag is None:
+                vlan_tag = 1
+
+            # Create Vlan object
+            vlan_tag = Vlan(self.session, vlan_tag)
+            # Try to get data; if non-existent, throw error
+            vlan_tag.get()
+            # Set VLAN tag
+            self.vlan_tag = vlan_tag
+
+            # Set VLAN mode
+            if native_vlan_tag:
+                self.vlan_mode = 'native-tagged'
+            else:
+                self.vlan_mode = 'native-untagged'
+
+            if not trunk_allowed_all:
+                self.vlan_mode = 'native-untagged'
+                # Set VLAN Trunks
+                if vlan_ids_list is not None:
+                    self.vlan_trunks = []
+                    for vlan in vlan_ids_list:
+                        vlan_obj = Vlan(self.session, vlan)
+                        vlan_obj.get()
+                        self.vlan_trunks.append(vlan_obj)
+
+            elif trunk_allowed_all:
+                self.vlan_mode = 'native-untagged'
+
+        # Set description
+        if description is not None:
+            self.description = description
+        # Set admin
+        self.admin = admin
+        if "lag" not in self.name:
+            try:
+                self.user_config["admin"] = admin
+            except AttributeError:
+                # For loopback
+                pass
+
+        # Set IPv4
+        if ipv4 is not None and ipv4 != []:
+            for i in range(len(ipv4)):
+                if i == 0:
+                    self.ip4_address = ipv4[i]
+                else:
+                    self.ip4_address_secondary.append(ipv4[i])
+        # If IPv4 is empty, delete
+        elif ipv4 == []:
+            self.ip4_address = None
+            self.ip4_address_secondary = None
+
+        # Set all remaining attributes for a Lag to be a L2
+        self.routing = False
+        if self.__is_special_type:
+            self.other_config["mclag_enabled"] = mc_lag
+            self.other_config["lacp-fallback"] = fallback_enabled
+
+        # Apply Changes inside Switch
+        return self.apply()
+
+    def configure_l3(self, phys_ports=None, ipv4=None, ipv6=None,
+                     vrf="default", lacp="passive", description=None,
+                     admin="up", fallback_enabled=False, mc_lag=False):
+        """
+        Configure a Interface object, if not materialized, materialize it and
+        then set the attributes to a L3 LAG
+        and apply() changes inside Switch
+
+        :param phys_ports: List of physical ports to aggregate (e.g. ["1/1/1",
+            "1/1/2", "1/1/3"]) or list of Interface Objects.
+        :param ipv4: Optional list of IPv4 address to assign
+            to the interface. If more than one is specified,
+            all addresses except for the first are added as secondary_ip4
+            Defaults to nothing if not specified.
+            Example:
+                ['1.1.1.1', '2.2.2.2']
+        :param ipv6: String list of IPv6 addresses to assign to the interface.
+            Defaults to nothing if not specified.
+            List of A Ipv6 objects is accepted
+            Example:
+                ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
+        :param vrf: VRF to attach the SVI to. Defaults to "default" if not
+            specified
+            A Vrf object is also accepted
+        :param lacp: Should be either "passive" or "active." Defaults to
+            "passive" if not specified.
+        :param description: Optional description for the interface. Defaults to
+            nothing if not specified.
+        :param admin: Optional administratively-configured state of the port.
+            Defaults to "up" if not specified
+        :param fallback_enabled: Boolean to determine if the LAG uses LACP
+            fallback. Defaults to False if not specified.
+        :param mc_lag: Boolean to determine if the LAG is multi-chassis.
+            Defaults to False if not specified.
+        :return: True if object was changed
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name), 'Object not materialized')
+
+        '''
+        Set ALL incoming attributes
+        '''
+
+        # Set Physical Ports
+        if phys_ports is not None:
+            self.interfaces = []
+            for port in phys_ports:
+                port_obj = self.session.api_version.get_module(
+                    self.session, 'Interface',
+                    port)
+                # Materialize Port
+                port_obj.get()
+                self.interfaces.append(port_obj)
+
+        # Set IPv4
+        if ipv4 is not None and ipv4 != []:
+            for i in range(len(ipv4)):
+                if i == 0:
+                    self.ip4_address = ipv4[i]
+                else:
+                    self.ip4_address_secondary.append(ipv4[i])
+        # If IPv4 is empty, delete
+        elif ipv4 == []:
+            self.ip4_address = None
+            self.ip4_address_secondary = None
+
+        # Set IPv6
+        if ipv6 is not None and ipv6 != []:
+            for ip_address in ipv6:
+                # Verify if incoming address is a string
+                if isinstance(ip_address, str):
+                    # Create Ipv6 object -- add it to ipv6_addresses internal
+                    # list
+                    ip_address = self.session.api_version.get_module(
+                        self.session, 'Ipv6', ip_address,
+                        parent_int=self,
+                        type="global-unicast",
+                        preferred_lifetime=604800,
+                        valid_lifetime=2592000,
+                        node_address=True,
+                        ra_prefix=True)
+                    # Try to get data, if non existent create
+                    try:
+                        # Try to obtain IPv6 address data
+                        ip_address.get()
+                    # If Ipv6 Object is non existent, create it
+                    except GenericOperationError:
+                        # Create IPv6 inside switch
+                        ip_address.apply()
+        # If IPv6 is empty, delete
+        elif ipv6 == []:
+            self.ip6_addresses = []
+
+        # Set lacp
+        self.lacp = lacp
+        # Set description
+        if description is not None:
+            self.description = description
+        # Set admin
+        self.admin = admin
+        if "lag" not in self.name:
+            try:
+                self.user_config["admin"] = admin
+            except AttributeError:
+                # For loopback
+                pass
+
+        # Set VRF
+        vrf_obj = Vrf(self.session, vrf)
+        vrf_obj.get()
+        self.vrf = vrf_obj
+
+        # Set all remaining attributes for a Lag to be a L3
+        self.routing = True
+        if self.__is_special_type:
+            self.other_config["mclag_enabled"] = mc_lag
+            self.other_config["lacp-fallback"] = fallback_enabled
+        self.vlan_mode = "native-untagged"
+        # Apply Changes inside Switch
+        return self.apply()
+
+    def configure_svi(
+            self,
+            vlan=None,
+            ipv4=None,
+            ipv6=None,
+            vrf=None,
+            description=None,
+            int_type="vlan",
+            user_config='up'):
+        """
+        Configure a Interface table entry for a VLAN.
+
+        :param vlan: Numeric ID of VLAN
+            A Vlan object is also accepted
+        :param ipv4: Optional list of IPv4 address to assign
+            to the interface. If more than one is specified,
+            all addresses except for the first are added as secondary_ip4
+            Defaults to nothing if not specified.
+            Example:
+                ['1.1.1.1']
+        :param ipv6: String list of IPv6 addresses to assign to the interface.
+            Defaults to nothing if not specified.
+            A Ipv6 object is also accepted
+            Example:
+                ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
+        :param vrf: VRF to attach the SVI to. Defaults to "default" if not
+            specified.
+            A Vrf object is also accepted
+        :param description: Optional description for the interface. Defaults
+            to nothing if not specified.
+        :param int_type: Type of interface; generally should be "vlan" for
+            SVI's. Defaults to vlan
+        :param user_config: User configuration to apply to interface. Defaults
+            to "up" if not specified.
+        :return: True if object was changed
+
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name), 'Object not materialized')
+
+        if vlan is not None:
+            vlan_tag = vlan
+            # Set VLAN Tag into Object
+            if isinstance(vlan, int):
+                name = "VLAN {}".format(str(vlan))
+                # Create Vlan object
+                vlan_tag = self.session.api_version.get_module(
+                    self.session, 'Vlan', vlan, name=name)
+                # Try to obtain data; if not, create
+                try:
+                    vlan_tag.get()
+                except GenericOperationError:
+                    # Create object inside switch
+                    vlan_tag.apply()
+
+            self.vlan_tag = vlan_tag
+
+        # Set IPv4
+        if ipv4 is not None and ipv4 != []:
+            for i in range(len(ipv4)):
+                if i == 0:
+                    self.ip4_address = ipv4[i]
+                else:
+                    self.ip4_address_secondary.append(ipv4[i])
+        # If IPv4 is empty, delete
+        elif ipv4 == []:
+            self.ip4_address = None
+            self.ip4_address_secondary = None
+        # Set IPv6
+        if ipv6 is not None and ipv6 != []:
+            for ip_address in ipv6:
+                # Verify if incoming address is a string
+                if isinstance(ip_address, str):
+                    # Create Ipv6 object -- add it to ipv6_addresses internal
+                    # list
+                    ip_address = self.session.api_version.get_module(
+                        self.session, 'Ipv6', ip_address,
+                        parent_int=self,
+                        type="global-unicast",
+                        preferred_lifetime=604800,
+                        valid_lifetime=2592000,
+                        node_address=True,
+                        ra_prefix=True)
+                    # Try to get data, if non existent create
+                    try:
+                        # Try to obtain IPv6 address data
+                        ip_address.get()
+                    # If Ipv6 Object is non existent, create it
+                    except GenericOperationError:
+                        # Create IPv6 inside switch
+                        ip_address.apply()
+        # If IPv6 is empty, delete
+        elif ipv6 == []:
+            self.ip6_addresses = []
+
+        # Set VRF
+        if vrf is not None:
+            if isinstance(vrf, str):
+                vrf = self.session.api_version.get_module(
+                    self.session, 'Vrf', vrf)
+                vrf.get()
+
+            self.vrf = vrf
+
+        # Set user config
+        self.admin = user_config
+        try:
+            self.user_config["admin"] = user_config
+        except AttributeError:
+            # Ignore if attribute error
+            pass
+
+        # Set type
+        self.type = int_type
+
+        if description is not None:
+            self.description = description
+
+        # Apply changes
+        return self.apply()
+
+    def add_ipv4_address(self, ip_address):
+        """
+        Configure a Interface object to add a new IPv4 address to it and
+        calls apply(), applying changes inside Switch
+
+        :param ip_address: IPv4 address to assign to the interface.
+            Example:
+                "1.1.1.1"
+        :return: True if object was changed
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name), 'Object not materialized')
+
+        # Set incoming IPv4 address
+        self.ip4_address = ip_address
+
+        # Apply changes inside switch
+        return self.apply()
+
+    def add_ipv6_address(self, ip_address, address_type="global-unicast"):
+        """
+        Configure a Interface object to append a IPv6 address to its
+            ip6_addresses list and apply changes
+
+        :param ip_address: IPv6 address to assign to the interface.
+            A Ipv6 object is also accepted.
+            Example of String:
+                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+        :param address_type: Type of Address.
+            Defaults to global-unicast
+        :return: Ipv6 object.
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name),
+                'Object not materialized')
+
+        # Verify if incoming address is a string
+        if isinstance(ip_address, str):
+            # Create Ipv6 object -- add it to ipv6_addresses internal list
+            ipv6 = self.session.api_version.get_module(
+                self.session, 'Ipv6', ip_address, parent_int=self,
+                type=address_type,
+                preferred_lifetime=604800,
+                valid_lifetime=2592000,
+                node_address=True,
+                ra_prefix=True)
+            # Try to get data, if non existent create
+            try:
+                # Try to obtain IPv6 address data
+                ipv6.get()
+            # If Ipv6 Object is non existent, create it
+            except GenericOperationError:
+                # Create IPv6 inside switch
+                ipv6.apply()
+
+        # Apply changes inside switch
+        self.apply()
+
+        return ipv6
+
+    def delete_ipv6_address(self, ip_address):
+        """
+        Given a IPv6 address, delete that address from the current
+        Interface object.
+        :param ip_address: IPv6 address to assign to the interface.
+            A Ipv6 object is also accepted
+            Example:
+                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name), 'Object not materialized')
+
+        # Verify if incoming address is a object
+        if isinstance(ip_address, Ipv6):
+            # Obtain address
+            ip_address = ip_address.address
+
+        # Iterate through every address inside interface
+        for add_obj in self.ip6_addresses:
+            if add_obj.address == ip_address:
+                # Removing address does an internal delete
+                self.ip6_addresses.remove(add_obj)
+
+    def configure_loopback(self, vrf, ipv4=None, description=None):
+        """
+        Configure a Interface object to create a Loopback Interface table
+        entry for a logical L3 Interface. If the Loopback Interface already
+        exists and an IPv4 address is given, the function will update the
+        IPv4 address.
+
+        :param vrf: VRF to attach the Loopback to. Defaults to "default"
+            if not specified
+        :param ipv4: IPv4 address to assign to the interface. Defaults to
+            nothing if not specified.
+            Example:
+                '1.1.1.1'
+        :param description: Optional description for the interface. Defaults
+            to nothing if not specified.
+        :return: True if object was changed
+
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name),
+                'Object not materialized')
+
+        # Set VRF
+        if vrf is not None:
+            if isinstance(vrf, str):
+                vrf = self.session.api_version.get_module(
+                    self.session, 'Vrf', vrf)
+                vrf.get()
+
+            self.vrf = vrf
+
+        # Set IPv4
+        if ipv4 is not None and ipv4 != []:
+            for i in range(len(ipv4)):
+                if i == 0:
+                    self.ip4_address = ipv4[i]
+                else:
+                    self.ip4_address_secondary.append(ipv4[i])
+        # If IPv4 is empty, delete
+        elif ipv4 == []:
+            self.ip4_address = None
+            self.ip4_address_secondary = None
+
+        if description is not None:
+            self.description = description
+
+        # Set all remaining attributes to create a loopback
+
+        # Set both admin and user up
+        self.admin = 'up'
+        if "lag" not in self.name:
+            try:
+                self.user_config["admin"] = 'up'
+            except AttributeError:
+                # For loopback
+                pass
+
+        self.ospf_if_type = "ospf_iftype_loopback"
+
+        # Apply changes to switch
+        return self.apply()
+
+    def configure_vxlan(self, source_ipv4=None, description=None,
+                        dest_udp_port=4789):
+        """
+        Configure VXLAN table entry for a logical L3
+        Interface. If the VXLAN Interface already exists and an IPv4
+        address is given, the function will update the IPv4 address.
+
+        :param source_ipv4: Optional source IPv4 address to assign to the
+            VXLAN interface. Defaults to nothing if not specified.
+            Example:
+                '1.1.1.1'
+        :param description: Optional description for the interface. Defaults
+            to nothing if not specified.
+        :param dest_udp_port: Optional Destination UDP Port that the VXLAN
+            will use.  Default is set to 4789
+        :return: True if object was changed
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name), 'Object not materialized')
+
+        # Set Values
+        self.options["local_ip"] = source_ipv4
+        self.options["vxlan_dest_udp_port"] = str(dest_udp_port)
+
+        self.type = "vxlan"
+        # Both user and admin up
+        self.admin = 'up'
+        if "lag" not in self.name:
+            try:
+                self.user_config["admin"] = 'up'
+            except AttributeError:
+                # For loopback
+                pass
+
+        if description is not None:
+            self.description = description
+
+        # Apply changes
+        return self.apply()
+
+    def set_vlan_mode(self, vlan_mode):
+        """
+        Set an L2 interface's VLAN mode (native-tagged,
+        native-untagged, or access)
+
+        :param vlan_mode: A string, either 'native-tagged', 'native-untagged',
+            or 'access', specifying the desired VLAN mode
+        :return: True if object was changed
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name), 'Object not materialized')
+
+        # Set Values
+        self.vlan_mode = vlan_mode
+        self.routing = False
+
+        # Apply changes
+        return self.apply()
+
+    def set_untagged_vlan(self, vlan):
+        """
+        Set the untagged VLAN on an access port
+
+        :param vlan: Numeric ID of VLAN to set on access port
+            A Vlan object is also accepted
+        :return: True if object was changed
+        """
+
+        if not self.materialized:
+            raise VerificationError(
+                'Interface {}'.format(self.name), 'Object not materialized')
+
+        # Set Values
+        self.vlan_mode = 'access'
+
+        vlan_tag = vlan
+        # Set Vlan Tag into Object
+        if isinstance(vlan, int):
+            # Create Vlan object
+            vlan_tag = self.session.api_version.get_module(
+                self.session, 'Vlan', vlan)
+            # Try to get data; if non-existent, throw error
+            vlan_tag.get()
+
+        # Set Vlan Tag
+        self.vlan_tag = vlan_tag
+
+        self.routing = False
+
+        # Apply changes
+        return self.apply()
+
+    def add_vlan_trunks(self, vlan_trunk_ids):
+        """
+        Add specified VLANs to a trunk port. By default, this will also set
+        the port to have 'no routing' and if there is not a native VLAN,
+        will set the native VLAN to VLAN 1.
+
+        :param vlan_trunk_ids: Dictionary of VLANs to specify
+            as allowed on the trunk port.  If empty, the interface
+            will allow all VLANs on the trunk.
+        :return: True if object was changed
+        """
+
+        # Set vlan Trunks
+        if vlan_trunk_ids is not None:
+            self.vlan_trunks = []
+
+            for vlan in vlan_trunk_ids:
+
+                vlan_obj = self.session.api_version.get_module(
+                    self.session, 'Vlan', vlan)
+                vlan_obj.get()
+
+                self.vlan_trunks.append(vlan_obj)
+
+        self.routing = False
+
+        # Set other values in case of None
+        if self.vlan_mode is not None:
+            self.vlan_mode = "native-untagged"
+
+        if self.vlan_tag is not None:
+            vlan_tag_obj = self.session.api_version.get_module(
+                self.session, 'Vlan', 1)
+            vlan_tag_obj.get()
+            self.vlan_tag = vlan_tag_obj
+
+        # Apply Changes
+        return self.apply()
+
+    def set_native_vlan(self, vlan, tagged=True):
+        """
+        Set a VLAN to be the native VLAN on the trunk.
+        Also gives the option to set the VLAN as tagged.
+
+        :param vlan: Numeric ID of VLAN to add to trunk port.
+            A Vlan object is also accepted
+        :param tagged: Boolean to determine if the native VLAN
+            will be set as the tagged VLAN.  If False, the VLAN
+            will be set as the native untagged VLAN
+            Defaults to True
+        :return: True if object was changed
+        """
+
+        if tagged:
+            self.vlan_mode = "native-tagged"
+        else:
+            self.vlan_mode = "native-untagged"
+
+        vlan_tag = vlan
+        # Set Vlan Tag into Object
+        if isinstance(vlan_tag, int):
+            # Create Vlan object
+            vlan_tag = self.session.api_version.get_module(
+                self.session, 'Vlan', vlan)
+            # Try to get data; if non-existent, throw error
+            vlan_tag.get()
+
+        self.vlan_tag = vlan_tag
+
+        self.routing = False
+
+        # Flag used to check if the incoming vlan has to be added to trunks
+        add = True
+        # Verify native vlan is in vlan trunks
+        for vlan_obj in self.vlan_trunks:
+            # Check vlan
+            if vlan_obj.id == vlan:
+                # Don't add
+                add = False
+        if add:
+            # Add new vlan to vlan trunks
+            self.vlan_trunks.append(self.vlan_tag)
+
+        # Apply Changes
+        return self.apply()
+
+    def delete_vlan(self, vlan):
+        """
+        Delete a VLAN from a trunk port.
+
+        :param vlan: Numeric ID of VLAN to delete from the trunk port.
+            A Vlan object is also accepted
+        : return: True if successfully deleted, False otherwise
+        """
+        # Import VLAN to  identify object type
+        from pyaoscx.vlan import Vlan
+        if isinstance(vlan, Vlan):
+            vlan_id = vlan.id
+        else:
+            vlan_id = vlan
+
+        deleted = False
+        # Iterate through vlan trunks in search of the vlan
+        for vlan_obj in self.vlan_trunks:
+            if vlan_obj.id == vlan_id:
+                # Delete vlan from vlan trunks
+                self.vlan_trunks.remove(vlan_obj)
+                deleted = True
+        # Apply Changes
+        self.apply()
+
+        return deleted
+
+    def add_port_to_lag(self, interface):
+        """
+        Configure a Port as a LAG member, and also enable the port.
+        Add port to list of interfaces inside Interface object
+
+        :param interface: Alphanumeric name of the interface
+            A Interface object is also accepted
+        :return: True if object was changed
+        """
+
+        # Identify interface variable type
+        if isinstance(interface, str):
+            # Create Interface Object
+            interface_obj = self.session.api_version.get_module(
+                self.session, 'Interface', interface)
+            # Try to get data; if non-existent, throw error
+            interface_obj.get()
+
+        elif isinstance(interface, Interface):
+            interface_obj = interface
+
+        for member in self.interfaces:
+            # Check existance inside members
+            if member.name == interface_obj.name:
+                # Stop execution
+                return False
+
+        # Add interface as a member of the lag
+        self.interfaces.append(interface_obj)
+
+        # Apply changes
+        return self.apply()
+
+    def remove_port_from_lag(self, interface):
+        """
+        Remove a Port from LAG, and also disable the port.
+        Remove port from list of interfaces inside Interface object
+
+        :param interface: Alphanumeric name of the interface
+            A Interface object is also accepted
+        :return: True if object was changed
+        """
+        if not self.__is_special_type:
+            raise VerificationError(
+                "Interface {}".format(self.name),
+                "Interface object must be a lag to remove a Port")
+
+        # Identify interface type
+        if isinstance(interface, Interface):
+            interface_name = interface.name
+        elif isinstance(interface, str):
+            interface_name = interface
+
+        for member in self.interfaces:
+            # Check existence inside members
+            if member.name == interface_name:
+                # Remove interface from Member
+                self.interfaces.remove(member)
+
+        # When changes are applied, port is disabled and lacp key changed
+        return self.apply()
+
+    def clear_acl(self, acl_type):
+        """
+        Clear an interface's ACL
+
+        :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in',
+            'aclv6_in', or 'aclv6_out'
+        :return: True if object was changed
+        """
+        if acl_type == "ipv6":
+            self.aclv6_in_cfg = None
+            self.aclv6_in_cfg_version = None
+        if acl_type == "ipv4":
+            self.aclv4_in_cfg = None
+            self.aclv4_in_cfg_version = None
+        if acl_type == "mac":
+            self.aclmac_in_cfg = None
+            self.aclmac_in_cfg_version = None
+
+        # Apply Changes
+        return self.apply()
+
+    def initialize_interface_entry(self):
+        """
+        Initialize Interface to its default state.
+        :return: True if object was changed
+        """
+        # Set interface to default settings
+        return self.__set_to_default()
+
+    def set_state(self, state="up"):
+        """
+        Either enable or disable the interface by setting Interface's
+            admin_state to "up" or "down"
+
+        :param state: State to set the interface to
+            Defaults to up
+        :return: True if object was changed
+
+        """
+        # Set interface to default settings
+        self.admin = state
+        if "lag" not in self.name:
+            try:
+                self.user_config["admin"] = state
+            except AttributeError:
+                # For loopback
+                pass
+
+        # Apply Changes
+        return self.apply()
+
+    def configure_vsx(self, active_forwarding, vsx_sync, act_gw_mac,
+                      act_gw_ip):
+        """
+        Configure VSX IPv4 settings on a VLAN Interface.
+
+        :param active_forwarding: True or False Boolean to set VSX active
+            forwarding
+        :param vsx_sync: List of alphanumeric values to enable VSX
+            configuration synchronization.  The options are
+            any combination of 'active-gateways', 'irdp', and 'policies'.
+            VSX Sync is mainly used in the Primary.
+        :param act_gw_mac: Alphanumeric value of the Virtual MAC address for
+            the interface active gateway
+            Example:
+                '01:02:03:04:05:06'
+        :param act_gw_ip: Alphanumeric value of the Virtual IP address for the
+            interface active gateway.
+            Example:
+                '1.1.1.1'
+        :return: True if object was changed
+        """
+        # Set values
+        vsx_sync_list = []
+        if "active-gateways" in vsx_sync:
+            vsx_sync_list.append("^vsx_virtual.*")
+        if "irdp" in vsx_sync:
+            vsx_sync_list.append(".irdp.*")
+        if "policies" in vsx_sync:
+            vsx_sync_list.append("^policy.*")
+
+        self.vsx_active_forwarding_enable = active_forwarding
+        self.vsx_sync = vsx_sync_list
+        self.vsx_virtual_gw_mac_v4 = act_gw_mac
+        self.vsx_virtual_ip4 = [act_gw_ip]
+
+        # Apply changes
+        return self.apply()
+
+    def delete_vsx_configuration(self):
+        """
+        Delete VSX IPv4 settings on a VLAN Interface.
+        :return: True if object was changed
+
+        """
+        # Set values
+        self.vsx_active_forwarding_enable = False
+        self.vsx_sync = []
+        self.vsx_virtual_gw_mac_v4 = None
+        self.vsx_virtual_ip4 = []
+
+        # Apply changes
+        return self.apply()
+
+    def configure_l3_ipv4_port(self, ip_address=None,
+                               port_desc=None, port_admin_state="up",
+                               vrf="default"):
+        """
+        Function will enable routing on the port and update the IPv4 address
+            if given.
+
+        :param ip_address: IPv4 address to assign to the interface. Defaults
+            to nothing if not specified.
+            Example:
+                '1.1.1.1'
+        :param port_desc: Optional description for the interface. Defaults to
+            nothing if not specified.
+        :param port_admin_state: Optional administratively-configured state of
+            the port.
+            Defaults to "up" if not specified
+        :param vrf: Name of the VRF to which the Port belongs. Defaults to
+            "default" if not specified.
+        :return: True if object was changed
+
+        """
+
+        # Set IPv4
+        if ip_address is not None:
+            self.ip4_address = ip_address
+
+        # Set description
+        if port_desc is not None:
+            self.description = port_desc
+        # Set admin
+        self.admin = port_admin_state
+        if "lag" not in self.name:
+            try:
+                self.user_config["admin"] = port_admin_state
+            except AttributeError:
+                # For loopback
+                pass
+
+        # Set vrf
+        vrf_obj = self.session.api_version.get_module(
+            self.session, 'Vrf', vrf)
+        vrf_obj.get()
+        self.vrf = vrf_obj
+
+        # Set routing
+        self.routing = True
+
+        # Apply Changes inside Switch
+        return self.apply()
+
+    def update_ospf_interface_authentication(self, vrf,
+                                             auth_type,
+                                             digest_key, auth_pass):
+        """
+        Perform PUT calls to update an Interface with OSPF to have
+        authentication
+
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to
+        :param auth_type: Alphanumeric type of authentication, chosen between
+            'md5', 'null', and 'text'
+        :param digest_key: Integer between 1-255 that functions as the digest
+            key for the authentication method
+        :param auth_pass: Alphanumeric text for the authentication password.
+            Note that this will be translated to a
+            base64 String in the configuration and json.
+        :return: True if object was changed
+        """
+
+        # Configure Port/Interface
+        self.configure_l3_ipv4_port(vrf=vrf)
+
+        self.ospf_auth_type = auth_type
+        self.ospf_auth_md5_keys = {str(digest_key): auth_pass}
+        self.ospf_if_type = "ospf_iftype_broadcast"
+        self.routing = True
+        # Set vrf
+        vrf_obj = self.session.api_version.get_module(
+            self.session, 'Vrf', vrf)
+        vrf_obj.get()
+        self.vrf = vrf_obj
+
+        # Apply changes
+        return self.apply()
+
+    def update_ospf_interface_type(self, vrf,
+                                   interface_type="pointtopoint"):
+        """
+        Update the Interface's OSPFv2 type,
+        as well as enable routing on the interface
+
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to
+        :param interface_type: Alphanumeric type of OSPF interface.
+            The options are 'broadcast', 'loopback', 'nbma',
+            'none', 'pointomultipoint', 'pointopoint', and 'virtuallink'
+            Defaults to pointtopoint
+        :return: True if object was changed
+        """
+        if interface_type not in [
+                'broadcast', 'loopback', 'statistics',
+                'nbma', 'pointomultipoint',
+                'pointopoint', 'virtuallink', None]:
+
+            raise Exception(
+                "ERROR: Incorrect value for interface type.\
+                The options are 'broadcast', 'loopback', 'nbma', "
+                "'none', 'pointomultipoint', 'pointopoint', and 'virtuallink'")
+
+        # Configure Port/Interface
+        self.configure_l3_ipv4_port(vrf=vrf)
+
+        self.ospf_if_type = "ospf_iftype_%s" % interface_type
+        self.routing = True
+        # Set vrf
+        vrf_obj = self.session.api_version.get_module(
+            self.session, 'Vrf', vrf)
+        vrf_obj.get()
+        self.vrf = vrf_obj
+
+        # Apply changes
+        return self.apply()
+
+    def set_active_gateway(self, ip_address, gateway_mac):
+        """
+        Update Active Gateway of a Interface
+
+        :param ip_address: IPv4 address to assign to the interface.
+            Example:
+                '1.1.1.1'
+        :param gateway_mac: Active Gateway MAC address to assign to the interface.
+            Example:
+                '01:02:03:04:05:06'
+        :return: True if object was changed
+
+        """
+        # Configure Active Gateaway IP
+        self.vsx_virtual_ip4 = ip_address
+        # Configure Gateaway mac
+        self.vsx_virtual_gw_mac_v4 = gateway_mac
+
+        # Apply changes
+        return self.apply()
+
+    def update_interface_qos_profile(self, qos_profile_details):
+        """
+        Update QoS schedule profile attached to a Interface
+
+        :param qos_profile_details: dict of QoS schedule profile.
+        :return: True if object was changed
+
+        """
+        # Update Values
+        self.qos = qos_profile_details
+
+        # Apply changes
+        return self.apply()
+
+    def update_interface_qos_rate(self, qos_rate):
+        """
+        Update the rate limit values configured for
+        broadcast/multicast/unknown unicast traffic.
+
+        :param qos_rate: dict of the rate limit values; should have the
+            format ['<type of traffic>'] = <value><unit> e.g.
+            {
+                'unknown-unicast': 100pps,
+                'broadcast': 200pps, 'multicast': 200pps
+            }"
+        :return: True if object was changed
+
+        """
+        rate_limits = {}
+        if qos_rate is not None:
+            for k, v in qos_rate.items():
+                for i, c in enumerate(v):
+                    if not c.isdigit():
+                        break
+                number = v[:i]
+                unit = v[i:].lstrip()
+
+                rate_limits[k] = number
+                rate_limits[k + '_units'] = unit
+
+        self.rate_limits = rate_limits
+
+        # Apply changes
+        return self.apply()
+
+    def update_acl_in(self, acl_name, list_type):
+        """
+        Perform GET and PUT calls to apply ACL on an interface. This function
+        specifically applies an ACL to Ingress traffic of the interface
+
+        :param acl_name: Alphanumeric String that is the name of the ACL
+        :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify the
+            type of ACL
+        :return: True if object was changed
+
+        """
+        import random
+
+        # Create Acl object
+        acl_obj = self.session.api_version.get_module(
+            self.session, 'ACL', index_id=acl_name, list_type=list_type)
+
+        if list_type == "ipv6":
+            self.aclv6_in_cfg = acl_obj
+            if hasattr(self, 'aclv6_in_cfg_version') and \
+                self.aclv6_in_cfg_version is None:
+                self.aclv6_in_cfg_version = random.randint(
+                    -9007199254740991, 9007199254740991)
+
+        if list_type == "ipv4":
+            self.aclv4_in_cfg = acl_obj
+            if hasattr(self, 'aclv4_in_cfg_version') and \
+                self.aclv4_in_cfg_version is None:
+                self.aclv4_in_cfg_version = random.randint(
+                    -9007199254740991, 9007199254740991)
+        if list_type == "mac":
+            self.aclmac_in_cfg = acl_obj
+            if hasattr(self, 'aclmac_in_cfg_version') and \
+                self.aclmac_in_cfg_version is None:
+                self.aclmac_in_cfg_version = random.randint(
+                    -9007199254740991, 9007199254740991)
+
+        # Apply changes
+        return self.apply()
+
+    def update_acl_out(self, acl_name, list_type):
+        """
+        Perform GET and PUT calls to apply ACL on an interface.
+        This function specifically applies an ACL
+        to Egress traffic of the interface, which must be a routing
+        interface
+
+        :param acl_name: Alphanumeric String that is the name of the ACL
+        :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify the
+            type of ACL
+        :return: True if object was changed
+
+        """
+        import random
+
+        # Create Acl object
+        acl_obj = self.session.api_version.get_module(
+            self.session, 'ACL', index_id=acl_name, list_type=list_type)
+
+        if list_type == "ipv6":
+            self.aclv6_out_cfg = acl_obj
+            if hasattr(self, 'aclv6_out_cfg_version') and \
+                self.aclv6_out_cfg_version is None:
+                self.aclv6_out_cfg_version = random.randint(
+                    -9007199254740991, 9007199254740991)
+        if list_type == "ipv4":
+            self.aclv4_out_cfg = acl_obj
+            if hasattr(self, 'aclv4_out_cfg_version') and \
+                self.aclv4_out_cfg_version is None:
+                self.aclv4_out_cfg_version = random.randint(
+                    -9007199254740991, 9007199254740991)
+        if list_type == "mac":
+            self.aclmac_out_cfg = acl_obj
+            if hasattr(self, 'aclmac_out_cfg_version') and \
+                self.aclmac_out_cfg_version is None:
+                self.aclmac_out_cfg_version = random.randint(
+                    -9007199254740991, 9007199254740991)
+
+        # Routeing
+        self.routing = True
+
+        # Apply changes
+        return self.apply()

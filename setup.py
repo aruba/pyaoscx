@@ -7,18 +7,18 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pyaoscx',
-      version='0.2.2',
+      version='2.0.0',
       description='AOS-CX Python Modules',
       long_description=long_description,
       long_description_content_type='text/markdown',
       url='https://github.com/aruba/pyaoscx',
-      author='Aruba Switching Automation',
-      author_email='aruba-switching-automation@hpe.com',
+      author='Aruba Automation',
+      author_email='aruba-automation@hpe.com',
       license='Apache 2.0',
       python_requires='>=3',
     classifiers=[
 
-        'Development Status :: 4 - Beta',
+        'Development Status :: 5 - Production/Stable',
 
         'Intended Audience :: System Administrators',
         'Topic :: System :: Networking',
