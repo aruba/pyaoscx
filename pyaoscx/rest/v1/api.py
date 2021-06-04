@@ -25,17 +25,6 @@ class v1(API):
         self.compound_index_separator = '/'
         self.valid_depths = [0, 1, 2, 3]
 
-    def valid_depth(self, depth):
-        '''
-        Verifies if given depth is valid for the current API version
-        :param depth: Integer
-        :return valid: Boolean True if depth is valid
-        '''
-        valid = True
-        if depth not in self.valid_depths:
-            valid = False
-        return valid
-
     def get_index(self, obj):
         '''
         Method used to obtain the correct format of the objects information
@@ -48,78 +37,6 @@ class v1(API):
         '''
         # use object indices
         return obj.get_uri()
-
-    def get_module(self, session, module, index_id=None, **kwargs):
-        '''
-        Create a module object given a response data and the module's type.
-
-        :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param module: Name representing the module which is about to be
-            created
-        :param index_id: The module ID
-        :return object: Return object same as module
-        '''
-
-        if module == 'Interface':
-            from pyaoscx.rest.v1.interface import Interface
-
-        elif module == 'Ipv6':
-            from pyaoscx.ipv6 import Ipv6
-
-        elif module == 'Vlan':
-            from pyaoscx.vlan import Vlan
-
-        elif module == 'Vrf':
-            from pyaoscx.vrf import Vrf
-
-        elif module == 'Vsx':
-            from pyaoscx.vsx import Vsx
-            return Vsx(session, **kwargs)
-
-        elif module == 'BgpRouter':
-            from pyaoscx.bgp_router import BgpRouter
-
-        elif module == 'BgpNeighbor':
-            from pyaoscx.bgp_neighbor import BgpNeighbor
-
-        elif module == 'VrfAddressFamily':
-            from pyaoscx.vrf_address_family import VrfAddressFamily
-
-        elif module == 'OspfRouter':
-            from pyaoscx.ospf_router import OspfRouter
-
-        elif module == 'OspfArea':
-            from pyaoscx.ospf_area import OspfArea
-
-        elif module == 'OspfInterface':
-            from pyaoscx.ospf_interface import OspfInterface
-
-        elif module == 'DhcpRelay':
-            from pyaoscx.dhcp_relay import DhcpRelay
-
-        elif module == 'ACL':
-            from pyaoscx.acl import ACL
-
-        elif module == 'AclEntry':
-            from pyaoscx.acl_entry import AclEntry
-
-        elif module == 'AggregateAddress':
-            from pyaoscx.aggregate_address import AggregateAddress
-
-        elif module == 'StaticRoute':
-            from pyaoscx.static_route import StaticRoute
-
-        elif module == 'StaticNexthop':
-            from pyaoscx.static_nexthop import StaticNexthop
-
-        elif module == 'PoEInterface':
-            from pyaoscx.poe_interface import PoEInterface
-
-        else:
-            raise ImportError("Invalid Module Name")
-
-        return locals()[module](session, index_id, **kwargs)
 
     def get_keys(self, response_data, module_name):
         '''
@@ -164,3 +81,7 @@ class v1(API):
                     uri_list.append(item)
 
             return uri_list
+
+
+    def _create_ospf_area(self, module_class, session, index_id, **kwargs):
+        return module_class(session, index_id, **kwargs)
