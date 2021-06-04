@@ -1,3 +1,35 @@
+# 2.0.0
+
+## Notable Changes
+**WARNING: V2 is NOT backwards compatible with v1 and earlier**
+* Huge overhaul of the design - the libraries now use factories in order for the code to be more object oriented.
+  Please read the [Design document](pyaoscx/DESIGN.md) file for more information.
+* Removed previous workflow examples (defunct) and added /workflows/workflow.py as an example for using the new design
+* Added directories for supporting files in /rest/v1 and /rest/v10_04
+* Most of the previous libraries have been updated, but there are unsupported modules that are pending updates below:
+   * ARP
+   * Common_ops
+   * EVPN
+   * LLDP
+   * Loop Protect
+   * MAC
+   * NAE
+   * QoS
+   * System
+   * VXLAN
+* Additionally, a few libraries have been migrated into other libraries:
+   * bgp.py is now split between bgp_router.py and bgp_neighbor.py
+   * config. py is now configuration.py
+   * dhcp.py is now dhcp_relay.py
+   * lag.py is now integrated into interface.py
+   * ospf.py is now split between ospf_area.py, ospf_interface.py, and ospf_router.py
+
+
+# 1.0.0
+
+## Notable Changes
+* Made changes to setup.py to update the PyPi information
+
 # 0.3.0
 
 ## Notable Changes

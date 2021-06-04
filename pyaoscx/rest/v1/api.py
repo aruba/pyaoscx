@@ -1,0 +1,163 @@
+# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# Apache License 2.0
+
+from datetime import date
+import re
+
+from pyaoscx.api import API
+
+
+class v1(API):
+    '''
+    Represents a REST API Version 1. It keeps all the information
+    needed for the version and methods related to it.
+    '''
+
+    def __init__(self):
+        self.release_date = date(2017, 1, 1)
+        self.version = '1'
+        self.default_selector = 'configuration'
+        self.default_depth = 0
+        self.default_facts_depth = 1
+        self.default_subsystem_facts_depth = 4
+        self.valid_selectors = ['configuration', 'status', 'statistics']
+        self.configurable_selectors = ['configuration']
+        self.compound_index_separator = '/'
+        self.valid_depths = [0, 1, 2, 3]
+
+    def valid_depth(self, depth):
+        '''
+        Verifies if given depth is valid for the current API version
+        :param depth: Integer
+        :return valid: Boolean True if depth is valid
+        '''
+        valid = True
+        if depth not in self.valid_depths:
+            valid = False
+        return valid
+
+    def get_index(self, obj):
+        '''
+        Method used to obtain the correct format of the objects information
+        which depends on the Current API version
+        Example:
+
+        1) "keepalive_vrf" : "Resource uri"
+        :param obj: PyaoscxModule object
+        :return: Resource URI
+        '''
+        # use object indices
+        return obj.get_uri()
+
+    def get_module(self, session, module, index_id=None, **kwargs):
+        '''
+        Create a module object given a response data and the module's type.
+
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :param module: Name representing the module which is about to be
+            created
+        :param index_id: The module ID
+        :return object: Return object same as module
+        '''
+
+        if module == 'Interface':
+            from pyaoscx.rest.v1.interface import Interface
+
+        elif module == 'Ipv6':
+            from pyaoscx.ipv6 import Ipv6
+
+        elif module == 'Vlan':
+            from pyaoscx.vlan import Vlan
+
+        elif module == 'Vrf':
+            from pyaoscx.vrf import Vrf
+
+        elif module == 'Vsx':
+            from pyaoscx.vsx import Vsx
+            return Vsx(session, **kwargs)
+
+        elif module == 'BgpRouter':
+            from pyaoscx.bgp_router import BgpRouter
+
+        elif module == 'BgpNeighbor':
+            from pyaoscx.bgp_neighbor import BgpNeighbor
+
+        elif module == 'VrfAddressFamily':
+            from pyaoscx.vrf_address_family import VrfAddressFamily
+
+        elif module == 'OspfRouter':
+            from pyaoscx.ospf_router import OspfRouter
+
+        elif module == 'OspfArea':
+            from pyaoscx.ospf_area import OspfArea
+
+        elif module == 'OspfInterface':
+            from pyaoscx.ospf_interface import OspfInterface
+
+        elif module == 'DhcpRelay':
+            from pyaoscx.dhcp_relay import DhcpRelay
+
+        elif module == 'ACL':
+            from pyaoscx.acl import ACL
+
+        elif module == 'AclEntry':
+            from pyaoscx.acl_entry import AclEntry
+
+        elif module == 'AggregateAddress':
+            from pyaoscx.aggregate_address import AggregateAddress
+
+        elif module == 'StaticRoute':
+            from pyaoscx.static_route import StaticRoute
+
+        elif module == 'StaticNexthop':
+            from pyaoscx.static_nexthop import StaticNexthop
+
+        else:
+            raise Exception("Invalid Module Name")
+
+        return locals()[module](session, index_id, **kwargs)
+
+    def get_keys(self, response_data, module_name):
+        '''
+        Given a response_data String obtain the keys
+        of said String and return them
+        :param response_data: a String in the form of
+            "/rest/v1/system/<module>/<key_1>/<key_2>"
+
+        :return name_arr: List of keys
+        '''
+        # Create regex string
+        regex_str = r'(.*)/' + re.escape(module_name) + r'/(?P<ids>.+)'
+        # Pattern expected
+        ids_pattern = re.compile(regex_str)
+        # Match pattern
+        indices = ids_pattern.match(response_data).group('ids')
+        # Get all indices
+        indices = indices.split('/')
+
+        return indices
+
+    def get_uri_from_data(self, data):
+        '''
+        Given a response data, create a list of URI items. In this Version the
+        data is a list, string or dict.
+        :param data: String, List or Dictionary containing URI items
+        :return uri_list: Return the list of URIs
+        '''
+
+        if isinstance(data, list):
+            return data
+        elif isinstance(data, str):
+            return [data]
+        elif isinstance(data, dict):
+            uri_list = []
+            for k, v in data.items():
+                item = self.get_uri_from_data(v)
+                # if value is a list, then concatenate.
+                if isinstance(item, list):
+                    uri_list += item
+                elif isinstance(item, str):
+                    uri_list.append(item)
+
+            return uri_list

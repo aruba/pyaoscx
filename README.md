@@ -1,18 +1,24 @@
 # pyaoscx
 
-These modules are written for AOS-CX API v1 and v10.04. These scripts are written for devices running AOS-CX firmware version 10.04.
+These modules are written for AOS-CX API v1 and v10.04. These scripts are written for devices running AOS-CX firmware 
+version 10.04 or greater.
 
-For this initial release, it is recommended to use the v1 AOS-CX API.  See the Release Notes for more information.
+See the [Release Notes](RELEASE-NOTES.md) for more information.
+
+Please note that pyaoscx v2 is **not** backwards compatible for pyaoscx v1 and earlier, so please specify the correct 
+version when using pyaoscx in requirements.txt files
 
 ## Structure
+Detailed information about the structure and design can be found in the [Design document](pyaoscx/DESIGN.md).
 
 * REST API call functions are found in the modules in /pyaoscx.
 * REST API call functions are combined into other functions that emulate low-level processes. These low-level process functions are also placed in files in /pyaoscx.
 * Functions from the /pyaoscx files (API functions and low-level functions) are combined to emulate larger network configuration processes (workflows). These workflow scripts stored in the /workflows folder.
 
+
 ## How to contribute
 
-Please see the accompanying CONTRIBUTING.md file for guidelines on how to contribute to this repository.
+Please see the accompanying [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to this repository.
 
 ## Git Workflow
 
