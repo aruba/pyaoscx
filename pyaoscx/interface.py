@@ -2,10 +2,19 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import json
+import logging
+import re
+
+from warnings import warn
+from netaddr import mac_eui48
+from netaddr import EUI as MacAddress
+
+import pyaoscx.utils.util as utils
+
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.verification_error import VerificationError
-
 
 from pyaoscx.ipv6 import Ipv6
 from pyaoscx.pyaoscx_module import PyaoscxModule
@@ -13,10 +22,6 @@ from pyaoscx.vlan import Vlan
 from pyaoscx.vrf import Vrf
 from pyaoscx.utils.connection import connected
 
-import json
-import logging
-import re
-import pyaoscx.utils.util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
 
 
@@ -2063,4 +2068,95 @@ class Interface(PyaoscxModule):
         self.routing = True
 
         # Apply changes
+        return self.apply()
+
+    def port_security_enable(
+            self, client_limit=0,
+            sticky_mac_learning=True,
+            allowed_mac_addr=[],
+            allowed_sticky_mac_addr={},
+            violation_action="notify",
+            violation_recovery_time=10,
+            violation_shutdown_recovery_enable=True):
+        """Enable port security on an specified Interface
+        :param client_limit: Integer with the maximum amount of MAC
+            addresses that can connect to the port. I
+        :param sticky_mac_learning: Boolean, If sticky MAC learning
+            should be enabled
+        :param allowed_mac_addr: The list of allowed MAC addresses,
+            each MAC address is a string, or a netaddr.EUI object
+        :param allowed_sticky_mac_addr: A dictionary where each key is
+            a MAC address (string or netaddr.EUI), and item is an
+            integer.
+        :param violation action: Action to take when unauthorized MACs
+            try to connect.
+        :param violation_recovery_time: integer with Time in seconds
+            to wait for recovery.
+        :param violation_shutdown_recovery_enable: Enable recovering
+            from violation shut down.
+        :return: True if the object was changed
+        """
+
+        mac_format = mac_eui48
+        mac_format.word_sep = ":"
+
+        if not self.materialized:
+            raise VerificationError("Interface {}".format(
+                self.name), "Object not materialized")
+
+        if not hasattr(self, "port_security"):
+            raise VerificationError(
+                "Interface {} is not security capable".format(self.name))
+
+        self.port_security["enable"] = True
+
+        self.port_security["client_limit"] = client_limit
+        self.port_security["sticky_mac_learning_enable"] = sticky_mac_learning
+
+        # Add static MAC addresses
+        # Convert all mac addresses to netaddr.EUI to verify that they
+        # are valid. This also ensures that all will have the same format.
+        # And then back to string because that is what the API ultimately
+        # accepts
+        self.port_security_static_client_mac_addr = [
+            str(MacAddress(mac_addr, dialect=mac_format))
+            for mac_addr in allowed_mac_addr]
+
+        # Add static sticky MAC addresses. We convert all dictionary
+        # keys to netadd.EUI to verify they are valid, and then pass them
+        # back to string because that is what the API accepts.
+        self.port_security_static_sticky_client_mac_addr = dict(
+            [(str(MacAddress(addr, dialect=mac_format)),
+              allowed_sticky_mac_addr[addr])
+             for addr in allowed_sticky_mac_addr])
+
+        self.port_access_security_violation["action"] = violation_action
+
+        self.port_access_security_violation[
+            "recovery_timer"] = violation_recovery_time
+        self.port_access_security_violation[
+            "shutdown_recovery_enable"] = violation_shutdown_recovery_enable
+
+        # Apply the changes
+        return self.apply()
+
+    def port_security_disable(self) -> bool:
+        """
+        Disable port security on the specified interface
+        :param interface_name: Alphanumeric String with the name of
+                               the Interface
+        :return: True if the object was changed
+        """
+        if not self.materialized:
+            raise VerificationError("interface {}".format(self.name),
+                                    "Object not materialized")
+
+        if not hasattr(self, "port_security"):
+            # This interface is not security capable
+            warn("Interface {} is not security capable".format(self.name),
+                 RuntimeWarning)
+
+        self.port_security["enable"] = False
+
+        # Apply the changes
         return self.apply()
