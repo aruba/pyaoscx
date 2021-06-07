@@ -5,11 +5,14 @@ from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
+from pyaoscx.mac import Mac
+from pyaoscx.static_mac import StaticMac
 
 import json
 import logging
 import re
 import pyaoscx.utils.util as utils
+from pyaoscx.utils.list_attributes import ListDescriptor
 
 
 class Vlan(PyaoscxModule):
@@ -20,6 +23,9 @@ class Vlan(PyaoscxModule):
     base_uri = 'system/vlans'
     resource_uri_name = 'vlans'
     indices = ['id']
+
+    macs = ListDescriptor('macs')
+    static_macs = ListDescriptor('static_macs')
 
     def __init__(self, session, vlan_id, uri=None, **kwargs):
 
@@ -33,6 +39,10 @@ class Vlan(PyaoscxModule):
         # obtained from the GET
         self._original_attributes = {}
         utils.set_creation_attrs(self, **kwargs)
+        # Use to manage MACs
+        self.macs = []
+        # Use to manage Static MACs
+        self.static_macs = []
         # Attribute used to know if object was changed recently
         self.__modified = False
 
@@ -58,19 +68,26 @@ class Vlan(PyaoscxModule):
 
         data = self._get_data(depth, selector)
 
+        # Delete unwanted data
+        if 'macs' in data:
+            data.pop('macs')
+
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
 
         # Determines if the VLAN is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, 'config_attrs', ['id'])
+            utils.set_config_attrs(self, data, 'config_attrs', ['id', 'macs'])
 
         # Set original attributes
         self._original_attributes = data
         # Remove ID
         if 'id' in self._original_attributes:
             self._original_attributes.pop('id')
+        # Remove macs
+        if 'macs' in self._original_attributes:
+            self._original_attributes.pop('macs')
 
         # Set all ACLs
         from pyaoscx.acl import ACL
@@ -94,6 +111,16 @@ class Vlan(PyaoscxModule):
             # Materialize Acl object
             acl.get()
             self.aclv6_in_cfg = acl
+
+        # Clean MACs
+        if not self.macs:
+            # Set MACs if any
+            # Adds macs to parent Vlan object
+            Mac.get_all(self.session, self)
+
+        # Set Static MACs
+        if self.static_macs == []:
+            StaticMac.get_all(self.session, self)
 
         # Sets object as materialized
         # Information is loaded from the Device
@@ -166,9 +193,8 @@ class Vlan(PyaoscxModule):
         '''
         Perform a PUT call to apply changes to an existing VLAN table entry
 
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+        :return modified: True if Object was modified and a PUT request was
+            made.
         '''
         # Variable returned
         modified = False
@@ -252,8 +278,7 @@ class Vlan(PyaoscxModule):
             connection to the device
         :param uri: a String with a URI
 
-        :return vlan_id, vlan: tuple containing both the Vlan object and the VLAN's
-            ID
+        :return vlan_id, vlan: tuple with the Vlan object its ID
         '''
         # Obtain ID from URI
         index_pattern = re.compile(r'(.*)vlans/(?P<index>.+)')
@@ -267,13 +292,13 @@ class Vlan(PyaoscxModule):
     @classmethod
     def get_facts(cls, session):
         '''
-        Modify this to Perform a GET call to retrieve all VLANs and their respective data
+        Modify this to Perform a GET call to retrieve all VLANs and their
+        respective data
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
 
         :return facts: Dictionary containing VLAN IDs as keys and Vlan objects as values
-
         '''
         # Log
         logging.info("Retrieving switch VLANs facts")
@@ -351,13 +376,13 @@ class Vlan(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified
         """
 
         return self.__modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def modify(self, vlan_name=None, vlan_desc=None, admin_conf_state=None):
@@ -504,3 +529,57 @@ class Vlan(PyaoscxModule):
 
         # Apply changes
         return self.apply()
+
+    def get_mac(self, from_id, mac_address):
+        """
+        Create an Mac object.
+        :param from_id: String source of the MAC address.
+            Must be "dynamic", "VSX", "static", "VRRP",
+            "port-access-security", "evpn", or "hsc"
+        :param mac_address: String MAC address.
+            Example:
+                '01:02:03:04:05:06'
+        :return: Mac object
+        """
+
+        mac_obj = self.session.api.get_module(
+            self.session, 'Mac',
+            from_id,
+            mac_addr=mac_address,
+            parent_vlan=self
+        )
+
+        # Get MAC data
+        mac_obj.get()
+        return mac_obj
+
+    def add_static_mac(self, port, mac_address):
+        """
+        Create an StaticMac object.
+        :param port: String for the Port's name:
+            Example:
+                1/1/1
+        :param mac_address: String MAC address.
+            Example:
+                '01:02:03:04:05:06'
+        :return: StaticMac object
+        """
+
+        if isinstance(port, str):
+            # Make Interface into an object
+            port = self.session.api.get_module(
+                self.session, 'Interface', port)
+            # Materialize interface to ensure its existence
+            port.get()
+
+        static_mac_obj = self.session.api.get_module(
+            self.session, 'StaticMac',
+            mac_address,
+            parent_vlan=self,
+            port=port
+        )
+
+        # Create static Mac on the switch
+        static_mac_obj.apply()
+
+        return static_mac_obj

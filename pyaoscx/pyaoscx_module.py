@@ -126,21 +126,6 @@ class PyaoscxModule(ABC):
         '''
         pass
 
-    def get_uri(self):
-        '''
-        Method used to obtain the specific <pyaoscx_module_type> URI
-        return: Object's URI
-        '''
-        pass
-
-    def get_info_format(self):
-        '''
-        Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
-        '''
-        pass
-
     @abstractmethod
     def from_uri(cls, session, uri):
         '''

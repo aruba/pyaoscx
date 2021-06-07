@@ -162,7 +162,9 @@ class API(ABC):
             "AggregateAddress": "aggregate_address",
             "StaticRoute": "static_route",
             "StaticNexthop": "static_nexthop",
-            "PoEInterface": "poe_interface"
+            "PoEInterface": "poe_interface",
+            "Mac": "mac",
+            "StaticMac": "static_mac"
         }
 
         try:

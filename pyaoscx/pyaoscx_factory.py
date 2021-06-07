@@ -1,7 +1,6 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.session import Session
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.dns import Dns
 from pyaoscx.configuration import Configuration
@@ -16,7 +15,7 @@ class PyaoscxFactory():
 
     __instance__ = None
 
-    def __init__(self, session: Session):
+    def __init__(self, session):
 
         self.session = session
         if PyaoscxFactory.__instance__ is None:
@@ -115,7 +114,7 @@ class PyaoscxFactory():
 
         return dns
 
-    def interface(self, name: str):
+    def interface(self, name):
         """
         Create an Interface object.
 
@@ -135,7 +134,7 @@ class PyaoscxFactory():
 
         return interface_obj
 
-    def ipv6(self, address: str, interface_name,
+    def ipv6(self, address, interface_name,
              address_type=None):
         """
         Create a Ipv6 object. If values differ from existing object, incoming
@@ -185,7 +184,7 @@ class PyaoscxFactory():
 
         return ipv6_obj
 
-    def vlan(self, vlan_id: int, name=None, description=None,
+    def vlan(self, vlan_id, name=None, description=None,
              vlan_type=None, admin_conf_state="up"):
         """
         Create a Vlan object.
@@ -237,7 +236,7 @@ class PyaoscxFactory():
 
         return vlan_obj
 
-    def vrf(self, name: str, route_distinguisher=None, vrf_type=None):
+    def vrf(self, name, route_distinguisher=None, vrf_type=None):
         """
         Create a Vrf object. If values differ from existing object, incoming
         changes will be applied
@@ -359,7 +358,7 @@ class PyaoscxFactory():
 
         return vsx_obj
 
-    def bgp_router_asn(self, vrf, asn: int, router_id=None):
+    def bgp_router_asn(self, vrf, asn, router_id=None):
         """
         Create a BgpRouter object as Autonomous System Number.
         If values differ from existing object, incoming
@@ -398,7 +397,7 @@ class PyaoscxFactory():
 
         return bgp_router_obj
 
-    def bgp_router_vrf(self, vrf, asn: int, redistribute):
+    def bgp_router_vrf(self, vrf, asn, redistribute):
         """
         Create a BgpRouter object with a BGP VRF settings for the
         associated BGP ASN.
@@ -759,7 +758,8 @@ class PyaoscxFactory():
                      vlan_desc=None, ipv4=None, vrf_name="default",
                      vlan_port_desc=None):
         """
-        Create VLAN and Interface objects to represent VLAN and SVI, respectively.
+        Create VLAN and Interface objects to represent VLAN and SVI,
+        respectively.
 
         :param vlan_id: Numeric ID of VLAN
         :param vlan_name: Alphanumeric name of VLAN
@@ -1152,3 +1152,72 @@ class PyaoscxFactory():
         poe_interface_obj.get()
 
         return poe_interface_obj
+
+    def mac(self, vlan, from_id, mac_address):
+        """
+        Create an Mac object.
+        param vlan_id: Numeric ID for VLAN
+            A Vlan object is also accepted
+        :param from_id: String source of the MAC address.
+            Must be "dynamic", "VSX", "static", "VRRP",
+            "port-access-security", "evpn", or "hsc"
+        :param mac_address: String MAC address, or netaddr EUI object
+            Example:
+                '01:02:03:04:05:06'
+        :return: Mac object
+        """
+
+        if isinstance(vlan, int):
+            vlan = self.vlan(vlan, 'Vlan{}'.format(vlan))
+
+        mac_obj = self.session.api.get_module(
+            self.session, 'Mac',
+            from_id,
+            mac_addr=mac_address,
+            parent_vlan=vlan
+        )
+
+        # Get MAC data
+        mac_obj.get()
+
+        return mac_obj
+
+    def static_mac(self, vlan, port, mac_address):
+        """
+        Create an StaticMac object.
+        param vlan_id: Numeric ID for VLAN
+            A Vlan object is also accepted
+        :param port: String for the Port's name:
+            Example:
+                1/1/1
+        :param mac_address: String MAC address, or netaddr EUI object
+            Example:
+                '01:02:03:04:05:06'
+        :return: StaticMac object
+        """
+
+        if isinstance(vlan, int):
+            vlan = self.vlan(vlan, 'Vlan{}'.format(vlan))
+
+        if isinstance(port, str):
+            port = self.interface(port)
+
+        static_mac_obj = self.session.api.get_module(
+            self.session, 'StaticMac',
+            mac_address,
+            parent_vlan=vlan,
+            port=port
+        )
+
+        # Try to obtain data; if not, create
+        try:
+            static_mac_obj.get()
+            if port is not None:
+                if port.name != static_mac_obj.port.name:
+                    static_mac_obj.port = port
+                    static_mac_obj.apply()
+        except GenericOperationError:
+            # Create object inside switch
+            static_mac_obj.apply()
+
+        return static_mac_obj
