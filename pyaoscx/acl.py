@@ -15,16 +15,16 @@ from pyaoscx.utils.list_attributes import ListDescriptor
 
 
 class ACL(PyaoscxModule):
-    '''
+    """
     Provide configuration management for ACL on AOS-CX devices.
-    '''
+    """
 
     base_uri = "system/acls"
-    resource_uri_name = 'acls'
+    resource_uri_name = "acls"
 
-    indices = ['name', 'list_type']
+    indices = ["name", "list_type"]
 
-    cfg_aces = ListDescriptor('cfg_aces')
+    cfg_aces = ListDescriptor("cfg_aces")
 
     def __init__(self, session, name, list_type, uri=None, **kwargs):
         self.session = session
@@ -47,7 +47,7 @@ class ACL(PyaoscxModule):
 
     @connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for an ACL table entry and fill
         the object with the incoming attributes
 
@@ -56,7 +56,7 @@ class ACL(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch ACLs")
 
         depth = self.session.api_version.default_depth\
@@ -69,28 +69,26 @@ class ACL(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+            selectors = " ".join(self.session.api_version.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
             base_url=self.session.base_url,
             class_uri=ACL.base_uri,
             id1=self.name,
             separator=self.session.api_version.compound_index_separator,
-            id2=self.list_type
-        )
+            id2=self.list_type)
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.s.get(uri,
+                                          verify=False,
+                                          params=payload,
+                                          proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -98,13 +96,13 @@ class ACL(PyaoscxModule):
         data = json.loads(response.text)
 
         # Remove fields because they are not needed for the PUT request
-        if 'name' in data:
-            data.pop('name')
-        if 'list_type' in data:
-            data.pop('list_type')
+        if "name" in data:
+            data.pop("name")
+        if "list_type" in data:
+            data.pop("list_type")
         # Delete unwanted data
-        if 'cfg_aces' in data:
-            data.pop('cfg_aces')
+        if "cfg_aces" in data:
+            data.pop("cfg_aces")
 
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
@@ -112,8 +110,8 @@ class ACL(PyaoscxModule):
         # Determines if the ACL is configurable
         if selector in self.session.api_version.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self, data, 'config_attrs', ['name', 'list_type'])
+            utils.set_config_attrs(self, data, "config_attrs",
+                                   ["name", "list_type"])
 
         # Set original attributes
         self.__original_attributes = data
@@ -132,7 +130,7 @@ class ACL(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session):
-        '''
+        """
         Perform a GET call to retrieve all system ACLs,
         and create a dictionary containing them
         :param cls: Object's class
@@ -140,18 +138,17 @@ class ACL(PyaoscxModule):
             connection to the device
         :return: Dictionary containing ACLs IDs as keys and a
             Acl objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch ACL")
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=ACL.base_uri)
+        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
+                                             class_uri=ACL.base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -164,15 +161,14 @@ class ACL(PyaoscxModule):
 
         for uri in uri_list:
             # Create a Acl object
-            indices, acl = ACL.from_uri(
-                session, uri)
+            indices, acl = ACL.from_uri(session, uri)
             acl_dict[indices] = acl
 
         return acl_dict
 
     @connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update an existing
         ACL table entry.
         Checks whether the ACL exists in the switch
@@ -181,7 +177,7 @@ class ACL(PyaoscxModule):
 
         :return modified: Boolean, True if object was created or modified
             False otherwise
-        '''
+        """
         modified = False
         if self.materialized:
             modified = self.update()
@@ -193,13 +189,12 @@ class ACL(PyaoscxModule):
 
     @connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing ACL table entry
 
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
-        '''
+        :return modified: True if Object was modified and a PUT request
+            was made.False otherwise
+        """
         # Variable returned
         modified = False
         acl_data = {}
@@ -211,8 +206,7 @@ class ACL(PyaoscxModule):
             class_uri=ACL.base_uri,
             id1=self.name,
             separator=self.session.api_version.compound_index_separator,
-            id2=self.list_type
-        )
+            id2=self.list_type)
 
         # Compare dictionaries
         if acl_data == self.__original_attributes:
@@ -223,19 +217,20 @@ class ACL(PyaoscxModule):
             post_data = json.dumps(acl_data, sort_keys=True, indent=4)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data, proxies=self.session.proxy)
+                response = self.session.s.put(uri,
+                                              verify=False,
+                                              data=post_data,
+                                              proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(
-                    response.text, response.status_code)
+                raise GenericOperationError(response.text,
+                                            response.status_code)
 
             else:
-                logging.info(
-                    "SUCCESS: Update ACL table entry {} succeeded")
+                logging.info("SUCCESS: Update ACL table entry {} succeeded")
             # Set new original attributes
             self.__original_attributes = acl_data
             modified = True
@@ -243,38 +238,37 @@ class ACL(PyaoscxModule):
 
     @connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new ACL table entry
         Only returns if an exception is not raise
 
         :return modified: Boolean, True if entry was created.
-        '''
+        """
 
         acl_data = {}
 
         acl_data = utils.get_attrs(self, self.config_attrs)
-        acl_data['name'] = self.name
-        acl_data['list_type'] = self.list_type
+        acl_data["name"] = self.name
+        acl_data["list_type"] = self.list_type
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=ACL.base_uri
-        )
+        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
+                                             class_uri=ACL.base_uri)
         post_data = json.dumps(acl_data, sort_keys=True, indent=4)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.s.post(uri,
+                                           verify=False,
+                                           data=post_data,
+                                           proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
         else:
-            logging.info(
-                "SUCCESS: Adding ACL table entry {} succeeded\
+            logging.info("SUCCESS: Adding ACL table entry {} succeeded\
                     ".format(self.name))
 
         # Get all object's data
@@ -285,32 +279,31 @@ class ACL(PyaoscxModule):
 
     @connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete ACL table entry.
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
             base_url=self.session.base_url,
             class_uri=ACL.base_uri,
             id1=self.name,
             separator=self.session.api_version.compound_index_separator,
-            id2=self.list_type
-        )
+            id2=self.list_type)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.s.delete(uri,
+                                             verify=False,
+                                             proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
         else:
-            logging.info(
-                "SUCCESS: Delete ACL table entry {} succeeded\
+            logging.info("SUCCESS: Delete ACL table entry {} succeeded\
                     ".format(self.name))
 
         # Delete object attributes
@@ -318,7 +311,7 @@ class ACL(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, response_data):
-        '''
+        """
         Create a Acl object given a response_data
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -331,18 +324,17 @@ class ACL(PyaoscxModule):
             or a
             string: "/rest/v10.04/system/acls/{name},{list_type}"
         :return: Acl object
-        '''
-        acl_arr = session.api_version.get_keys(
-            response_data, ACL.resource_uri_name)
+        """
+        acl_arr = session.api_version.get_keys(response_data,
+                                               ACL.resource_uri_name)
         list_type = acl_arr[1]
         name = acl_arr[0]
 
-        return ACL(
-            session, name, list_type)
+        return ACL(session, name, list_type)
 
     @classmethod
     def from_uri(cls, session, uri):
-        '''
+        """
         Create a Acl object given a URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -351,13 +343,13 @@ class ACL(PyaoscxModule):
 
         :return indices, acl: tuple containing both the indices and
             Acl object
-        '''
+        """
         # Obtain ID from URI
         index_pattern = \
             re.compile(
-                r'(.*)acls/(?P<index1>.+)[,./-](?P<index2>.+)')
-        name = index_pattern.match(uri).group('index1')
-        list_type = index_pattern.match(uri).group('index2')
+                r"(.*)acls/(?P<index1>.+)[,./-](?P<index2>.+)")
+        name = index_pattern.match(uri).group("index1")
+        list_type = index_pattern.match(uri).group("index2")
 
         # Create Acl object
         acl = ACL(session, name, list_type)
@@ -369,35 +361,37 @@ class ACL(PyaoscxModule):
         return "ACL name:{}, list_type:{}".format(self.name, self.list_type)
 
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific ACL URI
         return: Object's URI
-        '''
+        """
 
         if self._uri is None:
             self._uri = \
-                '{resource_prefix}{class_uri}/{id1}{separator}{id2}'.format(
+                "{resource_prefix}{class_uri}/{id1}{separator}{id2}".format(
                     resource_prefix=self.session.resource_prefix,
                     class_uri=ACL.base_uri,
                     id1=self.name,
-                    separator=self.session.api_version.compound_index_separator,
+                    separator=(
+                        self.session.api_version.compound_index_separator),
                     id2=self.list_type
                 )
 
         return self._uri
 
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api_version.get_index(self)
 
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified,
+            False otherwise.
         """
 
         return self.__modified
@@ -406,10 +400,18 @@ class ACL(PyaoscxModule):
     # IMPERATIVES FUNCTIONS
     ####################################################################
 
-    def add_acl_entry(self, sequence_num, action, count=None,
-                      protocol=None, src_ip=None, dst_ip=None,
-                      dst_l4_port_min=None, dst_l4_port_max=None,
-                      src_mac=None, dst_mac=None, ethertype=None):
+    def add_acl_entry(self,
+                      sequence_num,
+                      action,
+                      count=None,
+                      protocol=None,
+                      src_ip=None,
+                      dst_ip=None,
+                      dst_l4_port_min=None,
+                      dst_l4_port_max=None,
+                      src_mac=None,
+                      dst_mac=None,
+                      ethertype=None):
         """
         Create an AclEntry object, ACL Entry already exists, value passed
         won't update the entry
@@ -419,11 +421,13 @@ class ACL(PyaoscxModule):
         :param count: Optional boolean flag that when true, will make entry
             increment hit count for matched packets
         :param protocol: Optional integer IP protocol number
-        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are supported.
+        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are
+            supported.
             Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are supported.
+        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6
+            are supported.
             Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
@@ -445,11 +449,20 @@ class ACL(PyaoscxModule):
 
         # Create ACL Entry
         acl_entry_obj = self.session.api_version.get_module(
-            self.session, 'AclEntry', sequence_num, parent_acl=self,
-            action=action, count=count, protocol=protocol, src_ip=src_ip,
-            dst_ip=dst_ip, dst_l4_port_min=dst_l4_port_min,
-            dst_l4_port_max=dst_l4_port_max, src_mac=src_mac,
-            dst_mac=dst_mac, ethertype=ethertype)
+            self.session,
+            "AclEntry",
+            sequence_num,
+            parent_acl=self,
+            action=action,
+            count=count,
+            protocol=protocol,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            dst_l4_port_min=dst_l4_port_min,
+            dst_l4_port_max=dst_l4_port_max,
+            src_mac=src_mac,
+            dst_mac=dst_mac,
+            ethertype=ethertype)
 
         # Try to obtain data; if not, create
         try:
@@ -460,10 +473,17 @@ class ACL(PyaoscxModule):
 
         return acl_entry_obj
 
-    def modify_acl_entry(self, sequence_num, action, count=None,
-                         src_ip=None, dst_ip=None,
-                         dst_l4_port_min=None, dst_l4_port_max=None,
-                         src_mac=None, dst_mac=None, ethertype=None):
+    def modify_acl_entry(self,
+                         sequence_num,
+                         action,
+                         count=None,
+                         src_ip=None,
+                         dst_ip=None,
+                         dst_l4_port_min=None,
+                         dst_l4_port_max=None,
+                         src_mac=None,
+                         dst_mac=None,
+                         ethertype=None):
         """
         Modify an existing ACL Entry
 
@@ -471,11 +491,13 @@ class ACL(PyaoscxModule):
         :param action: Action should be either "permit" or "deny"
         :param count: Optional boolean flag that when true, will make entry
             increment hit count for matched packets
-        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are supported.
+        :param src_ip: Optional source IP address. Both IPv4 and IPv6
+            are supported.
             Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are supported.
+        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6
+            are supported.
             Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
@@ -496,17 +518,16 @@ class ACL(PyaoscxModule):
         """
 
         # Create ACL Entry
-        acl_entry_obj = self.session.api_version.get_module(
-            self.session, 'AclEntry', sequence_num, parent_acl=self)
+        acl_entry_obj = self.session.api_version.get_module(self.session,
+                                                            "AclEntry",
+                                                            sequence_num,
+                                                            parent_acl=self)
         # Get AclEntry object data
         acl_entry_obj.get()
 
         # Modify data
-        acl_entry_obj.modify(
-            action, count,
-            src_ip, dst_ip,
-            dst_l4_port_min, dst_l4_port_max,
-            src_mac, dst_mac, ethertype)
+        acl_entry_obj.modify(action, count, src_ip, dst_ip, dst_l4_port_min,
+                             dst_l4_port_max, src_mac, dst_mac, ethertype)
 
         return acl_entry_obj
 

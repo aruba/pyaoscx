@@ -3,8 +3,6 @@
 
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.exceptions.verification_error import VerificationError
-
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -38,8 +36,12 @@ class AclEntry(PyaoscxModule):
         "udp": 17
     }
 
-    def __init__(self, session, sequence_number, parent_acl,
-                 uri=None, **kwargs):
+    def __init__(self,
+                 session,
+                 sequence_number,
+                 parent_acl,
+                 uri=None,
+                 **kwargs):
 
         self.session = session
         # Assign ID
@@ -112,20 +114,18 @@ class AclEntry(PyaoscxModule):
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{base_url}{class_uri}/{sequence_number}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            sequence_number=self.sequence_number
-        )
+            sequence_number=self.sequence_number)
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.s.get(uri,
+                                          verify=False,
+                                          params=payload,
+                                          proxies=self.session.proxy)
 
         except Exception as e:
             raise ResponseError('GET', e)
@@ -141,8 +141,8 @@ class AclEntry(PyaoscxModule):
         # Determines if the ACL Entry is configurable
         if selector in self.session.api_version.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self, data, 'config_attrs', ['sequence_number'])
+            utils.set_config_attrs(self, data, 'config_attrs',
+                                   ['sequence_number'])
 
         # Set original attributes
         self.__original_attributes = data
@@ -164,8 +164,8 @@ class AclEntry(PyaoscxModule):
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
         :param parent_acl: parent Acl object where ACL Entry is stored
-        :return acl_entry_dict: Dictionary containing ACL Entry IDs as keys and an ACL Entry
-            objects as values
+        :return acl_entry_dict: Dictionary containing ACL Entry IDs as keys
+            and an ACL Entry objects as values
         '''
 
         logging.info("Retrieving all ACL entries within switch for ACL")
@@ -176,9 +176,8 @@ class AclEntry(PyaoscxModule):
             separator=session.api_version.compound_index_separator,
             id2=parent_acl.list_type)
 
-        uri = '{base_url}{class_uri}'.format(
-            base_url=session.base_url,
-            class_uri=base_uri)
+        uri = '{base_url}{class_uri}'.format(base_url=session.base_url,
+                                             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
@@ -233,9 +232,8 @@ class AclEntry(PyaoscxModule):
         '''
         Perform a PUT call to apply changes to an existing ACL Entry
 
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+        :return modified: True if Object was modified and a PUT request
+            was made. False otherwise
         '''
         # Variable returned
         modified = False
@@ -246,8 +244,7 @@ class AclEntry(PyaoscxModule):
         uri = "{base_url}{class_uri}/{sequence_number}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            sequence_number=self.sequence_number
-        )
+            sequence_number=self.sequence_number)
 
         # Compare dictionaries
         if acl_entry_data == self.__original_attributes:
@@ -258,21 +255,22 @@ class AclEntry(PyaoscxModule):
             post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data, proxies=self.session.proxy)
+                response = self.session.s.put(uri,
+                                              verify=False,
+                                              data=post_data,
+                                              proxies=self.session.proxy)
 
             except Exception as e:
                 raise ResponseError('PUT', e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(
-                    response.text, response.status_code)
+                raise GenericOperationError(response.text,
+                                            response.status_code)
 
             else:
                 logging.info(
                     "SUCCESS: Update ACL Entry table entry {} succeeded\
-                    ".format(
-                        self.sequence_number))
+                    ".format(self.sequence_number))
             # Set new original attributes
             self.__original_attributes = acl_entry_data
 
@@ -295,10 +293,8 @@ class AclEntry(PyaoscxModule):
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
         acl_entry_data['sequence_number'] = self.sequence_number
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
+        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
+                                             class_uri=self.base_uri)
 
         # Try to get protocol number
         try:
@@ -315,8 +311,10 @@ class AclEntry(PyaoscxModule):
         post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.s.post(uri,
+                                           verify=False,
+                                           data=post_data,
+                                           proxies=self.session.proxy)
 
         except Exception as e:
             raise ResponseError('POST', e)
@@ -344,12 +342,12 @@ class AclEntry(PyaoscxModule):
         uri = "{base_url}{class_uri}/{sequence_number}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            sequence_number=self.sequence_number
-        )
+            sequence_number=self.sequence_number)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.s.delete(uri,
+                                             verify=False,
+                                             proxies=self.session.proxy)
 
         except Exception as e:
             raise ResponseError('DELETE', e)
@@ -402,8 +400,8 @@ class AclEntry(PyaoscxModule):
         :param parent_acl: parent Acl object where ACL Entry is stored
         :param uri: a String with a URI
 
-        :return index, acl_entry_obj: tuple containing both the AclEntry object and
-            the acl_entry's sequence_number
+        :return index, acl_entry_obj: tuple containing both the AclEntry
+            object and the acl_entry's sequence_number
         '''
         # Obtain ID from URI
         index_pattern = re.compile(r'(.*)cfg_aces/(?P<index>.+)')
@@ -424,10 +422,11 @@ class AclEntry(PyaoscxModule):
         '''
 
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{sequence_number}'.format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=self.base_uri,
-                sequence_number=self.sequence_number)
+            self._uri = (
+                '{resource_prefix}{class_uri}/{sequence_number}'.format(
+                    resource_prefix=self.session.resource_prefix,
+                    class_uri=self.base_uri,
+                    sequence_number=self.sequence_number))
 
         return self._uri
 
@@ -442,7 +441,8 @@ class AclEntry(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified,
+            False otherwise.
         """
 
         return self.__modified
@@ -451,10 +451,16 @@ class AclEntry(PyaoscxModule):
     # IMPERATIVES FUNCTIONS
     ####################################################################
 
-    def modify(self, action=None, count=None,
-               src_ip=None, dst_ip=None,
-               dst_l4_port_min=None, dst_l4_port_max=None,
-               src_mac=None, dst_mac=None, ethertype=None):
+    def modify(self,
+               action=None,
+               count=None,
+               src_ip=None,
+               dst_ip=None,
+               dst_l4_port_min=None,
+               dst_l4_port_max=None,
+               src_mac=None,
+               dst_mac=None,
+               ethertype=None):
         """
         Create an AclEntry object, ACL Entry already exists, value passed
         won't update the entry
@@ -462,11 +468,13 @@ class AclEntry(PyaoscxModule):
         :param action: Action should be either "permit" or "deny"
         :param count: Optional boolean flag that when true, will make entry
             increment hit count for matched packets
-        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are supported.
+        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are
+            supported.
             Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are supported.
+        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6
+            are supported.
             Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff

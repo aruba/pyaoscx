@@ -15,15 +15,19 @@ import pyaoscx.utils.util as utils
 
 
 class BgpNeighbor(PyaoscxModule):
-    '''
+    """
     Provide configuration management for BGP Neighbor on AOS-CX devices.
-    '''
+    """
 
-    indices = ['ip_or_ifname_or_group_name']
-    resource_uri_name = 'bgp_neighbors'
+    indices = ["ip_or_ifname_or_group_name"]
+    resource_uri_name = "bgp_neighbors"
 
-    def __init__(self, session, ip_or_ifname_or_group_name, parent_bgp_router,
-                 uri=None, **kwargs):
+    def __init__(self,
+                 session,
+                 ip_or_ifname_or_group_name,
+                 parent_bgp_router,
+                 uri=None,
+                 **kwargs):
 
         self.session = session
         # Assign ID
@@ -43,17 +47,17 @@ class BgpNeighbor(PyaoscxModule):
         self.__modified = False
 
     def __set_bgp_router(self, parent_bgp_router):
-        '''
+        """
         Set parent BgpRouter object as an attribute for the BGP class
         :param parent_bgp_router a BgpRouter object
-        '''
+        """
 
         # Set parent BGP Router
         self.__parent_bgp_router = parent_bgp_router
 
         # Set URI
         self.base_uri = \
-            '{base_bgp_router_uri}/{bgp_router_asn}/bgp_neighbors'.format(
+            "{base_bgp_router_uri}/{bgp_router_asn}/bgp_neighbors".format(
                 base_bgp_router_uri=self.__parent_bgp_router.base_uri,
                 bgp_router_asn=self.__parent_bgp_router.asn)
 
@@ -68,16 +72,16 @@ class BgpNeighbor(PyaoscxModule):
 
     @connected
     def get(self, depth=None, selector=None):
-        '''
-        Perform a GET call to retrieve data for a BGP Neighbor table entry and fill
-        the object with the incoming attributes
+        """
+        Perform a GET call to retrieve data for a BGP Neighbor table
+        entry and fill the object with the incoming attributes
 
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch BGP Neighbors")
 
         depth = self.session.api_version.default_depth\
@@ -90,27 +94,25 @@ class BgpNeighbor(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+            selectors = " ".join(self.session.api_version.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{base_url}{class_uri}/{id}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            id=self.ip_or_ifname_or_group_name
-        )
+            id=self.ip_or_ifname_or_group_name)
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.s.get(uri,
+                                          verify=False,
+                                          params=payload,
+                                          proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -123,21 +125,21 @@ class BgpNeighbor(PyaoscxModule):
         # Determines if the BGP Neighbor is configurable
         if selector in self.session.api_version.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self, data, 'config_attrs', ['ip_or_ifname_or_group_name'])
+            utils.set_config_attrs(self, data, "config_attrs",
+                                   ["ip_or_ifname_or_group_name"])
 
         # Set original attributes
         self.__original_attributes = data
         # Remove ID
-        if 'ip_or_ifname_or_group_name' in self.__original_attributes:
-            self.__original_attributes.pop('ip_or_ifname_or_group_name')
+        if "ip_or_ifname_or_group_name" in self.__original_attributes:
+            self.__original_attributes.pop("ip_or_ifname_or_group_name")
 
         # If the BGP Neighbor has a local_interface inside the switch
-        if hasattr(self, 'local_interface') and \
+        if hasattr(self, "local_interface") and \
                 self.local_interface is not None:
             local_interface_response = self.local_interface
             interface_cls = self.session.api_version.get_module(
-                self.session, 'Interface', '')
+                self.session, "Interface", "")
             # Set port as a Interface Object
             self.local_interface = interface_cls.from_response(
                 self.session, local_interface_response)
@@ -150,32 +152,32 @@ class BgpNeighbor(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session, parent_bgp_router):
-        '''
+        """
         Perform a GET call to retrieve all system BGP Neighbors inside a BGP
         Router, and create a dictionary containing them
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param parent_bgp_router: parent BgpRouter object where BGP Neighbor is stored
+        :param parent_bgp_router: parent BgpRouter object where BGP Neighbor
+            is stored
         :return: Dictionary containing BGP Neighbors IDs as keys and a BGP
             Neighbors objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch BGP Neighbors")
 
         base_uri = \
-            '{base_bgp_router_uri}/{bgp_router_asn}/bgp_neighbors'.format(
+            "{base_bgp_router_uri}/{bgp_router_asn}/bgp_neighbors".format(
                 base_bgp_router_uri=parent_bgp_router.base_uri,
                 bgp_router_asn=parent_bgp_router.asn)
 
-        uri = '{base_url}{class_uri}'.format(
-            base_url=session.base_url,
-            class_uri=base_uri)
+        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
+                                             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -198,7 +200,7 @@ class BgpNeighbor(PyaoscxModule):
 
     @connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update an existing
         BGP Neighbor table entry.
         Checks whether the BGP Neighbor exists in the switch
@@ -208,7 +210,7 @@ class BgpNeighbor(PyaoscxModule):
         :return modified: Boolean, True if object was created or modified
             False otherwise
 
-        '''
+        """
         if not self.__parent_bgp_router.materialized:
             self.__parent_bgp_router.apply()
 
@@ -223,13 +225,13 @@ class BgpNeighbor(PyaoscxModule):
 
     @connected
     def update(self):
-        '''
-        Perform a PUT call to apply changes to an existing  BGP Neighbor table entry
+        """
+        Perform a PUT call to apply changes to an existing  BGP Neighbor
+        table entry
 
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
-        '''
+        :return modified: True if Object was modified and a PUT request
+            was made. False otherwise
+        """
         # Variable returned
         modified = False
 
@@ -245,8 +247,7 @@ class BgpNeighbor(PyaoscxModule):
         uri = "{base_url}{class_uri}/{id}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            id=self.ip_or_ifname_or_group_name
-        )
+            id=self.ip_or_ifname_or_group_name)
 
         # Compare dictionaries
         if bgp_neighbor_data == self.__original_attributes:
@@ -257,15 +258,17 @@ class BgpNeighbor(PyaoscxModule):
             put_data = json.dumps(bgp_neighbor_data, sort_keys=True, indent=4)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=put_data, proxies=self.session.proxy)
+                response = self.session.s.put(uri,
+                                              verify=False,
+                                              data=put_data,
+                                              proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(
-                    response.text, response.status_code)
+                raise GenericOperationError(response.text,
+                                            response.status_code)
 
             else:
                 logging.info(
@@ -279,45 +282,44 @@ class BgpNeighbor(PyaoscxModule):
 
     @connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new BGP Neighbor table entry
         Only returns if an exception is not raise
 
         :return modified: Boolean, True if entry was created
 
-        '''
+        """
 
         bgp_neighbor_data = {}
 
         bgp_neighbor_data = utils.get_attrs(self, self.config_attrs)
-        bgp_neighbor_data['ip_or_ifname_or_group_name'] = \
+        bgp_neighbor_data["ip_or_ifname_or_group_name"] = \
             self.ip_or_ifname_or_group_name
 
-        if hasattr(self, 'local_interface'):
+        if hasattr(self, "local_interface"):
 
             # If local interface is NOT a string
             if not isinstance(self.local_interface, str):
                 if not self.local_interface.materialized:
-                    raise VerificationError(
-                        'Local Interface',
-                        'Object not materialized')
+                    raise VerificationError("Local Interface",
+                                            "Object not materialized")
 
                 # Get ISL port uri
                 bgp_neighbor_data["local_interface"] = \
                     self.local_interface.get_info_format()
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
+        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
+                                             class_uri=self.base_uri)
         post_data = json.dumps(bgp_neighbor_data, sort_keys=True, indent=4)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.s.post(uri,
+                                           verify=False,
+                                           data=post_data,
+                                           proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -334,23 +336,23 @@ class BgpNeighbor(PyaoscxModule):
 
     @connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete  BGP Neighbor table entry.
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{id}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            id=self.ip_or_ifname_or_group_name
-        )
+            id=self.ip_or_ifname_or_group_name)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.s.delete(uri,
+                                             verify=False,
+                                             proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -370,13 +372,14 @@ class BgpNeighbor(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, parent_bgp_router, response_data):
-        '''
-        Create a  BgpNeighbor object given a response_data related to the BGP Router
-        ID object
+        """
+        Create a  BgpNeighbor object given a response_data related to the
+        BGP Router ID object
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param parent_bgp_router: parent BgpRouter object where BGP Neighbor is stored
+        :param parent_bgp_router: parent BgpRouter object where BGP
+            Neighbor is stored
         :param response_data: The response can be either a
             dictionary: {
                     id: "/rest/v10.04/system/vrfs/<vrf_name>/bgp_routers/asn
@@ -386,65 +389,64 @@ class BgpNeighbor(PyaoscxModule):
             string: "/rest/v10.04/system/vrfs/<vrf_name>/bgp_routers/asn/
                 bgp_neighbors/id"
         :return: BgpNeighbor object
-        '''
-        bgp_arr = session.api_version.get_keys(
-            response_data, BgpNeighbor.resource_uri_name)
+        """
+        bgp_arr = session.api_version.get_keys(response_data,
+                                               BgpNeighbor.resource_uri_name)
         bgp_neighbor_id = bgp_arr[0]
         return BgpNeighbor(session, bgp_neighbor_id, parent_bgp_router)
 
     @classmethod
     def from_uri(cls, session, parent_bgp_router, uri):
-        '''
+        """
         Create a BgpNeighbor object given a URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param parent_bgp_router: parent BgpRouter object where BGP Neighbor is stored
+        :param parent_bgp_router: parent BgpRouter object where BGP Neighbor
+            is stored
         :param uri: a String with a URI
 
         :return index, bgp_obj: tuple containing both the BGP object and the
             BGP's ID
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)bgp_neighbors/(?P<index>.+)')
-        index = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)bgp_neighbors/(?P<index>.+)")
+        index = index_pattern.match(uri).group("index")
 
         # Create BGP object
-        bgp_obj = BgpNeighbor(
-            session, index, parent_bgp_router, uri=uri)
+        bgp_obj = BgpNeighbor(session, index, parent_bgp_router, uri=uri)
 
         return index, bgp_obj
 
     def __str__(self):
-        return "Bgp Neighbor ID {}".format(
-            self.ip_or_ifname_or_group_name)
+        return "Bgp Neighbor ID {}".format(self.ip_or_ifname_or_group_name)
 
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific BGP Neighbor URI
         return: Object's URI
-        '''
+        """
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{id}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{id}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=self.base_uri,
-                id=self.ip_or_ifname_or_group_name
-            )
+                id=self.ip_or_ifname_or_group_name)
 
         return self._uri
 
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api_version.get_index(self)
 
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified,
+            False otherwise.
         """
 
         return self.__modified

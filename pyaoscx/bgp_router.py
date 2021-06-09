@@ -5,7 +5,6 @@ from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.verification_error import VerificationError
 
-
 from pyaoscx.bgp_neighbor import BgpNeighbor
 from pyaoscx.aggregate_address import AggregateAddress
 from pyaoscx.pyaoscx_module import PyaoscxModule
@@ -20,16 +19,16 @@ from pyaoscx.utils.list_attributes import ListDescriptor
 
 
 class BgpRouter(PyaoscxModule):
-    '''
+    """
     Provide configuration management for BGP on AOS-CX devices.
-    '''
+    """
 
-    indices = ['asn']
-    resource_uri_name = 'bgp_routers'
+    indices = ["asn"]
+    resource_uri_name = "bgp_routers"
 
     # Use to manage BGP Neighbors
-    bgp_neighbors = ListDescriptor('bgp_neighbors')
-    aggregate_addresses = ListDescriptor('aggregate_addresses')
+    bgp_neighbors = ListDescriptor("bgp_neighbors")
+    aggregate_addresses = ListDescriptor("aggregate_addresses")
 
     def __init__(self, session, asn: int, parent_vrf, uri=None, **kwargs):
 
@@ -55,16 +54,16 @@ class BgpRouter(PyaoscxModule):
         self.__modified = False
 
     def __set_vrf(self, parent_vrf):
-        '''
+        """
         Set parent Vrf object as an attribute for the BGP class
         :param parent_vrf: a Vrf object
-        '''
+        """
 
         # Set parent Vrf object
         self.__parent_vrf = parent_vrf
 
         # Set URI
-        self.base_uri = '{base_vrf_uri}/{vrf_name}/bgp_routers'.format(
+        self.base_uri = "{base_vrf_uri}/{vrf_name}/bgp_routers".format(
             base_vrf_uri=self.__parent_vrf.base_uri,
             vrf_name=self.__parent_vrf.name)
 
@@ -79,7 +78,7 @@ class BgpRouter(PyaoscxModule):
 
     @connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a BGP Router table entry and
             fill the object with the incoming attributes
 
@@ -88,7 +87,7 @@ class BgpRouter(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch BGP Routers")
 
         depth = self.session.api_version.default_depth\
@@ -102,36 +101,34 @@ class BgpRouter(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+            selectors = " ".join(self.session.api_version.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{base_url}{class_uri}/{asn}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            asn=self.asn
-        )
+            asn=self.asn)
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.s.get(uri,
+                                          verify=False,
+                                          params=payload,
+                                          proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
 
         data = json.loads(response.text)
         # Delete unwanted data
-        if 'bgp_neighbors' in data:
-            data.pop('bgp_neighbors')
-        if 'aggregate_addresses' in data:
-            data.pop('aggregate_addresses')
+        if "bgp_neighbors" in data:
+            data.pop("bgp_neighbors")
+        if "aggregate_addresses" in data:
+            data.pop("aggregate_addresses")
 
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
@@ -140,20 +137,20 @@ class BgpRouter(PyaoscxModule):
         if selector in self.session.api_version.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, 'config_attrs',
-                ['asn', 'bgp_neighbors', 'aggregate_addresses'])
+                self, data, "config_attrs",
+                ["asn", "bgp_neighbors", "aggregate_addresses"])
 
         # Set original attributes
         self.__original_attributes = data
         # Remove ID
-        if 'asn' in self.__original_attributes:
-            self.__original_attributes.pop('asn')
+        if "asn" in self.__original_attributes:
+            self.__original_attributes.pop("asn")
         # Remove ID
-        if 'bgp_neighbors' in self.__original_attributes:
-            self.__original_attributes.pop('bgp_neighbors')
+        if "bgp_neighbors" in self.__original_attributes:
+            self.__original_attributes.pop("bgp_neighbors")
         # Remove ID
-        if 'aggregate_addresses' in self.__original_attributes:
-            self.__original_attributes.pop('aggregate_addresses')
+        if "aggregate_addresses" in self.__original_attributes:
+            self.__original_attributes.pop("aggregate_addresses")
 
         # Sets object as materialized
         # Information is loaded from the Device
@@ -173,7 +170,7 @@ class BgpRouter(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session, parent_vrf):
-        '''
+        """
         Perform a GET call to retrieve all system BGP inside a VRF,
         and create a dictionary containing them
         :param cls: Object's class
@@ -182,22 +179,20 @@ class BgpRouter(PyaoscxModule):
         :param parent_vrf: parent Vrf object where VRF is stored
         :return: Dictionary containing BGP Router IDs as keys and a BGP Router
             objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch BGP Routers")
 
-        base_uri = '{base_vrf_uri}/{vrf_name}/bgp_routers'.format(
-            base_vrf_uri=parent_vrf.base_uri,
-            vrf_name=parent_vrf.name)
+        base_uri = "{base_vrf_uri}/{vrf_name}/bgp_routers".format(
+            base_vrf_uri=parent_vrf.base_uri, vrf_name=parent_vrf.name)
 
-        uri = '{base_url}{class_uri}'.format(
-            base_url=session.base_url,
-            class_uri=base_uri)
+        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
+                                             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -219,7 +214,7 @@ class BgpRouter(PyaoscxModule):
 
     @connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update an existing
         BGP Router table entry.
         Checks whether the BGP Router exists in the switch
@@ -229,7 +224,7 @@ class BgpRouter(PyaoscxModule):
         :return modified: Boolean, True if object was created or modified
             False otherwise
 
-        '''
+        """
         if not self.__parent_vrf.materialized:
             self.__parent_vrf.apply()
 
@@ -244,13 +239,13 @@ class BgpRouter(PyaoscxModule):
 
     @connected
     def update(self):
-        '''
-        Perform a PUT call to apply changes to an existing BGP Router table entry
+        """
+        Perform a PUT call to apply changes to an existing BGP Router
+        table entry
 
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
-        '''
+        :return modified: True if Object was modified and a PUT request
+            was made. False otherwise
+        """
         # Variable returned
         modified = False
 
@@ -261,8 +256,7 @@ class BgpRouter(PyaoscxModule):
         uri = "{base_url}{class_uri}/{asn}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            asn=self.asn
-        )
+            asn=self.asn)
 
         # Compare dictionaries
         if bgp_router_data == self.__original_attributes:
@@ -273,15 +267,17 @@ class BgpRouter(PyaoscxModule):
             post_data = json.dumps(bgp_router_data, sort_keys=True, indent=4)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data, proxies=self.session.proxy)
+                response = self.session.s.put(uri,
+                                              verify=False,
+                                              data=post_data,
+                                              proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(
-                    response.text, response.status_code)
+                raise GenericOperationError(response.text,
+                                            response.status_code)
 
             else:
                 logging.info(
@@ -297,30 +293,29 @@ class BgpRouter(PyaoscxModule):
 
     @connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new BGP Router table entry
         Only returns if an exception is not raise
 
         :return modified: Boolean, True if entry was created
-        '''
+        """
         bgp_data = {}
 
         bgp_data = utils.get_attrs(self, self.config_attrs)
-        bgp_data['asn'] = self.asn
+        bgp_data["asn"] = self.asn
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
+        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
+                                             class_uri=self.base_uri)
         post_data = json.dumps(bgp_data, sort_keys=True, indent=4)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data,
-                proxies=self.session.proxy)
+            response = self.session.s.post(uri,
+                                           verify=False,
+                                           data=post_data,
+                                           proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -336,23 +331,23 @@ class BgpRouter(PyaoscxModule):
 
     @connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete BGP Router table entry.
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{asn}".format(
             base_url=self.session.base_url,
             class_uri=self.base_uri,
-            asn=self.asn
-        )
+            asn=self.asn)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.s.delete(uri,
+                                             verify=False,
+                                             proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -371,8 +366,9 @@ class BgpRouter(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, parent_vrf, response_data):
-        '''
-        Create a BgpRouter object given a response_data related to the BGP asn object
+        """
+        Create a BgpRouter object given a response_data related to the
+        BGP asn object
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -384,15 +380,15 @@ class BgpRouter(PyaoscxModule):
             or a
             string: "/rest/v10.04/system/vrfs/bgp_routers/asn"
         :return: BgpRouter object
-        '''
-        bgp_arr = session.api_version.get_keys(
-            response_data, BgpRouter.resource_uri_name)
+        """
+        bgp_arr = session.api_version.get_keys(response_data,
+                                               BgpRouter.resource_uri_name)
         asn = bgp_arr[0]
         return BgpRouter(session, asn, parent_vrf)
 
     @classmethod
     def from_uri(cls, session, parent_vrf, uri):
-        '''
+        """
         Create a BgpRouter object given a URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -400,12 +396,12 @@ class BgpRouter(PyaoscxModule):
         :param parent_vrf: parent Vrf object where BGP Router is stored
         :param uri: a String with a URI
 
-        :return index, bgp_obj: tuple containing both the BgpRouter object and the BGP's
-            asn
-        '''
+        :return index, bgp_obj: tuple containing both the BgpRouter object
+            and the BGP's asn
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)bgp_routers/(?P<index>.+)')
-        index = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)bgp_routers/(?P<index>.+)")
+        index = index_pattern.match(uri).group("index")
 
         # Create BGP object
         bgp_obj = BgpRouter(session, index, parent_vrf, uri=uri)
@@ -416,32 +412,32 @@ class BgpRouter(PyaoscxModule):
         return "BGP Router ID {}".format(self.asn)
 
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific BGP Router URI
         return: Object's URI
-        '''
+        """
 
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{asn}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{asn}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=self.base_uri,
-                asn=self.asn
-            )
+                asn=self.asn)
 
         return self._uri
 
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api_version.get_index(self)
 
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified,
+            False otherwise.
         """
 
         return self.__modified
@@ -450,8 +446,11 @@ class BgpRouter(PyaoscxModule):
     # IMPERATIVES FUNCTIONS
     ####################################################################
 
-    def create_bgp_neighbors(self, group_ip, family_type="l2vpn_evpn",
-                             reflector=False, send_community=False,
+    def create_bgp_neighbors(self,
+                             group_ip,
+                             family_type="l2vpn_evpn",
+                             reflector=False,
+                             send_community=False,
                              local_interface=""):
         """
         Perform a POST call to create BGP Neighbors to the associated current
@@ -480,14 +479,13 @@ class BgpRouter(PyaoscxModule):
         """
 
         if not self.materialized:
-            raise VerificationError(
-                'VRF {}'.format(self.name),
-                'Object not materialized')
+            raise VerificationError("VRF {}".format(self.name),
+                                    "Object not materialized")
 
         if local_interface != "":
             if isinstance(local_interface, str):
                 local_interface = self.session.api_version.get_module(
-                    self.session, 'Interface', local_interface)
+                    self.session, "Interface", local_interface)
 
         # Set values needed
         activate = {
@@ -496,9 +494,7 @@ class BgpRouter(PyaoscxModule):
             "l2vpn-evpn": False
         }
 
-        next_hop_unchanged = {
-            "l2vpn-evpn": False
-        }
+        next_hop_unchanged = {"l2vpn-evpn": False}
 
         route_reflector_client = {
             "ipv4-unicast": False,
@@ -521,14 +517,18 @@ class BgpRouter(PyaoscxModule):
             route_reflector_client[family_type] = reflector
 
         bgp_neighbor_obj = self.session.api_version.get_module(
-            self.session, 'BgpNeighbor', group_ip,
-            parent_bgp_router=self, is_peer_group=False,
-            remote_as=self.asn, shutdown=False,
+            self.session,
+            "BgpNeighbor",
+            group_ip,
+            parent_bgp_router=self,
+            is_peer_group=False,
+            remote_as=self.asn,
+            shutdown=False,
             local_interface=local_interface,
-            activate=activate, next_hop_unchanged=next_hop_unchanged,
+            activate=activate,
+            next_hop_unchanged=next_hop_unchanged,
             route_reflector_client=route_reflector_client,
-            send_community=send_community_data
-        )
+            send_community=send_community_data)
 
         # Try to obtain data; if not, create
         try:

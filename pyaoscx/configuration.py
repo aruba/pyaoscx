@@ -4,7 +4,6 @@
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
-from pyaoscx.session import Session
 import pyaoscx.utils.util as utils
 from pyaoscx.utils.connection import connected
 
@@ -13,10 +12,10 @@ import json
 
 
 class Configuration():
-    '''
+    """
     Represents a Device's Configuration and all of its attributes.
     Keeping all configuration information
-    '''
+    """
 
     base_uri = "system"
 
@@ -30,10 +29,10 @@ class Configuration():
 
     @connected
     def get(self):
-        '''
+        """
         Perform a GET call to retrieve system attributes
 
-        '''
+        """
         logging.info("Retrieving the switch attributes and capabilities")
         depth = self.session.api_version.default_depth
         uri = "{base_url}{class_uri}?depth={depth}".format(
@@ -47,7 +46,7 @@ class Configuration():
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -66,7 +65,6 @@ class Configuration():
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
             class_uri=Configuration.base_uri,
-            depth=self.session.api_version.default_depth
         )
         try:
             response = self.session.s.get(
@@ -75,7 +73,7 @@ class Configuration():
                 params=payload)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -84,7 +82,7 @@ class Configuration():
         config_data = json.loads(response.text)
 
         # Set self.config_attrs and delete ID from it
-        utils.set_config_attrs(self, config_data, 'config_attrs')
+        utils.set_config_attrs(self, config_data, "config_attrs")
 
         # Set original attributes
         self.__original_attributes = config_data
@@ -94,13 +92,13 @@ class Configuration():
 
     @connected
     def apply(self):
-        '''
+        """
         Main method used to update System Attributes
         Checks whether the System is materialized
         Calls self.update() if the configuration is being updated
 
         :return modified: Boolean, True if object was modified
-        '''
+        """
         modified = False
         if self.materialized:
             modified = self.update()
@@ -110,10 +108,10 @@ class Configuration():
 
     @connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to a Device Configuration
         :return modified: Boolean, True if object was modified
-        '''
+        """
 
         system_data = {}
 
@@ -139,7 +137,7 @@ class Configuration():
                     proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -161,13 +159,13 @@ class Configuration():
     # IMPERATIVES FUNCTIONS
     ####################################################################
 
-    def get_full_config(self, config_name='running-config'):
-        '''
+    def get_full_config(self, config_name="running-config"):
+        """
         Perform a GET request to obtain the device's full config
         :param config_name: String with the local-config name wanted
             Defaults to running-config
         :return config_data: Data containing the full configuration
-        '''
+        """
         uri = "{base_url}fullconfigs/{cfg}".format(
             base_url=self.session.base_url,
             cfg=config_name
@@ -178,7 +176,7 @@ class Configuration():
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -190,17 +188,20 @@ class Configuration():
 
     def tftp_switch_config_from_remote_location(self, config_file_location,
                                                 config_name, vrf):
-        '''
+        """
         TFTP switch config from TFTP server.
-        :param config_file_location: TFTP server address and path for uploading configuration.
-        :param config_name: Config file or checkpoint to be uploaded to. When using TFTP
-            only running-config or startup-config can be used.
-        :param vrf: VRF to be used to contact TFTP server, required if remote_output_file_tftp_path is provided.
-        :return success: Return True if response is successful or False if it was not.
-        '''
+        :param config_file_location: TFTP server address and path for
+            uploading configuration.
+        :param config_name: Config file or checkpoint to be uploaded to.
+            When using TFTP only running-config or startup-config can be used.
+        :param vrf: VRF to be used to contact TFTP server, required if
+            remote_output_file_tftp_path is provided.
+        :return success: Return True if response is successful or False if
+            it was not.
+        """
         success = False
-        uri = '{base_url}fullconfigs/'\
-              '{cfg}?from={dest}&vrf={vrf}'.format(
+        uri = "{base_url}fullconfigs/"\
+              "{cfg}?from={dest}&vrf={vrf}".format(
                   base_url=self.session.base_url,
                   cfg=config_name,
                   dest=config_file_location,
@@ -214,7 +215,7 @@ class Configuration():
             success = True
 
         except Exception as e:
-            raise ResponseError('PUT', e)
+            raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
             raise GenericOperationError(response.text, response.status_code)
@@ -223,7 +224,7 @@ class Configuration():
 
     def copy_switch_config_to_remote_location(self, config_name, config_type,
                                               destination, vrf):
-        '''
+        """
         Copy TFTP switch config to TFTP server using a PUT request
 
         :param config_name:  String with the config file or checkpoint to be
@@ -235,11 +236,11 @@ class Configuration():
             copying off configuration, must be reachable through provided vrf
         :param vrf: VRF to be used to contact TFTP server
         :return True if completed
-        '''
+        """
 
-        uri = '{base_url}fullconfigs/'\
-              '{cfg}?to={dest}&type={type}'\
-              '&vrf={vrf}'.format(
+        uri = "{base_url}fullconfigs/"\
+              "{cfg}?to={dest}&type={type}"\
+              "&vrf={vrf}".format(
                   base_url=self.session.base_url,
                   cfg=config_name,
                   dest=destination,
@@ -251,7 +252,7 @@ class Configuration():
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -260,11 +261,11 @@ class Configuration():
         return True
 
     def backup_configuration(self, config_name, output_file=None,
-                             vrf=None, config_type='json',
+                             vrf=None, config_type="json",
                              remote_file_tftp_path=None):
-        '''
-        Obtains the switch's full config in json format and saves it to a local file
-        or a remote location over TFTP
+        """
+        Obtains the switch's full config in json format and saves it to
+        a local file or a remote location over TFTP
         :param config_name:  String with the config file or checkpoint to be
             downloaded. When using TFTP
             only running-config or startup-config can be used
@@ -279,30 +280,30 @@ class Configuration():
             copying off configuration, must be reachable through provided vrf
         :return bool: True if success
 
-        '''
+        """
         success = False
 
         if remote_file_tftp_path is not None:
             tftp_path = remote_file_tftp_path
             if vrf is None:
                 raise VerificationError(
-                    'Backup Config',
+                    "Backup Config",
                     "VRF needs to be provided in order to TFTP "
                     "the configuration from the switch")
 
             tftp_path_encoded = utils._replace_special_characters(tftp_path)
 
-            if config_name != 'running-config' and \
-                    config_name != 'startup-config':
+            if config_name != "running-config" and \
+                    config_name != "startup-config":
                 raise VerificationError(
-                    'Backup Config',
+                    "Backup Config",
                     "Only running-config or " +
                     "startup-config can be backed-up using TFTP")
             success = self.copy_switch_config_to_remote_location(
                 config_name, config_type, tftp_path_encoded, vrf)
         else:
             config_json = self.get_full_config()
-            with open(output_file, 'w') as to_file:
+            with open(output_file, "w") as to_file:
                 formatted_file = json.dumps(config_json, indent=4)
                 to_file.write(formatted_file)
 
@@ -312,7 +313,7 @@ class Configuration():
         return success
 
     def create_checkpoint(self, source_config, destination_config):
-        '''
+        """
         Perform a PUT request to create a new checkpoint or copy an
             existing checkpoint to AOS-CX switch config.
 
@@ -322,10 +323,12 @@ class Configuration():
             or name of checkpoint.
         :return bool: True if success
 
-        '''
+        """
         success = False
 
-        uri = '{base_url}fullconfigs/{dest}?from={prefix}fullconfigs/{src}'.format(
+        uri = (
+            "{base_url}fullconfigs/{dest}?from={prefix}fullconfigs/{src}"
+        ).format(
             base_url=self.session.base_url,
             prefix=self.session.resource_prefix,
             dest=destination_config,
@@ -337,7 +340,7 @@ class Configuration():
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('PUT', e)
+            raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
             raise GenericOperationError(response.text, response.status_code)
@@ -363,20 +366,20 @@ class Configuration():
         :return modified: Return True if coinfig was modified
         """
 
-        if 'mode' in self.mgmt_intf:
-            mgmt_if_mode = self.mgmt_intf['mode']
+        if "mode" in self.mgmt_intf:
+            mgmt_if_mode = self.mgmt_intf["mode"]
         else:
-            mgmt_if_mode = 'dhcp'
+            mgmt_if_mode = "dhcp"
 
-        if mgmt_if_mode != 'static':
+        if mgmt_if_mode != "static":
             message_part1 = "The management interface must have static"
             message_part2 = "IP to configure management interface name servers"
-            raise Exception(message_part1 + ' ' + message_part2)
+            raise Exception(message_part1 + " " + message_part2)
 
         if primary is not None:
-            self.mgmt_intf['dns_server_1'] = primary
+            self.mgmt_intf["dns_server_1"] = primary
         elif secondary is not None:
-            self.mgmt_intf['dns_server_2'] = secondary
+            self.mgmt_intf["dns_server_2"] = secondary
 
         return self.apply()
 
@@ -387,11 +390,11 @@ class Configuration():
         :return modified: Return True if coinfig was modified
         """
 
-        if 'dns_server_1' in self.mgmt_intf:
-            self.mgmt_intf.pop('dns_server_1')
+        if "dns_server_1" in self.mgmt_intf:
+            self.mgmt_intf.pop("dns_server_1")
 
-        if 'dns_server_2' in self.mgmt_intf:
-            self.mgmt_intf.pop('dns_server_2')
+        if "dns_server_2" in self.mgmt_intf:
+            self.mgmt_intf.pop("dns_server_2")
 
         return self.apply()
 
@@ -401,25 +404,30 @@ class Configuration():
                              config_json=None,
                              vrf=None,
                              remote_file_tftp_path=None):
-        '''
+        """
         Uploads configuration from a configuration file.
-        :param config_name:  String with the Config file or checkpoint to be uploaded to.
+        :param config_name:  String with the Config file or checkpoint
+            to be uploaded to.
             When using TFTP only running-config or startup-config can be used.
             Default: None.
-        :param config_file: String with the File name and path for locally downloading
-            configuration, only JSON version of configuration will be downloaded.
+        :param config_file: String with the File name and path for locally
+            downloading configuration, only JSON version of configuration
+            will be downloaded.
             Default: None.
-        :param config_json: String with the JSON file name and path for locally uploading configuration,
-            only JSON version of configuration can be uploaded.
+        :param config_json: String with the JSON file name and path for
+            locally uploading configuration, only JSON version of configuration
+            can be uploaded.
             Default: None.
-        :param vrf: String for VRF to be used to contact TFTP server, required if
-            remote_output_file_tftp_path is provided.
+        :param vrf: String for VRF to be used to contact TFTP server, required
+            if remote_output_file_tftp_path is provided.
             Default: None.
-        :param remote_file_tftp_path: String for TFTP server address and path for copying off
-            configuration, must be reachable through provided vrf.
+        :param remote_file_tftp_path: String for TFTP server address and path
+            for copying off configuration, must be reachable through provided
+            vrf.
             Default: None.
-        :return success: Return boolean True if response is successful or False if it was not.
-        '''
+        :return success: Return boolean True if response is successful or False
+            if it was not.
+        """
 
         success = False
 
@@ -433,7 +441,8 @@ class Configuration():
             tftp_path_encoded = utils._replace_special_characters(
                 remote_file_tftp_path)
 
-            if config_name != 'running-config' and config_name != 'startup-config':
+            if config_name != "running-config" and\
+               config_name != "startup-config":
                 raise VerificationError(
                     "Upload Config",
                     "Only running-config or startup-config "
@@ -453,19 +462,23 @@ class Configuration():
                                         config_json=None,
                                         config_file=None,
                                         config_name=None):
-        '''
+        """
         Uploads configuration from a configuration file.
-        :param config_name:  String with the Config file or checkpoint to be uploaded to.
-            When using TFTP only running-config or startup-config can be used.
+        :param config_name:  String with the Config file or checkpoint
+            to be uploaded to. When using TFTP only running-config or
+            startup-config can be used.
             Default: None.
-        :param config_file: String with the File name and path for locally downloading
-            configuration, only JSON version of configuration will be downloaded.
+        :param config_file: String with the File name and path for
+            locally downloading configuration, only JSON version of
+            configuration will be downloaded.
             Default: None.
-        :param config_json: String with the JSON file name and path for locally uploading configuration,
-            only JSON version of configuration can be uploaded.
+        :param config_json: String with the JSON file name and path for
+            locally uploading configuration, only JSON version of
+            configuration can be uploaded.
             Default: None.
-        :return success: Return boolean True if response is successful or False if it was not.
-        '''
+        :return success: Return boolean True if response is successful
+            or False if it was not.
+        """
         success = False
 
         if config_json:
@@ -479,7 +492,7 @@ class Configuration():
         config_json = json.dumps(config_json)
 
         # Create URI from the session base url and the configuration name
-        uri = '{base_url}fullconfigs/{cfg}'.format(
+        uri = "{base_url}fullconfigs/{cfg}".format(
             base_url=self.session.base_url,
             cfg=config_name
         )
@@ -494,7 +507,7 @@ class Configuration():
             success = True
 
         except Exception as e:
-            raise ResponseError('PUT', e)
+            raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
             raise GenericOperationError(
