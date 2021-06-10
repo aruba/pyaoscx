@@ -113,8 +113,11 @@ class v1(API):
         elif module == 'StaticNexthop':
             from pyaoscx.static_nexthop import StaticNexthop
 
+        elif module == 'PoEInterface':
+            from pyaoscx.poe_interface import PoEInterface
+
         else:
-            raise Exception("Invalid Module Name")
+            raise ImportError("Invalid Module Name")
 
         return locals()[module](session, index_id, **kwargs)
 

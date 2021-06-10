@@ -136,11 +136,14 @@ class v10_04(API):
         elif module == 'StaticNexthop':
             from pyaoscx.static_nexthop import StaticNexthop
 
+        elif module == 'PoEInterface':
+            from pyaoscx.poe_interface import PoEInterface
+
         else:
-            raise Exception("Invalid Module Name")
+            raise ImportError("Invalid Module Name")
 
         return locals()[module](session, index_id, **kwargs)
-      
+
     def get_keys(self, response_data, module_name=None):
         '''
         Given a response_data obtain the indices of said dictionary and return

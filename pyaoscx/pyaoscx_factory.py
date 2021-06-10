@@ -1142,3 +1142,26 @@ class PyaoscxFactory():
             static_nexthop_obj.apply()
 
         return static_nexthop_obj
+
+    def poe_interface(self, interface):
+        """
+        Create a PoE Interface object with associated settings
+
+        :param Interface: Alphanumeric name of the Interface the PoE_Interface belongs to.
+            An Interface object is also accepted
+        :return: PoE Interface object
+        """
+        if isinstance(interface, str):
+            # Make Interface into an object
+            interface_obj = self.session.api_version.get_module(
+                self.session, 'Interface', interface)
+            # Materialize Interface to ensure its existence
+            interface_obj.get()
+            interface = interface_obj
+
+        poe_interface_obj = self.session.api_version.get_module(
+            self.session, 'PoEInterface', interface)
+
+        poe_interface_obj.get()
+
+        return poe_interface_obj
