@@ -1,0 +1,24 @@
+@startuml
+
+class Device {
+    +resources:Module
+}
+
+class PyaoscxModule {
+    -uri:URI
+    get(): Module
+    get_all(): Module
+    apply(): boolean
+}
+
+PyaoscxFactory <|-- Device
+Device o-left- PyaoscxModule
+
+PyaoscxModule <|-down- ACL
+PyaoscxModule <|-down- BGP
+PyaoscxModule <|-down- Interface
+PyaoscxModule <|-down- Vlan
+PyaoscxModule <|-down- Vsx
+
+
+@enduml
