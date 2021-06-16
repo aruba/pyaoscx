@@ -3,6 +3,7 @@
 
 from pyaoscx.api import API
 from pyaoscx.exceptions.login_error import LoginError
+from pyaoscx.exceptions.verification_error import VerificationError
 import pyaoscx.utils.util as utils
 
 import json
@@ -37,6 +38,11 @@ class Session:
         } if proxy is None else {
             'https': proxy
         }
+        self.scheme = "https"
+        self.version_path = "rest/v{}/".format(self.api)
+
+        # TODO: remove base_url once all modules use the internal
+        # request methods
         self.base_url = "https://{}/rest/v{}/".format(
             self.ip, self.api)
         self.resource_prefix = "/rest/v{}/".format(self.api)
@@ -284,3 +290,46 @@ class Session:
         :return password
         """
         return self.__password
+
+    def _build_uri(self, resource_path):
+        """
+        Build a URI representing a resource
+        :param resource_path: Resource path before adding
+            version prefix
+        :return: String of the uri
+        """
+        complete_path = self.version_path + resource_path
+        return requests.utils.urlunparse(
+            (self.scheme, self.ip, complete_path, "", "", ""))
+
+    def request(self, operation, path, params=None, data=None, verify=False):
+        """
+        Perform a Request to the switch
+
+        :param operation: type of operation: PUT, GET, POST, DELETE
+        :param path: Path to the resource
+        :param params: Extra request parameters
+        :param data: Data to send in the resquest
+        :param verify: If session should verify
+        :return: response object from the request
+        """
+
+        operations = {
+            "PUT": self.s.put,
+            "GET": self.s.get,
+            "POST": self.s.post,
+            "DELETE": self.s.delete
+        }
+
+        if operation not in operations:
+            raise VerificationError(
+                "The operation {0} is not supported."
+                " Use any of {1}".format(
+                    operation, list(operations.keys)))
+
+        return operations[operation](
+            self._build_uri(path),
+            verify=verify,
+            params=params,
+            data=data,
+            proxies=self.proxy)

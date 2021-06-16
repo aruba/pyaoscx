@@ -31,10 +31,16 @@ class Vlan(PyaoscxModule):
         self.materialized = False
         # Attribute dictionary used to manage the original data
         # obtained from the GET
-        self.__original_attributes = {}
+        self._original_attributes = {}
         utils.set_creation_attrs(self, **kwargs)
         # Attribute used to know if object was changed recently
         self.__modified = False
+
+        # Build the path that identifies the current Vlan
+        self.path = "{0}/{1}".format(
+            Vlan.base_uri,
+            self.id
+        )
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -50,44 +56,7 @@ class Vlan(PyaoscxModule):
         '''
         logging.info("Retrieving the switch VLANs")
 
-        depth = self.session.api.default_depth if depth is None \
-            else depth
-        selector = self.session.api.default_selector if selector \
-            is None else selector
-
-        if not self.session.api.valid_depth(depth):
-            depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
-
-        if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
-            raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
-
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
-
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=Vlan.base_uri,
-            id=self.id
-        )
-
-        try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload,
-                proxies=self.session.proxy)
-
-        except Exception as e:
-            raise ResponseError('GET', e)
-
-        if not utils._response_ok(response, "GET"):
-            raise GenericOperationError(
-                response.text, response.status_code, "GET VLAN")
-
-        data = json.loads(response.text)
+        data = self._get_data(depth, selector)
 
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
@@ -98,10 +67,10 @@ class Vlan(PyaoscxModule):
             utils.set_config_attrs(self, data, 'config_attrs', ['id'])
 
         # Set original attributes
-        self.__original_attributes = data
+        self._original_attributes = data
         # Remove ID
-        if 'id' in self.__original_attributes:
-            self.__original_attributes.pop('id')
+        if 'id' in self._original_attributes:
+            self._original_attributes.pop('id')
 
         # Set all ACLs
         from pyaoscx.acl import ACL
@@ -208,12 +177,6 @@ class Vlan(PyaoscxModule):
 
         vlan_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=Vlan.base_uri,
-            id=self.id
-        )
-
         # Set all ACLs
         if "aclmac_in_cfg" in vlan_data and self.aclmac_in_cfg is not None:
             # Set values in correct form
@@ -228,37 +191,7 @@ class Vlan(PyaoscxModule):
             # Set values in correct form
             vlan_data["aclv6_in_cfg"] = self.aclv6_in_cfg.get_info_format()
 
-        # Compare dictionaries
-        if vlan_data == self.__original_attributes:
-            # Object was not modified
-            modified = False
-
-        else:
-
-            post_data = json.dumps(vlan_data, sort_keys=True, indent=4)
-
-            try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data,
-                    proxies=self.session.proxy)
-
-            except Exception as e:
-                raise ResponseError('PUT', e)
-
-            if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(
-                    response.text, response.status_code, "UPDATE VLAN")
-
-            else:
-                logging.info("SUCCESS: Adding VLAN table entry '{}' \
-                    succeeded".format(self.id))
-            # Set new original attributes
-            self.__original_attributes = vlan_data
-
-            # Object was modified, returns True
-            modified = True
-
-        return modified
+        return self._put_data(vlan_data)
 
     @PyaoscxModule.connected
     def create(self):
@@ -277,31 +210,7 @@ class Vlan(PyaoscxModule):
             self.id = int(self.id)
         vlan_data['id'] = self.id
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Vlan.base_uri
-        )
-
-        post_data = json.dumps(vlan_data, sort_keys=True, indent=4)
-
-        try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
-
-        except Exception as e:
-            raise ResponseError('POST', e)
-
-        if not utils._response_ok(response, "POST"):
-            raise GenericOperationError(response.text, response.status_code)
-
-        else:
-            logging.info("SUCCESS: Adding VLAN table entry '{}' \
-                succeeded".format(self.id))
-
-        # Get all objects data
-        self.get()
-
-        return True
+        return self._post_data(vlan_data)
 
     @PyaoscxModule.connected
     def delete(self):
@@ -310,27 +219,7 @@ class Vlan(PyaoscxModule):
 
         '''
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=Vlan.base_uri,
-            id=self.id
-        )
-
-        try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
-
-        except Exception as e:
-            raise ResponseError('DELETE', e)
-
-        if not utils._response_ok(response, "DELETE"):
-            raise GenericOperationError(
-                response.text, response.status_code, "DELETE VLAN")
-
-        else:
-            logging.info("SUCCESS: Delete VLAN table entry '{}'\
-                succeeded".format(self.id))
-
+        self._send_data(self.path, None, "DELETE", "Delete")
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
 

@@ -1,9 +1,16 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import json
+import logging
+import functools
+import pyaoscx.utils.util as utils
 from abc import ABC, abstractmethod
 from pyaoscx.exceptions.verification_error import VerificationError
-import functools
+from pyaoscx.utils.connection import connected
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+
 
 class PyaoscxModule(ABC):
     '''
@@ -148,3 +155,106 @@ class PyaoscxModule(ABC):
             <pyaoscx_module_type>'s ID
         '''
         pass
+
+    def _get_data(self, depth, selector):
+        """
+        Perform a GET call to retrieve data from a switch.
+
+        :param depth: Integer deciding how many levels into the API JSON
+            that references will be retrieved from the switch
+        :param selector: Alphanumeric option to select specific information
+            to return.
+        :return: Retrieved data from the switch.
+        """
+
+        depth = self.session.api.default_depth \
+            if depth is None else depth
+        selector = self.session.api.default_selector \
+            if selector is None else selector
+
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
+            raise Exception("ERROR: Depth should be one of {}".format(depths))
+
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
+            raise Exception(
+                "ERROR: Selector should be one of {}".format(selectors))
+
+        payload = {
+            "depth": depth,
+            "selector": selector
+        }
+
+        try:
+            response = self.session.request("GET", self.path, params=payload)
+
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        return json.loads(response.text)
+
+    def _put_data(self, data):
+        """
+        Perform a PUT request to the switch.
+
+        :param data: data to send.
+        :return: True if the object was modified
+        """
+
+        if data == self._original_attributes:
+            return False
+
+        self._send_data(self.path, data, "PUT", "Update")
+        # Set new original attributes
+        self._original_attributes = data
+        # Object was modified
+        return True
+
+    def _post_data(self, data):
+        """
+        Perform a POST request to the switch
+
+        :param data: data to send
+        """
+
+        self._send_data(self.base_uri, data, "POST", "Adding")
+        # Get the data from the created object
+        self.get()
+        return True
+
+    def _send_data(self, path, data, http_verb, display_verb):
+        """
+        Perform either PUT or POST operation to the switch.
+
+        :param path: path of the resource for the request. This could
+            the base URI if this was called in a create method, or
+            the VLAN URI if this was called in an update method.
+        :param data: data to send
+        :param hrrp_verb: HTTP operation to perfrom
+        :display_module_name: Module to display in logs
+        :display_verb: verb to display in logs
+        """
+
+        send_data = json.dumps(data, sort_keys=True, indent=4)
+
+        try:
+            response = self.session.request(
+                http_verb, path, data=send_data)
+
+        except Exception as e:
+            raise ResponseError(http_verb, e)
+
+        if not utils._response_ok(response, http_verb):
+            raise GenericOperationError(
+                response.text, response.status_code)
+
+        else:
+            logging.info(
+                "SUCCESS: {0} {1} table entry succeeded\
+                ".format(
+                    display_verb,
+                    type(self).__name__))
