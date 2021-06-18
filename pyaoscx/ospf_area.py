@@ -16,15 +16,15 @@ from pyaoscx.utils.list_attributes import ListDescriptor
 
 
 class OspfArea(PyaoscxModule):
-    '''
+    """
     Provide configuration management for OSPF Area instance on AOS-CX devices.
-    '''
+    """
 
-    indices = ['area_id']
-    resource_uri_name = 'areas'
+    indices = ["area_id"]
+    resource_uri_name = "areas"
 
     # Use to manage references
-    ospf_interfaces = ListDescriptor('ospf_interfaces')
+    ospf_interfaces = ListDescriptor("ospf_interfaces")
 
     def __init__(self, session, area_id, parent_ospf_router, uri=None,
                  **kwargs):
@@ -49,20 +49,21 @@ class OspfArea(PyaoscxModule):
         self.__modified = False
 
     def __set_ospf_router(self, parent_ospf_router):
-        '''
+        """
         Set parent OSPF Router as an attribute for the OspfArea object
         :param parent_ospf_router a OspfRouter object where OSPF Area
             is stored
-        '''
+        """
 
         # Set parent OSPF router
         self.__parent_ospf_router = parent_ospf_router
 
         # Set URI
         self.base_uri = \
-            '{base_ospf_router_uri}/{ospf_router_instance_tag}/areas'.format(
+            "{base_ospf_router_uri}/{ospf_router_instance_tag}/areas".format(
                 base_ospf_router_uri=self.__parent_ospf_router.base_uri,
-                ospf_router_instance_tag=self.__parent_ospf_router.instance_tag)
+                ospf_router_instance_tag=(
+                    self.__parent_ospf_router.instance_tag))
 
         for ospf_area in self.__parent_ospf_router.areas:
             if ospf_area.area_id == self.area_id:
@@ -74,7 +75,7 @@ class OspfArea(PyaoscxModule):
 
     @connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a OSPF Area table entry and
         fill the object with the incoming attributes
 
@@ -83,7 +84,7 @@ class OspfArea(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch OSPF Areas")
 
         depth = self.session.api_version.default_depth if depth is None \
@@ -96,7 +97,7 @@ class OspfArea(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+            selectors = " ".join(self.session.api_version.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -116,7 +117,7 @@ class OspfArea(PyaoscxModule):
                 uri, verify=False, params=payload, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -124,8 +125,8 @@ class OspfArea(PyaoscxModule):
         data = json.loads(response.text)
 
         # Delete unwanted data
-        if 'ospf_interfaces' in data:
-            data.pop('ospf_interfaces')
+        if "ospf_interfaces" in data:
+            data.pop("ospf_interfaces")
 
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
@@ -133,14 +134,14 @@ class OspfArea(PyaoscxModule):
         # Determines if the OSPF Area is configurable
         if selector in self.session.api_version.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, 'config_attrs', ['area_id'])
+            utils.set_config_attrs(self, data, "config_attrs", ["area_id"])
 
         # Set original attributes
         self.__original_attributes = data
 
         # Remove ID
-        if 'area_id' in self.__original_attributes:
-            self.__original_attributes.pop('area_id')
+        if "area_id" in self.__original_attributes:
+            self.__original_attributes.pop("area_id")
 
         # Sets object as materialized
         # Information is loaded from the Device
@@ -156,32 +157,33 @@ class OspfArea(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session, parent_ospf_router):
-        '''
+        """
         Perform a GET call to retrieve all system OSPF Area inside a
         OPSF Router, and create a dictionary containing them
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param parent_ospf_router: parent OPSF Router object where OPSF Area is stored
+        :param parent_ospf_router: parent OPSF Router object where OPSF Area
+            is stored
         :return: Dictionary containing OSPF Area IDs as keys and a OSPF
             Area objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch OSPF Area")
 
         base_uri = \
-            '{base_ospf_router_uri}/{ospf_router_instance_tag}/areas'.format(
+            "{base_ospf_router_uri}/{ospf_router_instance_tag}/areas".format(
                 base_ospf_router_uri=parent_ospf_router.base_uri,
                 ospf_router_instance_tag=parent_ospf_router.instance_tag)
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -204,7 +206,7 @@ class OspfArea(PyaoscxModule):
 
     @connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update an existing
         Ospf Area table entry.
         Checks whether the OSPF Area exists in the switch
@@ -213,7 +215,7 @@ class OspfArea(PyaoscxModule):
 
         :return modified: Boolean, True if object was created or modified
             False otherwise
-        '''
+        """
         if not self.__parent_ospf_router.materialized:
             self.__parent_ospf_router.apply()
 
@@ -229,12 +231,13 @@ class OspfArea(PyaoscxModule):
 
     @connected
     def update(self):
-        '''
-        Perform a PUT call to apply changes to an existing OSPF Area table entry
+        """
+        Perform a PUT call to apply changes to an existing OSPF Area table
+        entry
 
-        :return modified: True if Object was modified and a PUT request was made
-            False otherwise
-        '''
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise
+        """
         # Variable returned
         modified = False
 
@@ -258,10 +261,11 @@ class OspfArea(PyaoscxModule):
 
             try:
                 response = self.session.s.put(
-                    uri, verify=False, data=post_data, proxies=self.session.proxy)
+                    uri, verify=False, data=post_data,
+                    proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -279,16 +283,16 @@ class OspfArea(PyaoscxModule):
 
     @connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new OSPF Area
         Only returns if an exception is not raise
 
         :return modified: Boolean, True if entry was created
-        '''
+        """
         ospf_area_data = {}
 
         ospf_area_data = utils.get_attrs(self, self.config_attrs)
-        ospf_area_data['area_id'] = self.area_id
+        ospf_area_data["area_id"] = self.area_id
 
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
@@ -301,7 +305,7 @@ class OspfArea(PyaoscxModule):
                 uri, verify=False, data=post_data, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -318,10 +322,10 @@ class OspfArea(PyaoscxModule):
 
     @connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete OSPF Area table entry.
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{id}".format(
             base_url=self.session.base_url,
@@ -334,7 +338,7 @@ class OspfArea(PyaoscxModule):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -354,14 +358,14 @@ class OspfArea(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, parent_ospf_router, response_data):
-        '''
+        """
         Create an OspfArea object given a response_data related to the ospf
             router ID object
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param parent_ospf_router: parent OspfRouter object where OspfArea object
-            is stored
+        :param parent_ospf_router: parent OspfRouter object where OspfArea
+            object is stored
         :param response_data: The response can be either a
         dictionary: {
                 id: "/rest/v10.04/system/vrfs/<vrf_name>/ospf_routers/
@@ -372,7 +376,7 @@ class OspfArea(PyaoscxModule):
             instance_tag/areas/area_id"
         :return: OspfArea object
 
-        '''
+        """
         ospf_area_arr = session.api_version.get_keys(
             response_data, OspfArea.resource_uri_name)
         ospf_area_id = ospf_area_arr[0]
@@ -380,7 +384,7 @@ class OspfArea(PyaoscxModule):
 
     @classmethod
     def from_uri(cls, session, parent_ospf_router, uri):
-        '''
+        """
         Create an OspfArea object given a URI
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -389,10 +393,10 @@ class OspfArea(PyaoscxModule):
         :param uri: a String with a URI
         :return index, ospf_area_obj: tuple containing both the OspfArea object
             and the OSPF Area's ID
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)areas/(?P<index>.+)')
-        index = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)areas/(?P<index>.+)")
+        index = index_pattern.match(uri).group("index")
 
         # Create OspfArea object
         ospf_area_obj = OspfArea(
@@ -404,13 +408,13 @@ class OspfArea(PyaoscxModule):
         return "OSPF Area ID {}".format(self.area_id)
 
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific OSPF Area URI
         return: Object's URI
-        '''
+        """
 
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{id}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{id}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=self.base_uri,
                 id=self.area_id
@@ -419,17 +423,18 @@ class OspfArea(PyaoscxModule):
         return self._uri
 
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api_version.get_index(self)
 
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified,
+            False otherwise.
         """
 
         return self.__modified

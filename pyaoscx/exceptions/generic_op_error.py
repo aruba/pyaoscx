@@ -24,10 +24,11 @@ class GenericOperationError(PyaoscxError):
 
     def __str__(self):
         if self.message and self.extra_info:
-            return 'GENERIC OPERATION ERROR: {0} Code: {1} on Module {2}'.format(
-                self.message, self.response_code, self.extra_info)
+            return "GENERIC OPERATION ERROR: {0} Code: {1}"\
+                " on Module {2}".format(
+                    self.message, self.response_code, self.extra_info)
         if self.message:
-            return 'GENERIC OPERATION ERROR: {0} Code: {1}'.format(
+            return "GENERIC OPERATION ERROR: {0} Code: {1}".format(
                 self.message, self.response_code)
         else:
-            return 'GENERIC OPERATION ERROR'
+            return "GENERIC OPERATION ERROR"
