@@ -3,7 +3,6 @@
 
 from pyaoscx.session import Session
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.device import Device
 from pyaoscx.dns import Dns
 from pyaoscx.configuration import Configuration
 
@@ -33,18 +32,6 @@ class PyaoscxFactory():
         if not PyaoscxFactory.__instance__:
             PyaoscxFactory(session)
         return PyaoscxFactory.__instance__
-
-    def device(self):
-        """
-        Create a Device class, to obtain common device configuration,
-        capacities, capabilities, among other information related.
-        :return: Device object
-        """
-
-        switch = Device(self.session)
-        # Get Partial configuration attributes
-        switch.get()
-        return switch
 
     def configuration(self):
         """

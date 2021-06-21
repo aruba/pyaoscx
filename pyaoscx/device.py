@@ -1,6 +1,7 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+from pyaoscx.pyaoscx_factory import PyaoscxFactory
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
@@ -13,7 +14,7 @@ import logging
 import json
 
 
-class Device():
+class Device(PyaoscxFactory):
     '''
     Represents a Device and all of its attributes. Keeping all the important information
     inside one class.
