@@ -5,19 +5,20 @@ from pyaoscx.utils.connection import connected
 from pyaoscx.exceptions.request_error import HttpRequestError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
-from pyaoscx.pyaoscx_module import PyaoscxModule
+from pyaoscx.interface import Interface
 
 import json
 import logging
 import pyaoscx.utils.util as utils
 
 
-class PoEInterface(PyaoscxModule):
+class PoEInterface(Interface):
     '''
     Provide configuration management for PoE Interface on AOS-CX devices.
     '''
 
     resource_uri_name = 'poe_interface'
+    indices = ['name']
 
     def __init__(self, session, parent_interface, uri=None, **kwargs):
         """
@@ -61,6 +62,8 @@ class PoEInterface(PyaoscxModule):
             interface_name=self.__parent_interface.percents_name,
             resource=self.resource_uri_name
         )
+
+        self.name = self.__parent_interface.name
 
     @connected
     def get(self, depth=None, selector=None):
