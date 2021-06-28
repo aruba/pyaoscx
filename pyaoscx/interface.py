@@ -10,6 +10,7 @@ from warnings import warn
 from netaddr import mac_eui48
 from netaddr import EUI as MacAddress
 
+import pyaoscx.vrf as vrf_mod
 import pyaoscx.utils.util as utils
 
 from pyaoscx.exceptions.response_error import ResponseError
@@ -19,7 +20,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.ipv6 import Ipv6
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.vlan import Vlan
-from pyaoscx.vrf import Vrf
 from pyaoscx.utils.connection import connected
 
 
@@ -212,7 +212,7 @@ class Interface(PyaoscxModule):
         # Set VRF
         if hasattr(self, 'vrf') and self.vrf is not None:
             # Set VRF as a Vrf object
-            vrf_obj = Vrf.from_response(self.session, self.vrf)
+            vrf_obj = vrf_mod.Vrf.from_response(self.session, self.vrf)
             self.vrf = vrf_obj
             # Materialized VRF
             self.vrf.get()
@@ -1135,7 +1135,7 @@ class Interface(PyaoscxModule):
                 pass
 
         # Set VRF
-        vrf_obj = Vrf(self.session, vrf)
+        vrf_obj = vrf_mod.Vrf(self.session, vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
 

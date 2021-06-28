@@ -144,7 +144,8 @@ class API(ABC):
         """
 
         module_names = {
-            "Interface": "rest.{}.interface".format(self.version),
+            "Interface": "rest.v{}.interface".format(
+                self.version.replace(".", "_")),
             "Ipv6": "ipv6",
             "Vlan": "vlan",
             "Vrf": "vrf",

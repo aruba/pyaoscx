@@ -1,11 +1,12 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import pyaoscx.ospf_router
+
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.bgp_router import BgpRouter
-from pyaoscx.ospf_router import OspfRouter
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.static_route import StaticRoute
 from pyaoscx.vrf_address_family import VrfAddressFamily
@@ -167,7 +168,7 @@ class Vrf(PyaoscxModule):
         if self.ospf_routers == []:
             # Set OSPF Routers if any
             # Adds ospf_routers to parent Vrf object
-            OspfRouter.get_all(self.session, self)
+            ospf_router.OspfRouter.get_all(self.session, self)
 
         # Clean Static Routess settings
         if self.static_routes == []:

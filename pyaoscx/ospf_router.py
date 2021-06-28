@@ -5,6 +5,8 @@ import json
 import logging
 import re
 import pyaoscx.utils.util as utils
+import pyaoscx.interface as interface_mod
+
 
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
@@ -12,7 +14,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.interface import Interface
 from pyaoscx.ospf_area import OspfArea
 from pyaoscx.utils.connection import connected
 
@@ -160,7 +161,7 @@ class OspfRouter(PyaoscxModule):
 
             for uri in uri_list:
                 # Create an Interface object
-                name, interface = Interface.from_uri(self.session, uri)
+                name, interface = interface_mod.Interface.from_uri(self.session, uri)
 
                 # Materialize interface
                 interface.get()
