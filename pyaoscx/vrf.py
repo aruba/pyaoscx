@@ -6,6 +6,7 @@ import pyaoscx.ospf_router
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
+from pyaoscx.ospf_router import OspfRouter
 from pyaoscx.bgp_router import BgpRouter
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.static_route import StaticRoute
@@ -168,7 +169,7 @@ class Vrf(PyaoscxModule):
         if self.ospf_routers == []:
             # Set OSPF Routers if any
             # Adds ospf_routers to parent Vrf object
-            ospf_router.OspfRouter.get_all(self.session, self)
+            OspfRouter.get_all(self.session, self)
 
         # Clean Static Routess settings
         if self.static_routes == []:
