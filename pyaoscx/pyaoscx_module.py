@@ -2,6 +2,7 @@
 # Apache License 2.0
 
 from abc import ABC, abstractmethod
+from pyaoscx.exceptions.verification_error import VerificationError
 import functools
 
 class PyaoscxModule(ABC):
@@ -23,6 +24,21 @@ class PyaoscxModule(ABC):
                 self.session.open()
             return fnct(self, *args)
         return ensure_connected
+
+    def materialized(fnct):
+        """
+        Function used as a decorator to verify if the object is materialized.
+
+        :para fnct: function which behavior is modified
+        :return is_materialized: Function
+        """
+        @functools.wraps(fnct)
+        def is_materialized(self, *args):
+            if not self.materialized:
+                raise VerificationError("Object {}".format(self),
+                                        " not materialized")
+            return fnct(self, *args)
+        return is_materialized
 
     base_uri = ""
     indices = []

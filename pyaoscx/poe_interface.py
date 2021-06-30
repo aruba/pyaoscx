@@ -242,6 +242,7 @@ class PoEInterface(Interface):
     # IMPERATIVES FUNCTIONS
     ####################################################################
 
+    @PyaoscxModule.materialized
     def set_criticality(self, level):
         """
         Set the criticality level for the PoE Interface.
@@ -251,6 +252,7 @@ class PoEInterface(Interface):
             'critical'.
         :return: Returns True if there is not an exception raised
         """
+
         valid_criticalities = ['low', 'high', 'critical']
         if level not in valid_criticalities:
             raise ValueError(
@@ -263,6 +265,7 @@ class PoEInterface(Interface):
         # Update changes
         return self.apply()
 
+    @PyaoscxModule.materialized
     def set_power(self, state):
         """
         Perform a PUT call to set a configurable flag to control PoE power
