@@ -9,7 +9,6 @@ from pyaoscx.bgp_neighbor import BgpNeighbor
 from pyaoscx.aggregate_address import AggregateAddress
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.utils.connection import connected
 
 import json
 import logging
@@ -76,7 +75,7 @@ class BgpRouter(PyaoscxModule):
                 # Add self to bgp_routers list in parent_vrf
                 self.__parent_vrf.bgp_routers.append(self)
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a BGP Router table entry and
@@ -212,7 +211,7 @@ class BgpRouter(PyaoscxModule):
 
         return bgp_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to either create or update an existing
@@ -237,7 +236,7 @@ class BgpRouter(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing BGP Router
@@ -291,7 +290,7 @@ class BgpRouter(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a new BGP Router table entry
@@ -329,7 +328,7 @@ class BgpRouter(PyaoscxModule):
         # Object was created, thus modified
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         """
         Perform DELETE call to delete BGP Router table entry.

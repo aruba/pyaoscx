@@ -10,7 +10,6 @@ from pyaoscx.ipv6 import Ipv6
 from pyaoscx.interface import Interface as AbstractInterface
 from pyaoscx.vlan import Vlan
 from pyaoscx.vrf import Vrf
-from pyaoscx.utils.connection import connected
 
 import json
 import logging
@@ -70,7 +69,7 @@ class Interface(AbstractInterface):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         '''
         Perform a GET call to retrieve data for a Port table entry, a Interface
@@ -514,7 +513,7 @@ class Interface(AbstractInterface):
             session, 'Interface',
             interface_name)
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         '''
         Perform DELETE call to delete Interface.
@@ -571,7 +570,7 @@ class Interface(AbstractInterface):
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         '''
         Perform a PUT call to update data for a Port and Interface table entry
@@ -789,7 +788,7 @@ class Interface(AbstractInterface):
 
         return modified_int or modified_port
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a Port table entry for Interface.

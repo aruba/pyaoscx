@@ -5,7 +5,6 @@ from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
-from pyaoscx.utils.connection import connected
 
 import json
 import logging
@@ -37,7 +36,7 @@ class Vlan(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         '''
         Perform a GET call to retrieve data for a VLAN table entry and fill
@@ -172,7 +171,7 @@ class Vlan(PyaoscxModule):
 
         return vlans_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         '''
         Main method used to either create or update an existing
@@ -193,7 +192,7 @@ class Vlan(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing VLAN table entry
@@ -261,7 +260,7 @@ class Vlan(PyaoscxModule):
 
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         '''
         Perform a POST call to create a new VLAN using the object's attributes
@@ -304,7 +303,7 @@ class Vlan(PyaoscxModule):
 
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         '''
         Perform DELETE call to delete VLAN table entry.

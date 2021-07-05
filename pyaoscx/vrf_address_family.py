@@ -7,7 +7,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.utils.connection import connected
 
 import json
 import logging
@@ -68,7 +67,7 @@ class VrfAddressFamily(PyaoscxModule):
                 # Add self to vrf_address_families list in parent_vrf
                 self.__parent_vrf.address_families.append(self)
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         '''
         Perform a GET call to retrieve data for a VRF Address Family table
@@ -188,7 +187,7 @@ class VrfAddressFamily(PyaoscxModule):
 
         return vrf_address_family_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         '''
         Main method used to either create or update
@@ -213,7 +212,7 @@ class VrfAddressFamily(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing VRF Address Family table entry
@@ -263,7 +262,7 @@ class VrfAddressFamily(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         '''
         Perform a POST call to create a new VRF Address Family table entry
@@ -303,7 +302,7 @@ class VrfAddressFamily(PyaoscxModule):
         # Object was modified
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         '''
         Perform DELETE call to delete VRF Address Family table entry

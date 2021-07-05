@@ -2,13 +2,27 @@
 # Apache License 2.0
 
 from abc import ABC, abstractmethod
-from pyaoscx.utils.connection import connected
-
+import functools
 
 class PyaoscxModule(ABC):
     '''
     Provide an Interface class for pyaoscx Modules
     '''
+
+    def connected(fnct):
+        '''
+        Function used as a decorator to ensure the module has a established
+        connection
+
+        :param fnct: function which behavior is modified
+        :return ensure_connected: Function
+        '''
+        @functools.wraps(fnct)
+        def ensure_connected(self, *args):
+            if not self.session.connected:
+                self.session.open()
+            return fnct(self, *args)
+        return ensure_connected
 
     base_uri = ""
     indices = []

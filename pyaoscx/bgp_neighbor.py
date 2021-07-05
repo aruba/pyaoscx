@@ -6,7 +6,6 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
-from pyaoscx.utils.connection import connected
 
 import json
 import logging
@@ -70,7 +69,7 @@ class BgpNeighbor(PyaoscxModule):
                 # Add self to BGP Neighbors list in parent BGP Router
                 self.__parent_bgp_router.bgp_neighbors.append(self)
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a BGP Neighbor table
@@ -198,7 +197,7 @@ class BgpNeighbor(PyaoscxModule):
 
         return bgp_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to either create or update an existing
@@ -223,7 +222,7 @@ class BgpNeighbor(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing  BGP Neighbor
@@ -280,7 +279,7 @@ class BgpNeighbor(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a new BGP Neighbor table entry
@@ -334,7 +333,7 @@ class BgpNeighbor(PyaoscxModule):
         # Object was modified, as it was created inside Device
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         """
         Perform DELETE call to delete  BGP Neighbor table entry.

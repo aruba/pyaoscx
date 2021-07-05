@@ -11,7 +11,6 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.utils.connection import connected
 
 
 class Ipv6(PyaoscxModule):
@@ -83,7 +82,7 @@ class Ipv6(PyaoscxModule):
         # Adds to parent list
         self.__parent_int.ip6_addresses.append(self)
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a IPv6 table entry and fill
@@ -205,7 +204,7 @@ class Ipv6(PyaoscxModule):
 
         return ipv6_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to either create or update an existing
@@ -231,7 +230,7 @@ class Ipv6(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing IPv6 table entry
@@ -289,7 +288,7 @@ class Ipv6(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a new IPv6 using the object's attributes
@@ -328,7 +327,7 @@ class Ipv6(PyaoscxModule):
         # Object was created, thus modified
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         """
         Perform DELETE call to delete IPv6 address from interface on the

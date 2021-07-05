@@ -2,12 +2,12 @@
 # Apache License 2.0
 
 from pyaoscx.pyaoscx_factory import PyaoscxFactory
+from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.session import Session
 import pyaoscx.utils.util as utils
-from pyaoscx.utils.connection import connected
 
 
 import logging
@@ -31,7 +31,7 @@ class Device(PyaoscxFactory):
         # Set firmware version
         self.get_firmware_version()
 
-    @connected
+    @PyaoscxModule.connected
     def get(self):
         '''
         Perform a GET call to retrieve device attributes
@@ -80,14 +80,14 @@ class Device(PyaoscxFactory):
         # Set device as materialized
         self.materialized = True
 
-    @connected
+    @PyaoscxModule.connected
     def get_subsystems(self):
         '''
          Perform GET call to retrieve subsystem attributes and create a dictionary containing them
         '''
         # Log
         logging.info("Retrieving the switch subsystem attributes and capabilities")
-        
+
         # Attribute list
         attributes = [
             'product_info',
@@ -123,7 +123,7 @@ class Device(PyaoscxFactory):
         # Create class attributes using util.create_attrs
         utils.create_attrs(self, data_subsystems)
 
-    @connected
+    @PyaoscxModule.connected
     def get_firmware_version(self):
         '''
         Perform a GET call to retrieve device firmware version

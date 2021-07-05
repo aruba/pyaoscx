@@ -3,7 +3,6 @@
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.configuration import Configuration
-from pyaoscx.utils.connection import connected
 
 
 class Dns(PyaoscxModule):
@@ -56,7 +55,7 @@ class Dns(PyaoscxModule):
         # Materialize internal VRF
         self.__internal_vrf.get()
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a DNS inside the VRF
@@ -104,7 +103,7 @@ class Dns(PyaoscxModule):
         """
         pass
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to either create a new DNS or update an existing
@@ -123,7 +122,7 @@ class Dns(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing DNS
@@ -148,7 +147,7 @@ class Dns(PyaoscxModule):
         modified = self.__internal_vrf.apply()
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Method not implemented
@@ -156,7 +155,7 @@ class Dns(PyaoscxModule):
         """
         pass
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         """
         Perform DELETE call to delete DNS.

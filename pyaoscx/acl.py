@@ -4,7 +4,6 @@
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
-from pyaoscx.utils.connection import connected
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 import json
@@ -45,7 +44,7 @@ class ACL(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for an ACL table entry and fill
@@ -166,7 +165,7 @@ class ACL(PyaoscxModule):
 
         return acl_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to either create or update an existing
@@ -187,7 +186,7 @@ class ACL(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing ACL table entry
@@ -236,7 +235,7 @@ class ACL(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a new ACL table entry
@@ -277,7 +276,7 @@ class ACL(PyaoscxModule):
         # Object was modified, as it was created
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         """
         Perform DELETE call to delete ACL table entry.

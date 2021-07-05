@@ -4,8 +4,8 @@
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
+from pyaoscx.pyaoscx_module import PyaoscxModule
 import pyaoscx.utils.util as utils
-from pyaoscx.utils.connection import connected
 
 import logging
 import json
@@ -27,7 +27,7 @@ class Configuration():
         # Attribute used to know if object was changed recently
         self.__modified = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self):
         """
         Perform a GET call to retrieve system attributes
@@ -90,7 +90,7 @@ class Configuration():
         # Set device as materialized
         self.materialized = True
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to update System Attributes
@@ -106,7 +106,7 @@ class Configuration():
             raise VerificationError("Device", "Not materialized")
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to a Device Configuration

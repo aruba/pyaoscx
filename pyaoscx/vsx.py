@@ -8,7 +8,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.vrf import Vrf
-from pyaoscx.utils.connection import connected
 
 import json
 import logging
@@ -37,7 +36,7 @@ class Vsx(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         '''
         Perform a GET call to retrieve data for a VSX table entry and fill the
@@ -142,7 +141,7 @@ class Vsx(PyaoscxModule):
 
         return vsx_obj
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         '''
         Main method used to either create or update an existing VSX configuration.
@@ -172,7 +171,7 @@ class Vsx(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing VSX inside the switch
@@ -222,7 +221,7 @@ class Vsx(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         '''
         Perform a POST call to create a new VSX
@@ -295,7 +294,7 @@ class Vsx(PyaoscxModule):
         # Object was modified
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         '''
         Perform DELETE call to delete VSX configuration.

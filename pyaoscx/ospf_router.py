@@ -15,7 +15,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 from pyaoscx.ospf_area import OspfArea
-from pyaoscx.utils.connection import connected
 
 from pyaoscx.utils.list_attributes import ListDescriptor
 
@@ -77,7 +76,7 @@ class OspfRouter(PyaoscxModule):
                 # Add self to ospf_routers list in parent Vrf object
                 self.__parent_vrf.ospf_routers.append(self)
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a OSPF Router table entry and
@@ -225,7 +224,7 @@ class OspfRouter(PyaoscxModule):
 
         return ospf_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to either create update an existing
@@ -250,7 +249,7 @@ class OspfRouter(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing OSPF Router table
@@ -319,7 +318,7 @@ class OspfRouter(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a new  OSPF Router table entry
@@ -377,7 +376,7 @@ class OspfRouter(PyaoscxModule):
         # Object was created
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         """
         Perform DELETE call to delete  OSPF Router table entry.

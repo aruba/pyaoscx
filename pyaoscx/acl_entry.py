@@ -6,7 +6,6 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.utils.connection import connected
 
 import json
 import logging
@@ -86,7 +85,7 @@ class AclEntry(PyaoscxModule):
                 # Add self to cfg_aces list in parent acl
                 self.__parent_acl.cfg_aces.append(self)
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         '''
         Perform a GET call to retrieve data for an ACL Entry table entry and
@@ -203,7 +202,7 @@ class AclEntry(PyaoscxModule):
 
         return acl_entry_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         '''
         Main method used to either create a new ACL Entry or update an existing
@@ -227,7 +226,7 @@ class AclEntry(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing ACL Entry
@@ -278,7 +277,7 @@ class AclEntry(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         '''
         Perform a POST call to create a new ACL Entry.
@@ -332,7 +331,7 @@ class AclEntry(PyaoscxModule):
         # Object was created, means modified
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         '''
         Perform DELETE call to delete ACL Entry from parent ACL on the switch.

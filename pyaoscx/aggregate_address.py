@@ -4,7 +4,6 @@
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
-from pyaoscx.utils.connection import connected
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 import json
@@ -86,7 +85,7 @@ class AggregateAddress(PyaoscxModule):
                 # Add self to Aggregate Addresses list in parent BGP Router
                 self.__parent_bgp_router.aggregate_addresses.append(self)
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a Aggregate Address table entry
@@ -208,7 +207,7 @@ class AggregateAddress(PyaoscxModule):
 
         return agg_address_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Main method used to either create or update an existing
@@ -233,7 +232,7 @@ class AggregateAddress(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing Aggregate
@@ -288,7 +287,7 @@ class AggregateAddress(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a new Aggregate Address table entry
@@ -330,7 +329,7 @@ class AggregateAddress(PyaoscxModule):
         # Object was modified
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         """
         Perform DELETE call to delete Aggregate Address.

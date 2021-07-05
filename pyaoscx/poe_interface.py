@@ -1,11 +1,11 @@
 # (C) Copyright 2019-2020 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.utils.connection import connected
 from pyaoscx.exceptions.request_error import HttpRequestError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.interface import Interface
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 import json
 import logging
@@ -47,7 +47,7 @@ class PoEInterface(Interface):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a PoE Interface table entry and
@@ -120,7 +120,7 @@ class PoEInterface(Interface):
 
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         """
         Apply an update of values of this PoE Interface.
@@ -136,7 +136,7 @@ class PoEInterface(Interface):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         """
         Perform a PUT call to apply changes to an existing PoE Interface
@@ -192,15 +192,15 @@ class PoEInterface(Interface):
 
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         pass
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         pass
 
-    @connected
+    @PyaoscxModule.connected
     def get_all(self):
         pass
 

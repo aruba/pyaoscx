@@ -31,7 +31,6 @@ class Session:
     def __init__(self, ip_address, api_version, proxy=None):
 
         self.api_version = API.create(api_version)
-        self.connected = False
         self.ip = ip_address
         self.proxy = {
             'no_proxy': self.ip
@@ -45,8 +44,13 @@ class Session:
         self.s.verify = False
         self.__username = self.__password = ''
 
-    def is_connected(self):
-        return self.connected
+    def __get_connected(self):
+        cookies = self.s.cookies
+        is_connected = hasattr(cookies, '_cookies') and \
+                       self.ip in cookies._cookies
+        return is_connected
+
+    connected = property(__get_connected)
 
     def cookies(self):
         '''
@@ -144,7 +148,6 @@ class Session:
                             (response.status_code, response.text))
 
         logging.info('SUCCESS: Login succeeded')
-        self.connected = True
 
     def close(self):
         '''
@@ -167,7 +170,6 @@ class Session:
                                 (response.status_code, response.text))
 
             logging.info('SUCCESS: Logout succeeded')
-            self.connected = False
 
     # Session Login and Logout
     # Used for Connection within Ansible

@@ -11,7 +11,6 @@ from pyaoscx.bgp_router import BgpRouter
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.static_route import StaticRoute
 from pyaoscx.vrf_address_family import VrfAddressFamily
-from pyaoscx.utils.connection import connected
 from pyaoscx.exceptions.verification_error import VerificationError
 
 import json
@@ -60,7 +59,7 @@ class Vrf(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         '''
         Perform a GET call to retrieve data for a VRF table entry and fill the
@@ -217,7 +216,7 @@ class Vrf(PyaoscxModule):
 
         return vrfs_dict
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         '''
         Main method used to either create or update an existing VRF table entry.
@@ -237,7 +236,7 @@ class Vrf(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing VRF table entry
@@ -289,7 +288,7 @@ class Vrf(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         '''
         Perform a POST call to create a new VRF using the object's attributes
@@ -330,7 +329,7 @@ class Vrf(PyaoscxModule):
         # Object was modified
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         '''
         Perform DELETE call to delete VRF table entry.

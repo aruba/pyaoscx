@@ -20,7 +20,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.ipv6 import Ipv6
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.vlan import Vlan
-from pyaoscx.utils.connection import connected
 
 
 from pyaoscx.utils.list_attributes import ListDescriptor
@@ -117,7 +116,7 @@ class Interface(PyaoscxModule):
         else:
             self.__is_special_type = False
 
-    @connected
+    @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         '''
         Perform a GET call to retrieve data for a Interface table entry
@@ -464,7 +463,7 @@ class Interface(PyaoscxModule):
         
         return facts
 
-    @connected
+    @PyaoscxModule.connected
     def create(self):
         """
         Perform a POST call to create a Port table entry
@@ -509,7 +508,7 @@ class Interface(PyaoscxModule):
 
         return True
 
-    @connected
+    @PyaoscxModule.connected
     def apply(self):
         '''
         Main method used to update or create a Interface or Port table entry.
@@ -529,7 +528,7 @@ class Interface(PyaoscxModule):
         self.__modified = modified
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def delete(self):
         '''
         Perform DELETE call to delete Interface table entry.
@@ -566,7 +565,7 @@ class Interface(PyaoscxModule):
             # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
 
-    @connected
+    @PyaoscxModule.connected
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing Interface or Port
@@ -727,7 +726,7 @@ class Interface(PyaoscxModule):
             modified = True
         return modified
 
-    @connected
+    @PyaoscxModule.connected
     def __add_member_to_lag(self, lag):
         """
         Perform PUT calls to configure a Port as a LAG member,
@@ -759,7 +758,7 @@ class Interface(PyaoscxModule):
         # Make a POST call and update values
         self.update()
 
-    @connected
+    @PyaoscxModule.connected
     def __delete_lag(self, lag):
         """
         Perform PUT calls to update Interface, deleting the LAG
