@@ -28,9 +28,9 @@ class Session:
         '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
     '''
 
-    def __init__(self, ip_address, api_version, proxy=None):
+    def __init__(self, ip_address, api, proxy=None):
 
-        self.api_version = API.create(api_version)
+        self.api = API.create(api)
         self.ip = ip_address
         self.proxy = {
             'no_proxy': self.ip
@@ -38,8 +38,8 @@ class Session:
             'https': proxy
         }
         self.base_url = "https://{}/rest/v{}/".format(
-            self.ip, self.api_version)
-        self.resource_prefix = "/rest/v{}/".format(self.api_version)
+            self.ip, self.api)
+        self.resource_prefix = "/rest/v{}/".format(self.api)
         self.s = requests.Session()
         self.s.verify = False
         self.__username = self.__password = ''

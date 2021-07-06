@@ -34,7 +34,7 @@ class Configuration():
 
         """
         logging.info("Retrieving the switch attributes and capabilities")
-        depth = self.session.api_version.default_depth
+        depth = self.session.api.default_depth
         uri = "{base_url}{class_uri}?depth={depth}".format(
             base_url=self.session.base_url,
             class_uri=Configuration.base_uri,
@@ -57,7 +57,7 @@ class Configuration():
         utils.create_attrs(self, data)
 
         # Second GET request to obtain just the variables that are writable
-        selector = self.session.api_version.default_selector
+        selector = self.session.api.default_selector
         payload = {
             "depth": depth,
             "selector": selector

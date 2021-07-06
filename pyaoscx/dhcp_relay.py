@@ -54,17 +54,17 @@ class DhcpRelay(PyaoscxModule):
         """
         logging.info("Retrieving the switch DHCP Relays")
 
-        depth = self.session.api_version.default_depth\
+        depth = self.session.api.default_depth\
             if depth is None else depth
-        selector = self.session.api_version.default_selector\
+        selector = self.session.api.default_selector\
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = " ".join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -77,7 +77,7 @@ class DhcpRelay(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=DhcpRelay.base_uri,
             id1=self.vrf.name,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.port.percents_name
         )
         try:
@@ -102,7 +102,7 @@ class DhcpRelay(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the DHCP Relay is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
                 self, data, "config_attrs", ["vrf", "port"])
@@ -151,7 +151,7 @@ class DhcpRelay(PyaoscxModule):
 
         dhcp_relay_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a DHCP Relay object
@@ -201,7 +201,7 @@ class DhcpRelay(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=DhcpRelay.base_uri,
             id1=self.vrf.name,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.port.percents_name
         )
 
@@ -288,7 +288,7 @@ class DhcpRelay(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=DhcpRelay.base_uri,
             id1=self.vrf.name,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.port.percents_name
         )
 
@@ -324,15 +324,15 @@ class DhcpRelay(PyaoscxModule):
             or a string: "/rest/v10.04/system/dhcp_relays/{vrf},{port}"
         return: DhcpRelay object
         """
-        dhcp_relay_arr = session.api_version.get_keys(
+        dhcp_relay_arr = session.api.get_keys(
             response_data, DhcpRelay.resource_uri_name)
         port_name = dhcp_relay_arr[1]
         vrf_name = dhcp_relay_arr[0]
         # Create Modules
-        port_obj = session.api_version.get_module(
+        port_obj = session.api.get_module(
             session, "Interface",
             port_name)
-        vrf_obj = session.api_version.get_module(
+        vrf_obj = session.api.get_module(
             session, "Vrf", vrf_name)
 
         return DhcpRelay(
@@ -357,10 +357,10 @@ class DhcpRelay(PyaoscxModule):
         vrf = index_pattern.match(uri).group("index1")
         port = index_pattern.match(uri).group("index2")
 
-        port_obj = session.api_version.get_module(
+        port_obj = session.api.get_module(
             session, "Interface",
             port)
-        vrf_obj = session.api_version.get_module(
+        vrf_obj = session.api.get_module(
             session, "Vrf", vrf)
 
         # Create DHCP Relay object
@@ -385,7 +385,7 @@ class DhcpRelay(PyaoscxModule):
                     class_uri=DhcpRelay.base_uri,
                     id1=self.vrf.name,
                     separator=(
-                        self.session.api_version.compound_index_separator),
+                        self.session.api.compound_index_separator),
                     id2=self.port.percents_name
                 )
 
@@ -397,7 +397,7 @@ class DhcpRelay(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         """
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """

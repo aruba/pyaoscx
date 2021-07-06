@@ -86,17 +86,17 @@ class OspfArea(PyaoscxModule):
         """
         logging.info("Retrieving the switch OSPF Areas")
 
-        depth = self.session.api_version.default_depth if depth is None \
+        depth = self.session.api.default_depth if depth is None \
             else depth
-        selector = self.session.api_version.default_selector if selector is \
+        selector = self.session.api.default_selector if selector is \
             None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = " ".join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -131,7 +131,7 @@ class OspfArea(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the OSPF Area is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(self, data, "config_attrs", ["area_id"])
 
@@ -191,7 +191,7 @@ class OspfArea(PyaoscxModule):
 
         ospf_area_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create an OspfArea object
@@ -376,7 +376,7 @@ class OspfArea(PyaoscxModule):
         :return: OspfArea object
 
         """
-        ospf_area_arr = session.api_version.get_keys(
+        ospf_area_arr = session.api.get_keys(
             response_data, OspfArea.resource_uri_name)
         ospf_area_id = ospf_area_arr[0]
         return OspfArea(session, ospf_area_id, parent_ospf_router)
@@ -427,7 +427,7 @@ class OspfArea(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         """
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """

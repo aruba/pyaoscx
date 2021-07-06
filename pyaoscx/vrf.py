@@ -73,17 +73,17 @@ class Vrf(PyaoscxModule):
         '''
         logging.info("Retrieving the switch VRF")
 
-        depth = self.session.api_version.default_depth if depth is \
+        depth = self.session.api.default_depth if depth is \
             None else depth
-        selector = self.session.api_version.default_selector if selector\
+        selector = self.session.api.default_selector if selector\
             is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -120,7 +120,7 @@ class Vrf(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the VRF is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(self, data, 'config_attrs', [
                 'name', 'type', 'bgp_routers',
@@ -206,7 +206,7 @@ class Vrf(PyaoscxModule):
 
         vrfs_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create Vrf object
@@ -376,7 +376,7 @@ class Vrf(PyaoscxModule):
         :return: Vrf object
 
         '''
-        vrf_name_arr = session.api_version.get_keys(
+        vrf_name_arr = session.api.get_keys(
             response_data, Vrf.resource_uri_name)
         vrf_name = vrf_name_arr[0]
         return Vrf(session, vrf_name)
@@ -407,28 +407,28 @@ class Vrf(PyaoscxModule):
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        
+
         :return facts: Dictionary containing VRF IDs as keys and VRF objects as values
-        
+
         '''
         # Log
         logging.info("Retrieving switch VRF facts")
 
         # Set VRF facts depth
-        vrf_depth = session.api_version.default_facts_depth
-        
+        vrf_depth = session.api.default_facts_depth
+
         # Build URI
         uri = "{base_url}{class_uri}?depth={depth}".format(
             base_url=session.base_url,
             class_uri=Vrf.base_uri,
             depth=vrf_depth
         )
-        
+
         try:
-            # Try to get facts data via GET method 
+            # Try to get facts data via GET method
             response = session.s.get(
-                uri, 
-                verify=False, 
+                uri,
+                verify=False,
                 proxies=session.proxy
             )
 
@@ -436,7 +436,7 @@ class Vrf(PyaoscxModule):
             raise ResponseError('GET', e)
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
-        
+
         # Load response text into json format
         facts = json.loads(response.text)
 
@@ -462,7 +462,7 @@ class Vrf(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         '''
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def __str__(self):
         return "VRF name: '{}'".format(self.name)
@@ -502,7 +502,7 @@ class Vrf(PyaoscxModule):
         if isinstance(family_type, str):
             # Create Vrf_Family_Address object -- add it to it's internal
             # address_families
-            vrf_address_family = self.session.api_version.get_module(
+            vrf_address_family = self.session.api.get_module(
                 self.session, 'VrfAddressFamily', family_type,
                 parent_vrf=self,
                 export_route_targets=export_target,

@@ -79,18 +79,18 @@ class StaticNexthop(PyaoscxModule):
         '''
         logging.info("Retrieving the switch static_nexthop routers")
 
-        depth = self.session.api_version.default_depth\
+        depth = self.session.api.default_depth\
             if depth is None else depth
 
-        selector = self.session.api_version.default_selector\
+        selector = self.session.api.default_selector\
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -120,7 +120,7 @@ class StaticNexthop(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the Static Nexthop is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
                 self, data, 'config_attrs',
@@ -136,7 +136,7 @@ class StaticNexthop(PyaoscxModule):
         if 'port' in data and \
                 self.port is not None:
             port_response = self.port
-            interface_cls = self.session.api_version.get_module(
+            interface_cls = self.session.api.get_module(
                 self.session, 'Interface', '')
             # Set port as a Interface Object
             self.port = interface_cls.from_response(
@@ -186,7 +186,7 @@ class StaticNexthop(PyaoscxModule):
 
         static_nexthop_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a StaticNexthop object and adds it to parent static_route
@@ -386,7 +386,7 @@ class StaticNexthop(PyaoscxModule):
             string: "/rest/v10.04/system/static_routes/static_nexthops/id"
         :return: StaticNexthop object
         '''
-        static_nexthop_arr = session.api_version.get_keys(
+        static_nexthop_arr = session.api.get_keys(
             response_data, StaticNexthop.resource_uri_name)
         _id = static_nexthop_arr[0]
         return StaticNexthop(session, _id, parent_static_route)
@@ -439,7 +439,7 @@ class StaticNexthop(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         '''
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """
@@ -485,7 +485,7 @@ class StaticNexthop(PyaoscxModule):
 
         next_id = None
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Obtain ID from uri

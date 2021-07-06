@@ -102,18 +102,18 @@ class StaticRoute(PyaoscxModule):
         '''
         logging.info("Retrieving the switch Static Routes")
 
-        depth = self.session.api_version.default_depth\
+        depth = self.session.api.default_depth\
             if depth is None else depth
 
-        selector = self.session.api_version.default_selector\
+        selector = self.session.api.default_selector\
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -146,7 +146,7 @@ class StaticRoute(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the Static Route is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
                 self, data, 'config_attrs',
@@ -208,7 +208,7 @@ class StaticRoute(PyaoscxModule):
 
         static_route_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a StaticRoute object and adds it to parent_vrf list
@@ -393,7 +393,7 @@ class StaticRoute(PyaoscxModule):
             string: "/rest/v10.04/system/vrfs/static_routes/prefix"
         :return: Static Route Object
         '''
-        static_route_arr = session.api_version.get_keys(
+        static_route_arr = session.api.get_keys(
             response_data, StaticRoute.resource_uri_name)
         prefix = static_route_arr[0]
         return StaticRoute(session, prefix, parent_vrf)
@@ -444,7 +444,7 @@ class StaticRoute(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         '''
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """
@@ -489,7 +489,7 @@ class StaticRoute(PyaoscxModule):
         # Set variable
         next_hop_interface_obj = None
         if next_hop_interface is not None:
-            next_hop_interface_obj = self.session.api_version.get_module(
+            next_hop_interface_obj = self.session.api.get_module(
                 self.session, 'Interface',
                 next_hop_interface)
 
@@ -499,7 +499,7 @@ class StaticRoute(PyaoscxModule):
         if nexthop_type == 'forward':
             bfd_enable = False
 
-        static_nexthop_obj = self.session.api_version.get_module(
+        static_nexthop_obj = self.session.api.get_module(
             self.session, 'StaticNexthop', 0,
             parent_static_route=self,
         )
@@ -514,7 +514,7 @@ class StaticRoute(PyaoscxModule):
             pass
 
         finally:
-            static_nexthop_obj = self.session.api_version.get_module(
+            static_nexthop_obj = self.session.api.get_module(
                 self.session, 'StaticNexthop',
                 0,
                 parent_static_route=self,

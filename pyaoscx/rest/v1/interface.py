@@ -83,17 +83,17 @@ class Interface(AbstractInterface):
         '''
         logging.info("Retrieving Port")
 
-        depth = self.session.api_version.default_depth \
+        depth = self.session.api.default_depth \
             if depth is None else depth
-        selector = self.session.api_version.default_selector \
+        selector = self.session.api.default_selector \
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}" .format(selectors))
 
@@ -140,7 +140,7 @@ class Interface(AbstractInterface):
         utils.create_attrs(self, data_port)
 
         # Determines if the module is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Get list of keys and create a list with the given keys
             utils.set_config_attrs(
                 self, data_port, 'config_attrs',
@@ -183,7 +183,7 @@ class Interface(AbstractInterface):
             utils.create_attrs(self, data_int)
 
             # Determines if the module is configurable
-            if selector in self.session.api_version.configurable_selectors:
+            if selector in self.session.api.configurable_selectors:
                 # Get list of keys and create a list with the given keys
                 utils.set_config_attrs(
                     self, data_int, 'config_attrs_int', ['name', 'origin'])
@@ -199,7 +199,7 @@ class Interface(AbstractInterface):
         if hasattr(self, 'interfaces') and self.interfaces is not None:
             interfaces_list = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api_version.get_uri_from_data(
+            uri_list = self.session.api.get_uri_from_data(
                 self.interfaces)
             for uri in uri_list:
                 # Create an Interface object
@@ -243,7 +243,7 @@ class Interface(AbstractInterface):
         if hasattr(self, 'vlan_trunks') and self.vlan_trunks is not None:
             vlan_trunks = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api_version.get_uri_from_data(
+            uri_list = self.session.api.get_uri_from_data(
                 self.vlan_trunks)
 
             for uri in uri_list:
@@ -377,7 +377,7 @@ class Interface(AbstractInterface):
 
         interfaces_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a Interface object
@@ -415,13 +415,13 @@ class Interface(AbstractInterface):
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :return facts: Dictionary containing Interface IDs as keys and Interface 
+        :return facts: Dictionary containing Interface IDs as keys and Interface
             objects as values
         '''
         # Log
         logging.info("Retrieving the switch interfaces facts")
-        
-        depth = session.api_version.default_facts_depth
+
+        depth = session.api.default_facts_depth
 
         payload = {
             "depth": depth
@@ -448,7 +448,7 @@ class Interface(AbstractInterface):
                 response_ports.status_code)
 
         ports_data = json.loads(response_ports.text)
-        
+
         # Build interface URI
         uri_interface =\
         '{base_url}{class_uri}?depth={depth}'.format(
@@ -470,7 +470,7 @@ class Interface(AbstractInterface):
             raise GenericOperationError(
                 response_interface.text,
                 response_interface.status_code)
-        
+
         # Load response text into json format
         interfaces_data = json.loads(response_interface.text)
         facts_dict = {}
@@ -502,14 +502,14 @@ class Interface(AbstractInterface):
         '''
         try:
             # Try using interfaces
-            interfaces_id_arr = session.api_version.get_keys(
+            interfaces_id_arr = session.api.get_keys(
                 response_data, 'interfaces')
         except AttributeError:
             # If AttributeError for Nonetype, try with ports
-            interfaces_id_arr = session.api_version.get_keys(
+            interfaces_id_arr = session.api.get_keys(
                 response_data, 'ports')
         interface_name = interfaces_id_arr[0]
-        return session.api_version.get_module(
+        return session.api.get_module(
             session, 'Interface',
             interface_name)
 
@@ -891,7 +891,7 @@ class Interface(AbstractInterface):
         inside other objects
         return: Object format depending on the API Version
         '''
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def __str__(self):
         return "Port name: '{}'".format(self.name)

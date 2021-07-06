@@ -73,7 +73,7 @@ class AclEntry(PyaoscxModule):
         self.base_uri = '{base_acl_uri}/{id1}{separator}{id2}/cfg_aces'.format(
             base_acl_uri=self.__parent_acl.base_uri,
             id1=self.__parent_acl.name,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.__parent_acl.list_type)
 
         # Verify acl_entry doesn't exist already inside acl
@@ -99,17 +99,17 @@ class AclEntry(PyaoscxModule):
         '''
         logging.info("Retrieving the switch ACL Entries")
 
-        depth = self.session.api_version.default_depth \
+        depth = self.session.api.default_depth \
             if depth is None else depth
-        selector = self.session.api_version.default_selector \
+        selector = self.session.api.default_selector \
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -138,7 +138,7 @@ class AclEntry(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the ACL Entry is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(self, data, 'config_attrs',
                                    ['sequence_number'])
@@ -172,7 +172,7 @@ class AclEntry(PyaoscxModule):
         base_uri = '{base_acl_uri}/{id1}{separator}{id2}/cfg_aces'.format(
             base_acl_uri=parent_acl.base_uri,
             id1=parent_acl.name,
-            separator=session.api_version.compound_index_separator,
+            separator=session.api.compound_index_separator,
             id2=parent_acl.list_type)
 
         uri = '{base_url}{class_uri}'.format(base_url=session.base_url,
@@ -190,7 +190,7 @@ class AclEntry(PyaoscxModule):
 
         acl_entry_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a AclEntry object and adds it to parent acl list
@@ -385,7 +385,7 @@ class AclEntry(PyaoscxModule):
             string: "/rest/v10.04/system/acls/cfg_aces/sequence_number"
         :return: AclEntry object
         '''
-        acl_entry_arr = session.api_version.get_keys(
+        acl_entry_arr = session.api.get_keys(
             response_data, AclEntry.resource_uri_name)
         sequence_number = acl_entry_arr[0]
         return AclEntry(session, sequence_number, parent_acl)
@@ -435,7 +435,7 @@ class AclEntry(PyaoscxModule):
         other objects
         return: AclEntry object format depending on the API Version
         '''
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """

@@ -61,18 +61,18 @@ class PoEInterface(Interface):
         """
         logging.info("Retrieving the switch PoE Interface")
 
-        depth = self.session.api_version.default_depth\
+        depth = self.session.api.default_depth\
             if depth is None else depth
 
-        selector = self.session.api_version.default_selector\
+        selector = self.session.api.default_selector\
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise ValueError("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise ValueError(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -107,7 +107,7 @@ class PoEInterface(Interface):
         utils.create_attrs(self, data)
 
         # Determines if the PoE Interface is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs
             utils.set_config_attrs(
                 self, data, 'config_attrs')

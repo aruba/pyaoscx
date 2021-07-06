@@ -89,18 +89,18 @@ class BgpRouter(PyaoscxModule):
         """
         logging.info("Retrieving the switch BGP Routers")
 
-        depth = self.session.api_version.default_depth\
+        depth = self.session.api.default_depth\
             if depth is None else depth
 
-        selector = self.session.api_version.default_selector\
+        selector = self.session.api.default_selector\
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = " ".join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -133,7 +133,7 @@ class BgpRouter(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the BGP Router is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
                 self, data, "config_attrs",
@@ -200,7 +200,7 @@ class BgpRouter(PyaoscxModule):
 
         bgp_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a BgpRouter object and adds it to parent Vrf object list
@@ -380,7 +380,7 @@ class BgpRouter(PyaoscxModule):
             string: "/rest/v10.04/system/vrfs/bgp_routers/asn"
         :return: BgpRouter object
         """
-        bgp_arr = session.api_version.get_keys(response_data,
+        bgp_arr = session.api.get_keys(response_data,
                                                BgpRouter.resource_uri_name)
         asn = bgp_arr[0]
         return BgpRouter(session, asn, parent_vrf)
@@ -430,7 +430,7 @@ class BgpRouter(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         """
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """
@@ -483,7 +483,7 @@ class BgpRouter(PyaoscxModule):
 
         if local_interface != "":
             if isinstance(local_interface, str):
-                local_interface = self.session.api_version.get_module(
+                local_interface = self.session.api.get_module(
                     self.session, "Interface", local_interface)
 
         # Set values needed
@@ -515,7 +515,7 @@ class BgpRouter(PyaoscxModule):
         if reflector:
             route_reflector_client[family_type] = reflector
 
-        bgp_neighbor_obj = self.session.api_version.get_module(
+        bgp_neighbor_obj = self.session.api.get_module(
             self.session,
             "BgpNeighbor",
             group_ip,

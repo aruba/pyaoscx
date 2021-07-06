@@ -59,7 +59,7 @@ class Device(PyaoscxFactory):
         attributes_list = ','.join(attributes)
         uri = "{}system?attributes={}&depth={}".format(
             self.session.base_url, attributes_list,
-            self.session.api_version.default_depth)
+            self.session.api.default_depth)
 
         try:
             response = self.session.s.get(
@@ -103,7 +103,7 @@ class Device(PyaoscxFactory):
         # Build URI
         uri = "{}system/subsystems?attributes={}&depth={}".format(
             self.session.base_url, attributes_list,
-            self.session.api_version.default_subsystem_facts_depth)
+            self.session.api.default_subsystem_facts_depth)
 
         try:
             # Try to perform a GET call and retrieve the data
@@ -164,10 +164,10 @@ class Device(PyaoscxFactory):
         modified = False
 
         logging.info("Setting Banner")
-        depth = self.session.api_version.default_depth
+        depth = self.session.api.default_depth
 
         # Second GET request to obtain just the variables that are writable
-        selector = self.session.api_version.default_selector
+        selector = self.session.api.default_selector
         payload = {
             "depth": depth,
             "selector": selector
@@ -175,7 +175,7 @@ class Device(PyaoscxFactory):
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
             class_uri=Device.base_uri,
-            depth=self.session.api_version.default_depth
+            depth=self.session.api.default_depth
         )
         try:
             response = self.session.s.get(
@@ -238,10 +238,10 @@ class Device(PyaoscxFactory):
             False otherwise
         '''
         logging.info("Removing Banner")
-        depth = self.session.api_version.default_depth
+        depth = self.session.api.default_depth
 
         # Second GET request to obtain just the variables that are writable
-        selector = self.session.api_version.default_selector
+        selector = self.session.api.default_selector
         payload = {
             "depth": depth,
             "selector": selector
@@ -249,7 +249,7 @@ class Device(PyaoscxFactory):
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
             class_uri=Device.base_uri,
-            depth=self.session.api_version.default_depth
+            depth=self.session.api.default_depth
         )
         try:
             response = self.session.s.get(

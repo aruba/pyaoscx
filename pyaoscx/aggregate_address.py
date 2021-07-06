@@ -99,17 +99,17 @@ class AggregateAddress(PyaoscxModule):
         """
         logging.info("Retrieving the switch Aggregate Addresses")
 
-        depth = self.session.api_version.default_depth\
+        depth = self.session.api.default_depth\
             if depth is None else depth
-        selector = self.session.api_version.default_selector\
+        selector = self.session.api.default_selector\
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = " ".join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -122,7 +122,7 @@ class AggregateAddress(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=self.base_uri,
             id1=self.address_family,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.reference_ip_prefix
         )
 
@@ -142,7 +142,7 @@ class AggregateAddress(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the Aggregate Address is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
                 self, data, "config_attrs", ["address-family"])
@@ -197,7 +197,7 @@ class AggregateAddress(PyaoscxModule):
 
         agg_address_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a AggregateAddress object
@@ -252,7 +252,7 @@ class AggregateAddress(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=self.base_uri,
             id1=self.address_family,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.reference_ip_prefix
         )
         # Compare dictionaries
@@ -340,7 +340,7 @@ class AggregateAddress(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=self.base_uri,
             id1=self.address_family,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.reference_ip_prefix
         )
 
@@ -388,7 +388,7 @@ class AggregateAddress(PyaoscxModule):
                     /aggregate_addresses/address_family/ip_prefix"
         :return: AggregateAddress object
         """
-        aggr_address_arr = session.api_version.get_keys(
+        aggr_address_arr = session.api.get_keys(
             response_data, cls.resource_uri_name)
         ip_prefix = aggr_address_arr[1]
         address_family = aggr_address_arr[0]
@@ -439,7 +439,7 @@ class AggregateAddress(PyaoscxModule):
                 resource_prefix=self.session.resource_prefix,
                 class_uri=self.base_uri,
                 id1=self.address_family,
-                separator=self.session.api_version.compound_index_separator,
+                separator=self.session.api.compound_index_separator,
                 id2=self.reference_ip_prefix
             )
 
@@ -451,7 +451,7 @@ class AggregateAddress(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         """
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """

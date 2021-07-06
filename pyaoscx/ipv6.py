@@ -96,17 +96,17 @@ class Ipv6(PyaoscxModule):
         """
         logging.info("Retrieving the switch IPv6")
 
-        depth = self.session.api_version.default_depth \
+        depth = self.session.api.default_depth \
             if depth is None else depth
-        selector = self.session.api_version.default_selector \
+        selector = self.session.api.default_selector \
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = " ".join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -137,7 +137,7 @@ class Ipv6(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the IPv6 is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(self, data, "config_attrs", ["address"])
 
@@ -193,7 +193,7 @@ class Ipv6(PyaoscxModule):
 
         ipv6_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a Ipv6 object
@@ -381,7 +381,7 @@ class Ipv6(PyaoscxModule):
             string: "/rest/v10.04/interface/ip6_addresses/address"
         :return: IPv6 object
         """
-        ipv6_arr = session.api_version.get_keys(
+        ipv6_arr = session.api.get_keys(
             response_data, Ipv6.resource_uri_name)
         address = ipv6_arr[0]
         return Ipv6(session, address, parent_int)
@@ -431,7 +431,7 @@ class Ipv6(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         """
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """

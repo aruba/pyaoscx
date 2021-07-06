@@ -122,7 +122,7 @@ class PyaoscxFactory():
         :param name: Alphanumeric name of Interface
         :return: Interface object
         """
-        interface_obj = self.session.api_version.get_module(
+        interface_obj = self.session.api.get_module(
             self.session, 'Interface',
             name)
 
@@ -158,12 +158,12 @@ class PyaoscxFactory():
 
         if isinstance(interface_name, str):
             # Make Interface into an object
-            interface = self.session.api_version.get_module(
+            interface = self.session.api.get_module(
                 self.session, 'Interface', interface_name)
             # Materialize interface to ensure its existence
             interface.get()
 
-        ipv6_obj = self.session.api_version.get_module(
+        ipv6_obj = self.session.api.get_module(
             self.session, 'Ipv6', address,
             parent_int=interface, type=_type,
             preferred_lifetime=604800,
@@ -210,12 +210,12 @@ class PyaoscxFactory():
 
         if pvlan_type == "static":
             # admin-configured state can only be set on static VLANs
-            vlan_obj = self.session.api_version.get_module(
+            vlan_obj = self.session.api.get_module(
                 self.session, 'Vlan', vlan_id,
                 name=name, description=description,
                 admin=admin_conf_state)
         else:
-            vlan_obj = self.session.api_version.get_module(
+            vlan_obj = self.session.api.get_module(
                 self.session, 'Vlan', vlan_id, name=name,
                 description=description)
 
@@ -254,11 +254,11 @@ class PyaoscxFactory():
             _type = vrf_type
 
         if route_distinguisher is not None and _type != 'default':
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', name,
                 rd=route_distinguisher, type=_type)
         else:
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', name, type=_type)
 
         # Try to obtain data; if not, create
@@ -311,13 +311,13 @@ class PyaoscxFactory():
             _keepalive_port = keepalive_port
         if keepalive_vrf is not None:
             if isinstance(keepalive_vrf, str):
-                keepalive_vrf = self.session.api_version.get_module(
+                keepalive_vrf = self.session.api.get_module(
                     self.session, 'Vrf', keepalive_vrf)
                 keepalive_vrf.get()
 
         if isl_port is not None:
             if isinstance(isl_port, str):
-                isl_port = self.session.api_version.get_module(
+                isl_port = self.session.api.get_module(
                     self.session, 'Interface', isl_port)
                 isl_port.get()
             # Check ISL Port routing
@@ -326,7 +326,7 @@ class PyaoscxFactory():
                 isl_port.routing = False
                 isl_port.apply()
 
-        vsx_obj = self.session.api_version.get_module(
+        vsx_obj = self.session.api.get_module(
             self.session, 'Vsx', device_role=role,
             isl_port=isl_port, keepalive_peer_ip=keepalive_peer,
             keepalive_src_ip=keepalive_src, keepalive_vrf=keepalive_vrf,
@@ -374,13 +374,13 @@ class PyaoscxFactory():
         """
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
             vrf = vrf_obj
 
-        bgp_router_obj = self.session.api_version.get_module(
+        bgp_router_obj = self.session.api.get_module(
             self.session, 'BgpRouter', asn, parent_vrf=vrf,
             router_id=router_id)
 
@@ -415,7 +415,7 @@ class PyaoscxFactory():
         """
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
@@ -432,7 +432,7 @@ class PyaoscxFactory():
                 "ipv6-unicast": ["connected"]
             }
 
-        bgp_router_obj = self.session.api_version.get_module(
+        bgp_router_obj = self.session.api.get_module(
             self.session, 'BgpRouter', asn, parent_vrf=vrf,
             redistribute=redistribute_data)
 
@@ -487,7 +487,7 @@ class PyaoscxFactory():
 
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
@@ -495,7 +495,7 @@ class PyaoscxFactory():
 
         if isinstance(bgp_router_asn, int):
             # Make BGP Router into an object
-            bgp_router_obj = self.session.api_version.get_module(
+            bgp_router_obj = self.session.api.get_module(
                 self.session, 'BgpRouter', bgp_router_asn, parent_vrf=vrf)
 
             # Materialize BGP Router to ensure its existence
@@ -509,7 +509,7 @@ class PyaoscxFactory():
 
         if local_interface != "":
             if isinstance(local_interface, str):
-                local_interface = self.session.api_version.get_module(
+                local_interface = self.session.api.get_module(
                     self.session, 'Interface', local_interface)
                 local_interface.get()
 
@@ -554,7 +554,7 @@ class PyaoscxFactory():
         if _reflector:
             route_reflector_client[_family_type] = reflector
 
-        bgp_neighbor_obj = self.session.api_version.get_module(
+        bgp_neighbor_obj = self.session.api.get_module(
             self.session, 'BgpNeighbor', group_ip,
             parent_bgp_router=bgp_router_asn,
             remote_as=asn, shutdown=False,
@@ -607,13 +607,13 @@ class PyaoscxFactory():
 
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
             vrf = vrf_obj
 
-        ospf_router_obj = self.session.api_version.get_module(
+        ospf_router_obj = self.session.api.get_module(
             self.session, 'OspfRouter', ospf_id, parent_vrf=vrf,
             redistribute=_redistribute)
 
@@ -655,7 +655,7 @@ class PyaoscxFactory():
 
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
@@ -663,7 +663,7 @@ class PyaoscxFactory():
 
         if isinstance(ospf_id, int):
             # Make OSPF Router into an object
-            ospf_router_obj = self.session.api_version.get_module(
+            ospf_router_obj = self.session.api.get_module(
                 self.session, 'OspfRouter', ospf_id, parent_vrf=vrf)
 
             # Materialize OSPF Router to ensure its existence
@@ -675,7 +675,7 @@ class PyaoscxFactory():
             ospf_router = ospf_id
 
         # Create OspfArea object
-        ospf_area_obj = self.session.api_version.get_module(
+        ospf_area_obj = self.session.api.get_module(
             self.session, 'OspfArea', area_id, parent_ospf_router=ospf_router,
             area_type=_area_type, ipsec_ah={}, ipsec_esp={})
 
@@ -709,7 +709,7 @@ class PyaoscxFactory():
 
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
@@ -717,7 +717,7 @@ class PyaoscxFactory():
 
         if isinstance(ospf_id, int):
             # Make Ospf ID into an object
-            ospf_router_obj = self.session.api_version.get_module(
+            ospf_router_obj = self.session.api.get_module(
                 self.session, 'OspfRouter', ospf_id, parent_vrf=vrf)
 
             # Materialize OSPF Router to ensure its existence
@@ -730,7 +730,7 @@ class PyaoscxFactory():
 
         if isinstance(area_id, str):
             # Create OspfArea object
-            ospf_area_obj = self.session.api_version.get_module(
+            ospf_area_obj = self.session.api.get_module(
                 self.session, 'OspfArea', area_id,
                 parent_ospf_router=ospf_router)
             # Materialize it
@@ -742,7 +742,7 @@ class PyaoscxFactory():
             area = area_id
 
         # Make Ospf ID into an object
-        ospf_interface = self.session.api_version.get_module(
+        ospf_interface = self.session.api.get_module(
             self.session, 'OspfInterface', interface_name,
             parent_ospf_area=area)
 
@@ -794,13 +794,13 @@ class PyaoscxFactory():
 
         :return: DhcpRelay object
         """
-        port_obj = self.session.api_version.get_module(
+        port_obj = self.session.api.get_module(
             self.session, 'Interface',
             port)
-        vrf_obj = self.session.api_version.get_module(
+        vrf_obj = self.session.api.get_module(
             self.session, 'Vrf', vrf)
 
-        dhcp_relay = self.session.api_version.get_module(
+        dhcp_relay = self.session.api.get_module(
             self.session, 'DhcpRelay', index_id=vrf_obj, port=port_obj)
 
         # Try to obtain data; if not, create
@@ -823,7 +823,7 @@ class PyaoscxFactory():
         :return: Acl object
         """
 
-        acl = self.session.api_version.get_module(
+        acl = self.session.api.get_module(
             self.session, 'ACL', index_id=list_name, list_type=list_type)
 
         # Try to obtain data; if not, create
@@ -873,14 +873,14 @@ class PyaoscxFactory():
 
         """
         # Create Acl object
-        acl = self.session.api_version.get_module(
+        acl = self.session.api.get_module(
             self.session, 'ACL', index_id=list_name, list_type=list_type)
 
         # Get ACL data
         acl.get()
 
         # Create ACL Entry
-        acl_entry_obj = self.session.api_version.get_module(
+        acl_entry_obj = self.session.api.get_module(
             self.session, 'AclEntry', index_id=sequence_num, parent_acl=acl,
             action=action, count=count, protocol=protocol, src_ip=src_ip,
             dst_ip=dst_ip, dst_l4_port_min=dst_l4_port_min,
@@ -922,13 +922,13 @@ class PyaoscxFactory():
         """
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
             vrf = vrf_obj
 
-        vrf_address_fam_obj = self.session.api_version.get_module(
+        vrf_address_fam_obj = self.session.api.get_module(
             self.session, 'VrfAddressFamily', address_family,
             parent_vrf=vrf)
 
@@ -964,7 +964,7 @@ class PyaoscxFactory():
 
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
@@ -972,7 +972,7 @@ class PyaoscxFactory():
 
         if isinstance(bgp_router_asn, int):
             # Make BGP Router into an object
-            bgp_router_obj = self.session.api_version.get_module(
+            bgp_router_obj = self.session.api.get_module(
                 self.session, 'BgpRouter', bgp_router_asn, parent_vrf=vrf)
 
             # Materialize interface to ensure its existence
@@ -980,7 +980,7 @@ class PyaoscxFactory():
             # Set variable as an object
             bgp_router_asn = bgp_router_obj
 
-        aggregate_add_obj = self.session.api_version.get_module(
+        aggregate_add_obj = self.session.api.get_module(
             self.session, 'AggregateAddress',
             family_type,
             ip_prefix=ip_prefix,
@@ -1014,13 +1014,13 @@ class PyaoscxFactory():
 
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
             vrf = vrf_obj
 
-        static_route_obj = self.session.api_version.get_module(
+        static_route_obj = self.session.api.get_module(
             self.session, 'StaticRoute', destination_address_prefix,
             parent_vrf=vrf)
 
@@ -1071,7 +1071,7 @@ class PyaoscxFactory():
 
         if isinstance(vrf, str):
             # Make VRF into an object
-            vrf_obj = self.session.api_version.get_module(
+            vrf_obj = self.session.api.get_module(
                 self.session, 'Vrf', vrf)
             # Materialize VRF to ensure its existence
             vrf_obj.get()
@@ -1079,7 +1079,7 @@ class PyaoscxFactory():
         static_route = destination_address_prefix
         if isinstance(destination_address_prefix, str):
             # Make a Static Route Object
-            static_route_obj = self.session.api_version.get_module(
+            static_route_obj = self.session.api.get_module(
                 self.session, 'StaticRoute', destination_address_prefix,
                 parent_vrf=vrf)
             # Materialize Object to ensure its existence
@@ -1091,7 +1091,7 @@ class PyaoscxFactory():
         # Set variable
         next_hop_interface_obj = None
         if next_hop_interface is not None:
-            next_hop_interface_obj = self.session.api_version.get_module(
+            next_hop_interface_obj = self.session.api.get_module(
                 self.session, 'Interface',
                 next_hop_interface)
         if nexthop_type is None:
@@ -1100,7 +1100,7 @@ class PyaoscxFactory():
         if nexthop_type == 'forward':
             bfd_enable = False
 
-        static_nexthop_obj = self.session.api_version.get_module(
+        static_nexthop_obj = self.session.api.get_module(
             self.session, 'StaticNexthop', 0,
             parent_static_route=static_route,
         )
@@ -1115,7 +1115,7 @@ class PyaoscxFactory():
             pass
 
         finally:
-            static_nexthop_obj = self.session.api_version.get_module(
+            static_nexthop_obj = self.session.api.get_module(
                 self.session, 'StaticNexthop',
                 0,
                 parent_static_route=static_route_obj,
@@ -1140,13 +1140,13 @@ class PyaoscxFactory():
         """
         if isinstance(interface, str):
             # Make Interface into an object
-            interface_obj = self.session.api_version.get_module(
+            interface_obj = self.session.api.get_module(
                 self.session, 'Interface', interface)
             # Materialize Interface to ensure its existence
             interface_obj.get()
             interface = interface_obj
 
-        poe_interface_obj = self.session.api_version.get_module(
+        poe_interface_obj = self.session.api.get_module(
             self.session, 'PoEInterface', interface)
 
         poe_interface_obj.get()

@@ -50,17 +50,17 @@ class Vlan(PyaoscxModule):
         '''
         logging.info("Retrieving the switch VLANs")
 
-        depth = self.session.api_version.default_depth if depth is None \
+        depth = self.session.api.default_depth if depth is None \
             else depth
-        selector = self.session.api_version.default_selector if selector \
+        selector = self.session.api.default_selector if selector \
             is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -93,7 +93,7 @@ class Vlan(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the VLAN is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(self, data, 'config_attrs', ['id'])
 
@@ -161,7 +161,7 @@ class Vlan(PyaoscxModule):
 
         vlans_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a Vlan object
@@ -349,7 +349,7 @@ class Vlan(PyaoscxModule):
             string: "/rest/v1/system/vlans/1"
         :return: Vlan Object
         '''
-        vlan_id_arr = session.api_version.get_keys(
+        vlan_id_arr = session.api.get_keys(
             response_data, Vlan.resource_uri_name)
         vlan_id = vlan_id_arr[0]
         return Vlan(session, vlan_id)
@@ -382,15 +382,15 @@ class Vlan(PyaoscxModule):
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        
+
         :return facts: Dictionary containing VLAN IDs as keys and Vlan objects as values
-        
+
         '''
         # Log
         logging.info("Retrieving switch VLANs facts")
 
         # Set VLAN facts depth
-        vlan_depth = session.api_version.default_facts_depth
+        vlan_depth = session.api.default_facts_depth
 
         # Build URI
         uri = '{base_url}{class_uri}?depth={depth}'.format(
@@ -400,20 +400,20 @@ class Vlan(PyaoscxModule):
         )
 
         try:
-            # Try to get facts data via GET method 
+            # Try to get facts data via GET method
             response = session.s.get(
-                uri, 
-                verify=False, 
-                proxies=session.proxy 
+                uri,
+                verify=False,
+                proxies=session.proxy
             )
 
         except Exception as e:
             raise ResponseError('GET', e)
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(
-                response.text, 
+                response.text,
                 response.status_code)
-        
+
         # Load response text into json format
         facts = json.loads(response.text)
 
@@ -457,7 +457,7 @@ class Vlan(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         '''
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """
@@ -511,7 +511,7 @@ class Vlan(PyaoscxModule):
         import random
 
         # Create Acl object
-        acl_obj = self.session.api_version.get_module(
+        acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)
 
         if list_type == "ipv6":
@@ -546,7 +546,7 @@ class Vlan(PyaoscxModule):
         import random
 
         # Create Acl object
-        acl_obj = self.session.api_version.get_module(
+        acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)
 
         if list_type == "ipv6":

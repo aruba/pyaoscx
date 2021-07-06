@@ -50,7 +50,7 @@ class Dns(PyaoscxModule):
         # VRF attribute where configurable attributes go
         self.__internal_vrf = None
         # Try to create VRF
-        self.__internal_vrf = self.session.api_version.get_module(
+        self.__internal_vrf = self.session.api.get_module(
             self.session, "Vrf", self.vrf_name)
         # Materialize internal VRF
         self.__internal_vrf.get()
@@ -68,7 +68,7 @@ class Dns(PyaoscxModule):
         :return: Returns True if there is not an exception raised
         """
         # Get VRF
-        vrf_obj = self.session.api_version.get_module(
+        vrf_obj = self.session.api.get_module(
             self.session, "Vrf", self.vrf_name)
 
         # Get vrf Object

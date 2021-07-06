@@ -129,17 +129,17 @@ class Interface(PyaoscxModule):
         '''
         logging.info("Retrieving Interface")
 
-        depth = self.session.api_version.default_depth \
+        depth = self.session.api.default_depth \
             if depth is None else depth
-        selector = self.session.api_version.default_selector \
+        selector = self.session.api.default_selector \
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = ' '.join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = ' '.join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -171,7 +171,7 @@ class Interface(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the module is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
                 self, data, 'config_attrs', ['name', 'type']
@@ -184,7 +184,7 @@ class Interface(PyaoscxModule):
         if hasattr(self, 'interfaces') and self.interfaces is not None:
             interfaces_list = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api_version.get_uri_from_data(
+            uri_list = self.session.api.get_uri_from_data(
                 self.interfaces)
 
             for uri in uri_list:
@@ -229,7 +229,7 @@ class Interface(PyaoscxModule):
         if hasattr(self, 'vlan_trunks') and self.vlan_trunks is not None:
             vlan_trunks = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api_version.get_uri_from_data(
+            uri_list = self.session.api.get_uri_from_data(
                 self.vlan_trunks)
 
             for uri in uri_list:
@@ -362,7 +362,7 @@ class Interface(PyaoscxModule):
 
         interfaces_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create an Interface object
@@ -389,10 +389,10 @@ class Interface(PyaoscxModule):
         :return: Interface object
 
         '''
-        interfaces_id_arr = session.api_version.get_keys(
+        interfaces_id_arr = session.api.get_keys(
             response_data, Interface.resource_uri_name)
         interface_name = interfaces_id_arr[0]
-        return session.api_version.get_module(
+        return session.api.get_module(
             session, 'Interface',
             interface_name)
 
@@ -413,7 +413,7 @@ class Interface(PyaoscxModule):
         name_percents = index_pattern.match(uri).group('index')
         name = utils._replace_percents(name_percents)
         # Create Interface object
-        interface_obj = session.api_version.get_module(
+        interface_obj = session.api.get_module(
             session, 'Interface',
             name, uri=uri)
 
@@ -427,14 +427,14 @@ class Interface(PyaoscxModule):
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :return facts: Dictionary containing Interface IDs as keys and Interface 
+        :return facts: Dictionary containing Interface IDs as keys and Interface
             objects as values
         '''
         # Log
         logging.info("Retrieving the switch interfaces facts")
 
         # Set depth
-        interface_depth = session.api_version.default_facts_depth
+        interface_depth = session.api.default_facts_depth
 
         # Build URI
         uri =\
@@ -443,24 +443,24 @@ class Interface(PyaoscxModule):
             class_uri=Interface.base_uri,
             depth=interface_depth
         )
-        
+
         try:
             # Try to get facts via GET method
             response = session.s.get(
                 uri,
-                verify=False, 
+                verify=False,
                 proxies=session.proxy
             )
-            
+
         except Exception as e:
             raise ResponseError('GET', e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
-        
+
         # Load into json format
         facts = json.loads(response.text)
-        
+
         return facts
 
     @PyaoscxModule.connected
@@ -803,7 +803,7 @@ class Interface(PyaoscxModule):
             other objects
         return: Object format depending on the API Version
         '''
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def __str__(self):
         """
@@ -939,7 +939,7 @@ class Interface(PyaoscxModule):
         if phys_ports is not None:
             self.interfaces = []
             for port in phys_ports:
-                port_obj = self.session.api_version.get_module(
+                port_obj = self.session.api.get_module(
                     self.session, 'Interface',
                     port)
                 # Materialize Port
@@ -1073,7 +1073,7 @@ class Interface(PyaoscxModule):
         if phys_ports is not None:
             self.interfaces = []
             for port in phys_ports:
-                port_obj = self.session.api_version.get_module(
+                port_obj = self.session.api.get_module(
                     self.session, 'Interface',
                     port)
                 # Materialize Port
@@ -1099,7 +1099,7 @@ class Interface(PyaoscxModule):
                 if isinstance(ip_address, str):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
                     # list
-                    ip_address = self.session.api_version.get_module(
+                    ip_address = self.session.api.get_module(
                         self.session, 'Ipv6', ip_address,
                         parent_int=self,
                         type="global-unicast",
@@ -1195,7 +1195,7 @@ class Interface(PyaoscxModule):
             if isinstance(vlan, int):
                 name = "VLAN {}".format(str(vlan))
                 # Create Vlan object
-                vlan_tag = self.session.api_version.get_module(
+                vlan_tag = self.session.api.get_module(
                     self.session, 'Vlan', vlan, name=name)
                 # Try to obtain data; if not, create
                 try:
@@ -1224,7 +1224,7 @@ class Interface(PyaoscxModule):
                 if isinstance(ip_address, str):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
                     # list
-                    ip_address = self.session.api_version.get_module(
+                    ip_address = self.session.api.get_module(
                         self.session, 'Ipv6', ip_address,
                         parent_int=self,
                         type="global-unicast",
@@ -1247,7 +1247,7 @@ class Interface(PyaoscxModule):
         # Set VRF
         if vrf is not None:
             if isinstance(vrf, str):
-                vrf = self.session.api_version.get_module(
+                vrf = self.session.api.get_module(
                     self.session, 'Vrf', vrf)
                 vrf.get()
 
@@ -1313,7 +1313,7 @@ class Interface(PyaoscxModule):
         # Verify if incoming address is a string
         if isinstance(ip_address, str):
             # Create Ipv6 object -- add it to ipv6_addresses internal list
-            ipv6 = self.session.api_version.get_module(
+            ipv6 = self.session.api.get_module(
                 self.session, 'Ipv6', ip_address, parent_int=self,
                 type=address_type,
                 preferred_lifetime=604800,
@@ -1387,7 +1387,7 @@ class Interface(PyaoscxModule):
         # Set VRF
         if vrf is not None:
             if isinstance(vrf, str):
-                vrf = self.session.api_version.get_module(
+                vrf = self.session.api.get_module(
                     self.session, 'Vrf', vrf)
                 vrf.get()
 
@@ -1507,7 +1507,7 @@ class Interface(PyaoscxModule):
         # Set Vlan Tag into Object
         if isinstance(vlan, int):
             # Create Vlan object
-            vlan_tag = self.session.api_version.get_module(
+            vlan_tag = self.session.api.get_module(
                 self.session, 'Vlan', vlan)
             # Try to get data; if non-existent, throw error
             vlan_tag.get()
@@ -1538,7 +1538,7 @@ class Interface(PyaoscxModule):
 
             for vlan in vlan_trunk_ids:
 
-                vlan_obj = self.session.api_version.get_module(
+                vlan_obj = self.session.api.get_module(
                     self.session, 'Vlan', vlan)
                 vlan_obj.get()
 
@@ -1551,7 +1551,7 @@ class Interface(PyaoscxModule):
             self.vlan_mode = "native-untagged"
 
         if self.vlan_tag is not None:
-            vlan_tag_obj = self.session.api_version.get_module(
+            vlan_tag_obj = self.session.api.get_module(
                 self.session, 'Vlan', 1)
             vlan_tag_obj.get()
             self.vlan_tag = vlan_tag_obj
@@ -1582,7 +1582,7 @@ class Interface(PyaoscxModule):
         # Set Vlan Tag into Object
         if isinstance(vlan_tag, int):
             # Create Vlan object
-            vlan_tag = self.session.api_version.get_module(
+            vlan_tag = self.session.api.get_module(
                 self.session, 'Vlan', vlan)
             # Try to get data; if non-existent, throw error
             vlan_tag.get()
@@ -1646,7 +1646,7 @@ class Interface(PyaoscxModule):
         # Identify interface variable type
         if isinstance(interface, str):
             # Create Interface Object
-            interface_obj = self.session.api_version.get_module(
+            interface_obj = self.session.api.get_module(
                 self.session, 'Interface', interface)
             # Try to get data; if non-existent, throw error
             interface_obj.get()
@@ -1838,7 +1838,7 @@ class Interface(PyaoscxModule):
                 pass
 
         # Set vrf
-        vrf_obj = self.session.api_version.get_module(
+        vrf_obj = self.session.api.get_module(
             self.session, 'Vrf', vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
@@ -1875,7 +1875,7 @@ class Interface(PyaoscxModule):
         self.ospf_if_type = "ospf_iftype_broadcast"
         self.routing = True
         # Set vrf
-        vrf_obj = self.session.api_version.get_module(
+        vrf_obj = self.session.api.get_module(
             self.session, 'Vrf', vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
@@ -1912,7 +1912,7 @@ class Interface(PyaoscxModule):
         self.ospf_if_type = "ospf_iftype_%s" % interface_type
         self.routing = True
         # Set vrf
-        vrf_obj = self.session.api_version.get_module(
+        vrf_obj = self.session.api.get_module(
             self.session, 'Vrf', vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
@@ -2000,7 +2000,7 @@ class Interface(PyaoscxModule):
         import random
 
         # Create Acl object
-        acl_obj = self.session.api_version.get_module(
+        acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)
 
         if list_type == "ipv6":
@@ -2042,7 +2042,7 @@ class Interface(PyaoscxModule):
         import random
 
         # Create Acl object
-        acl_obj = self.session.api_version.get_module(
+        acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)
 
         if list_type == "ipv6":

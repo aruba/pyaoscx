@@ -58,17 +58,17 @@ class ACL(PyaoscxModule):
         """
         logging.info("Retrieving the switch ACLs")
 
-        depth = self.session.api_version.default_depth\
+        depth = self.session.api.default_depth\
             if depth is None else depth
-        selector = self.session.api_version.default_selector\
+        selector = self.session.api.default_selector\
             if selector is None else selector
 
-        if not self.session.api_version.valid_depth(depth):
-            depths = self.session.api_version.valid_depths
+        if not self.session.api.valid_depth(depth):
+            depths = self.session.api.valid_depths
             raise Exception("ERROR: Depth should be {}".format(depths))
 
-        if selector not in self.session.api_version.valid_selectors:
-            selectors = " ".join(self.session.api_version.valid_selectors)
+        if selector not in self.session.api.valid_selectors:
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -78,7 +78,7 @@ class ACL(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=ACL.base_uri,
             id1=self.name,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.list_type)
         try:
             response = self.session.s.get(uri,
@@ -107,7 +107,7 @@ class ACL(PyaoscxModule):
         utils.create_attrs(self, data)
 
         # Determines if the ACL is configurable
-        if selector in self.session.api_version.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(self, data, "config_attrs",
                                    ["name", "list_type"])
@@ -156,7 +156,7 @@ class ACL(PyaoscxModule):
 
         acl_dict = {}
         # Get all URI elements in the form of a list
-        uri_list = session.api_version.get_uri_from_data(data)
+        uri_list = session.api.get_uri_from_data(data)
 
         for uri in uri_list:
             # Create a Acl object
@@ -204,7 +204,7 @@ class ACL(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=ACL.base_uri,
             id1=self.name,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.list_type)
 
         # Compare dictionaries
@@ -287,7 +287,7 @@ class ACL(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=ACL.base_uri,
             id1=self.name,
-            separator=self.session.api_version.compound_index_separator,
+            separator=self.session.api.compound_index_separator,
             id2=self.list_type)
 
         try:
@@ -324,7 +324,7 @@ class ACL(PyaoscxModule):
             string: "/rest/v10.04/system/acls/{name},{list_type}"
         :return: Acl object
         """
-        acl_arr = session.api_version.get_keys(response_data,
+        acl_arr = session.api.get_keys(response_data,
                                                ACL.resource_uri_name)
         list_type = acl_arr[1]
         name = acl_arr[0]
@@ -372,7 +372,7 @@ class ACL(PyaoscxModule):
                     class_uri=ACL.base_uri,
                     id1=self.name,
                     separator=(
-                        self.session.api_version.compound_index_separator),
+                        self.session.api.compound_index_separator),
                     id2=self.list_type
                 )
 
@@ -384,7 +384,7 @@ class ACL(PyaoscxModule):
         other objects
         return: Object format depending on the API Version
         """
-        return self.session.api_version.get_index(self)
+        return self.session.api.get_index(self)
 
     def was_modified(self):
         """
@@ -447,7 +447,7 @@ class ACL(PyaoscxModule):
         """
 
         # Create ACL Entry
-        acl_entry_obj = self.session.api_version.get_module(
+        acl_entry_obj = self.session.api.get_module(
             self.session,
             "AclEntry",
             sequence_num,
@@ -517,7 +517,7 @@ class ACL(PyaoscxModule):
         """
 
         # Create ACL Entry
-        acl_entry_obj = self.session.api_version.get_module(self.session,
+        acl_entry_obj = self.session.api.get_module(self.session,
                                                             "AclEntry",
                                                             sequence_num,
                                                             parent_acl=self)
