@@ -33,6 +33,7 @@ class Session:
 
         self.api = API.create(api)
         self.ip = ip_address
+        self.connected = False
         self.proxy = {
             'no_proxy': self.ip
         } if proxy is None else {
@@ -50,13 +51,11 @@ class Session:
         self.s.verify = False
         self.__username = self.__password = ''
 
-    def __get_connected(self):
+    def __is_connected(self):
         cookies = self.s.cookies
-        is_connected = hasattr(cookies, '_cookies') and \
+        self.connected = hasattr(cookies, '_cookies') and \
                        self.ip in cookies._cookies
-        return is_connected
-
-    connected = property(__get_connected)
+        return self.connected
 
     def cookies(self):
         '''
