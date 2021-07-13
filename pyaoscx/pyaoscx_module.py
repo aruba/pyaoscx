@@ -7,7 +7,6 @@ import functools
 import pyaoscx.utils.util as utils
 from abc import ABC, abstractmethod
 from pyaoscx.exceptions.verification_error import VerificationError
-from pyaoscx.utils.connection import connected
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
