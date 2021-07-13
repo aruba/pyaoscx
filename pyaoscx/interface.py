@@ -2143,8 +2143,6 @@ class Interface(PyaoscxModule):
     def port_security_disable(self) -> bool:
         """
         Disable port security on the specified interface
-        :param interface_name: Alphanumeric String with the name of
-                               the Interface
         :return: True if the object was changed
         """
         if not self.materialized:
