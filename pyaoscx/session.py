@@ -51,12 +51,6 @@ class Session:
         self.s.verify = False
         self.__username = self.__password = ''
 
-    def __is_connected(self):
-        cookies = self.s.cookies
-        self.connected = hasattr(cookies, '_cookies') and \
-                       self.ip in cookies._cookies
-        return self.connected
-
     def cookies(self):
         '''
         Return the cookie stored in the requests' session
@@ -151,6 +145,13 @@ class Session:
         if response.status_code != 200:
             raise Exception('FAIL: Login failed with status code %d: %s' %
                             (response.status_code, response.text))
+
+        cookies = self.s.cookies
+        self.connected = hasattr(cookies, '_cookies') and \
+                       self.ip in cookies._cookies
+
+        if not self.connected:
+            raise LoginError("Cookies were not set correctly. Login failed")
 
         logging.info('SUCCESS: Login succeeded')
 
