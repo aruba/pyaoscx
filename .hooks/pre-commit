@@ -1,0 +1,124 @@
+#!/usr/bin/env sh
+
+# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# Apache License 2.0
+
+set_verbosity() {
+	# must be set before with git config [--global] hooks.verbose (true|false)
+	# the bootstrap-hooks script sets it to false by default
+	VERBOSE=$(git config --bool hooks.verbose)
+	exit_status=$?
+	# if not set, set to false by default
+	[ "$exit_status" = "0" ] || VERBOSE="false"
+
+	# uncomment the next line if you want verbose output
+	# VERBOSE="true"
+	[ "$VERBOSE" = "true" ] && echo "verbose output ON"
+}
+
+formatter_not_installed() {
+	echo "[!] $FORMATTER is not installed or reachable." >&2
+	exit 1 # exit with non-zero code if can't find $FORMATTER
+}
+
+linter_not_installed() {
+	echo "[!] $LINTER is not installed or reachable." >&2
+	exit 1 # exit with non-zero code if can't find $LINTER
+}
+
+set_linter() {
+	LINTER="flake8"
+	[ "$VERBOSE" = "true" ] && echo "linter is: $LINTER"
+
+	# shortcircuit if which $LINTER succeeds
+	# when shortcircuit ocurs, won't run what's after ||
+	which $LINTER > /dev/null 2>&1 || linter_not_installed
+
+	[ "$LINTER" = "flake8" ] \
+		&& LINTER_CMD="$(which $LINTER)"
+
+	[ "$VERBOSE" = "true" ] && echo "linter command is: $LINTER_CMD"
+}
+
+set_formatter() {
+	FORMATTER="autopep8"
+	[ "$VERBOSE" = "true" ] && echo "formatter is: $FORMATTER"
+
+	# shortcircuit if which $FORMATTER succeeds
+	# when shortcircuit ocurs, won't run what's after ||
+	which $FORMATTER > /dev/null 2>&1 || formatter_not_installed
+
+	[ "$FORMATTER" = "autopep8" ] \
+		&& FORMATTER_CMD="$(which $FORMATTER) --in-place --aggressive --aggressive"
+
+	[ "$VERBOSE" = "true" ] && echo "formatter command is: $FORMATTER_CMD"
+}
+
+linter_found_lint() {
+	echo "[!] linter found issues" >&2
+	exit 1 # exit with non-zero code when linter finds issues
+}
+
+formatting_failed() {
+	echo "[!] formatting failed." >&2
+	exit 1 # exit with non-zero code if formatting failed
+}
+
+get_baseline() {
+	if git rev-parse --verify HEAD >/dev/null 2>&1
+	then
+		AGAINST="HEAD" # shell functions can't return strings, so share variable
+	else
+		# Initial commit: diff against an empty tree object
+		AGAINST="$(git hash-object -t tree /dev/null)"
+	fi
+}
+
+format_python_files() {
+	[ "$VERBOSE" = "true" ] && echo "running diff against $AGAINST"
+
+	# Redirect output to stderr.
+	exec 1>&2
+
+	local py_files
+	py_files=$(git diff --cached "$AGAINST" --name-only --diff-filter=ACMR \
+		| grep \.py$)
+
+	# formatting several files is slow (a test w/ all current files in the repo
+	# took ~40s with autopep8) when done with a single process
+	# so here procs is set to the number of available processing units
+	# then used by parallel -j, to run $procs parallel file formatting jobs
+	local procs
+	procs=$(nproc)
+	[ "$VERBOSE" = "true" ] && echo "using $procs processes"
+
+	# note that this is moreutil's parallel, not GNU parallel
+	# this will return what $FORMATTER_CMD returns, so if any of the
+	# formattings jobs fail, this will fail, the then call formatting_failed
+	parallel -j $procs $FORMATTER_CMD -- $py_files || formatting_failed
+
+	parallel -j $procs $LINTER_CMD -- $py_files || linter_found_lint
+
+	# formatting is the bottleneck, git add is fast, and actually
+	# cannot be run in parallel due to an internal git filesystem lock
+	for file in $py_files; do
+		git add $file
+	done
+}
+
+main() {
+	# cd into repo's top level to avoid problems with long filenames
+	cd "$(git rev-parse --show-toplevel)"
+
+	set_verbosity
+
+	set_linter
+
+	set_formatter
+
+	get_baseline
+
+	format_python_files
+}
+
+main

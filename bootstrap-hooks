@@ -1,0 +1,106 @@
+#!/usr/bin/env sh
+
+# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# Apache License 2.0
+
+# editing a script while it runs
+# may cause problems because the shell reads it line by line
+# when all commands are outside functions
+# so here all the blocks are wrapped to avoid that
+# should someone want to add something to their local hook
+
+set_hooks_settings() {
+	git config hooks.verbose false
+
+	cat <<- EOF
+	by default, the hooks will NOT use verbose output
+	if you want hooks in this repository to use verbose output
+	you can run
+
+	  git config hooks.verbose true
+	EOF
+}
+
+install_hooks() {
+	# use local for variable that won't be shared
+	local base_dir
+	base_dir=$(git rev-parse --show-toplevel)
+
+	for filename in ${base_dir}/.hooks/*; do
+		rm -f "$base_dir/.git/hooks/$(basename "$filename")"
+		ln -s "$filename" "${base_dir}/.git/hooks/"
+		git update-index --assume-unchanged "$filename"
+	done
+
+	cat <<- EOF
+
+	by default, these hooks will be ignored (but may still affected by git reset)
+	if you want to see when the hooks change, run
+
+	  cd $(git rev-parse --show-toplevel)
+	  git update-index --no-assume-unchanged .hooks/*
+	  cd -
+	EOF
+}
+
+spin() {
+	while :; do
+		for c in / - \\ \|; do
+			printf '%s\b' "$c"
+			[ "$END_SPIN" = "true" ] && { break 2; }
+			sleep 1
+		done
+	done
+	printf '\n'
+}
+
+install_tools() {
+	[ -d "$HOME/.bintools" ] && return 0
+	cat <<- EOF
+
+	installing tools
+	EOF
+	# start a spinner while installing the tools
+	spin &
+	SPIN_PID=$!
+	# set a trap for the spinner to end when receiving any signal
+	# including this script ending
+	trap 'kill -9 "$SPIN_PID"' $(seq 0 15)
+	(
+		virtualenv -p python3.7 "$HOME/.bintools"
+		. "$HOME/.bintools/bin/activate"
+		python -m pip install flake8
+		python -m pip install autopep8
+		deactivate
+	) > /dev/null 2>&1
+	END_SPIN="true"
+	[ -d "$HOME/.hookbin" ] && return 0
+	(
+		mkdir -p "$HOME/.hookbin"
+		cd "$HOME/.hookbin"
+		ln -s "$HOME/.bintools/bin/flake8" .
+		ln -s "$HOME/.bintools/bin/autopep8" .
+	) > /dev/null 2>&1
+}
+
+set_new_path_section() {
+	grep -q hookbin "$HOME/.bashrc" && return 0
+	cat <<- EOF >> "$HOME/.bashrc"
+
+	# set by pyaoscx's bootstrap-hooks
+	[ -d \$HOME/.hookbin ] && export PATH="\$HOME/.hookbin:\$PATH"
+
+	EOF
+}
+
+main() {
+	set_hooks_settings
+
+	install_hooks
+
+	install_tools
+
+	set_new_path_section
+}
+
+main
