@@ -1183,3 +1183,27 @@ class PyaoscxFactory():
             static_mac_obj.apply()
 
         return static_mac_obj
+
+    def qos(self, name, **kwargs):
+        """
+        Create a Qos object.
+        :param name: String representing a user-defined name for a Qos object.
+        :return: Returns a Qos object.
+        """
+        # Check for data type of name
+        if not isinstance(name, str):
+            raise ValueError("ERROR: Name must be on string format.")
+
+        qos_obj = self.session.api.get_module(
+            self.session,
+            "Qos",
+            name,
+            **kwargs
+        )
+
+        # Try to obtain data; if unable to, create
+        try:
+            qos_obj.get()
+        except GenericOperationError:
+            qos_obj.apply()
+        return qos_obj

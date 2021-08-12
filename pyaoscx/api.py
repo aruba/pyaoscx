@@ -164,7 +164,8 @@ class API(ABC):
             "StaticNexthop": "static_nexthop",
             "PoEInterface": "poe_interface",
             "Mac": "mac",
-            "StaticMac": "static_mac"
+            "StaticMac": "static_mac",
+            "Qos": "qos",
         }
 
         try:
