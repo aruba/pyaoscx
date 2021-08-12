@@ -82,6 +82,5 @@ class v1(API):
 
             return uri_list
 
-
     def _create_ospf_area(self, module_class, session, index_id, **kwargs):
         return module_class(session, index_id, **kwargs)

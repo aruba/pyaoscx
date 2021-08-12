@@ -154,6 +154,7 @@ class API(ABC):
             "BgpNeighbor": "bgp_neighbor",
             "VrfAddressFamily": "vrf_address_family",
             "OspfRouter": "ospf_router",
+            "Ospfv3Router": "ospfv3_router",
             "OspfArea": "ospf_area",
             "OspfInterface": "ospf_interface",
             "DhcpRelay": "dhcp_relay",

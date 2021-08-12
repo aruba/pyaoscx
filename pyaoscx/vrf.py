@@ -16,6 +16,8 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.static_route import StaticRoute
 from pyaoscx.vrf_address_family import VrfAddressFamily
 
+from pyaoscx.pyaoscx_module import PyaoscxModule
+
 
 class Vrf(PyaoscxModule):
     '''
@@ -29,6 +31,7 @@ class Vrf(PyaoscxModule):
     bgp_routers = ListDescriptor('bgp_routers')
     address_families = ListDescriptor('address_families')
     ospf_routers = ListDescriptor('ospf_routers')
+    ospfv3_routers = ListDescriptor('ospfv3_routers')
     static_routes = ListDescriptor('static_routes')
 
     def __init__(self, session, name, uri=None, **kwargs):
@@ -51,6 +54,8 @@ class Vrf(PyaoscxModule):
         self.address_families = []
         # Use to manage OSPF Routers
         self.ospf_routers = []
+        # Use to manage OSPFv3 Routers
+        self.ospfv3_routers = []
         # Use to manage Static Routes
         self.static_routes = []
         # Attribute used to know if object was changed recently
@@ -107,10 +112,13 @@ class Vrf(PyaoscxModule):
 
         data = json.loads(response.text)
         # Delete unwanted data
-        if 'ospf_routers' in data:
-            data.pop('ospf_routers')
-            data.pop('bgp_routers')
-        if 'static_routes' in data:
+        if "ospf_routers" in data:
+            data.pop("ospf_routers")
+        if "ospfv3_routers" in data:
+            data.pop("ospfv3_routers")
+        if "ospf_routers" in data or "ospfv3_routers" in data:
+            data.pop("bgp_routers")
+        if "static_routes" in data:
             data.pop("static_routes")
 
         # Add dictionary as attributes for the object
@@ -119,11 +127,21 @@ class Vrf(PyaoscxModule):
         # Determines if the VRF is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, 'config_attrs', [
-                'name', 'type', 'bgp_routers',
-                'ospf_routers', 'vrf_address_families',
-                'static_routes'])
-
+            unwanted_attributes = [
+                "name",
+                "type",
+                "bgp_routers",
+                "ospf_routers",
+                "ospfv3_routers",
+                "vrf_address_families",
+                "static_routes"
+            ]
+            utils.set_config_attrs(
+                self,
+                data,
+                "config_attrs",
+                unwanted_attributes
+            )
         # Set original attributes
         self.__original_attributes = data
         # Remove ID
@@ -151,26 +169,39 @@ class Vrf(PyaoscxModule):
 
         # Clean BGP Router settings
         if self.bgp_routers == []:
+            # gotta use deferred import to avoid cyclical import error
+            from pyaoscx.bgp_router import BgpRouter
             # Set BGP Routers if any
             # Adds bgp_bouters to parent Vrf object
             BgpRouter.get_all(self.session, self)
 
         # Clean Address Families settings
         if self.address_families == []:
+            # gotta use deferred import to avoid cyclical import error
+            from pyaoscx.vrf_address_family import VrfAddressFamily
             # Set Address Families if any
             # Adds address_families to parent Vrf object
             VrfAddressFamily.get_all(self.session, self)
 
         # Clean OSPF Routers settings
         if self.ospf_routers == []:
-            # gotta use deferred import to avoid circular import error
+            # gotta use deferred import to avoid cyclical import error
             from pyaoscx.ospf_router import OspfRouter
             # Set OSPF Routers if any
             # Adds ospf_routers to parent Vrf object
             OspfRouter.get_all(self.session, self)
 
+        # If no OSPFv3 Routers are present
+        if self.ospfv3_routers == []:
+            # gotta use deferred import to avoid cyclical import error
+            from pyaoscx.ospfv3_router import Ospfv3Router
+            # Add all ospfv3_routers (if any) to parent Vrf object
+            routers = Ospfv3Router.get_all(self.session, self)
+
         # Clean Static Routess settings
         if self.static_routes == []:
+            # gotta use deferred import to avoid cyclical import error
+            from pyaoscx.static_route import StaticRoute
             # Set Static Route if any
             # Adds static_routes to parent Vrf object
             StaticRoute.get_all(self.session, self)
@@ -523,21 +554,19 @@ class Vrf(PyaoscxModule):
 
     def delete_address_family(self, family_type="ipv4_unicast"):
         """
-        Given a address family type, delete that address from the current
-        Vrf object.
-
+        Given an address family type, delete that address from the current
+            Vrf object.
         :param family_type: Alphanumeric type of the Address Family.
             The options are 'ipv4_unicast' and 'ipv6_unicast'.
             A VrfAddressFamily object is accepted.
             The default value is set to 'ipv4_unicast'.
-
         """
-
         if not self.materialized:
             raise VerificationError(
                 'VRF {}'.format(self.name),
                 'Object not materialized')
-
+        # gotta use deferred import to avoid cyclical import error
+        from pyaoscx.vrf_address_family import VrfAddressFamily
         # Verify if incoming address is a object
         if isinstance(family_type, VrfAddressFamily):
             # Obtain address
@@ -639,3 +668,28 @@ class Vrf(PyaoscxModule):
             self.dns_host_v6_address_mapping = None
 
         return self.apply()
+
+    def update_ospf_routers(self, router):
+        """
+        Update references to OSPF Routers. If a Router with the same instance
+            tag is found, update the reference to the new router, otherwise,
+            add reference to the new router
+        """
+        routers = getattr(self, router.resource_uri_name)
+        for r in routers:
+            if r.instance_tag == router.instance_tag:
+                # Make list element point to current object
+                # See utils.list_attributes.ListDescriptor
+                r = router
+                return
+        routers.append(router)
+
+    def remove_ospf_router(self, router):
+        """
+        Update references to OSPF Routers. If a Router with the same instance
+            tag is found, delete the reference to it
+        """
+        routers = getattr(self, router.resource_uri_name)
+        for r in routers:
+            if r.instance_tag == router.instance_tag:
+                routers.remove(r)

@@ -299,8 +299,10 @@ class Session:
         :return: String of the uri
         """
         complete_path = self.version_path + resource_path
-        return requests.utils.urlunparse(
-            (self.scheme, self.ip, complete_path, "", "", ""))
+        uri = requests.utils.urlunparse(
+            (self.scheme, self.ip, complete_path, "", "", "")
+        )
+        return uri
 
     def request(self, operation, path, params=None, data=None, verify=False):
         """

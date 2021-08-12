@@ -579,13 +579,10 @@ class PyaoscxFactory():
 
         return bgp_neighbor_obj
 
-    def ospf_router_id(self, vrf, ospf_id,
-                       redistribute=None):
+    def ospf_router(self, vrf, ospf_id, **kwargs):
         """
-        Create a OspfRouter object as OSPF ID.
-        If values differ from existing object, incoming
-        changes will be applied
-
+        Create OspfRouter object. If values differ from existing object,
+            incoming changes will be applied.
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to
             A Vrf object is also accepted
         :param ospf_id: OSPF process ID between numbers 1-63
@@ -594,93 +591,196 @@ class PyaoscxFactory():
             "connected", and "static"
         :return: OspfRouter object
         """
-        if redistribute is None:
-            _redistribute = ["connected", "static"]
-        else:
-            _redistribute = redistribute
-
+        if "redistribute" not in kwargs:
+            kwargs["redistribute"] = ["connected", "static"]
         if isinstance(vrf, str):
             vrf = self.__get_vrf_from_switch(vrf)
-
         ospf_router_obj = self.session.api.get_module(
-            self.session, 'OspfRouter', ospf_id, parent_vrf=vrf,
-            redistribute=_redistribute)
-
+            self.session,
+            "OspfRouter",
+            ospf_id,
+            parent_vrf=vrf,
+            **kwargs
+        )
         # Try to obtain data; if not, create
         try:
             ospf_router_obj.get()
-            # Change attributes
-            if redistribute is not None:
-                ospf_router_obj.redistribute = redistribute
-            # Apply changes
+            # get() overwrites object's attributes with the switch config, so
+            # set them here after object is materialized, to keep the new ones
+            utils.set_config_attrs(ospf_router_obj, kwargs)
             ospf_router_obj.apply()
-
         except GenericOperationError:
-            # Create object inside switch
-            ospf_router_obj.apply()
-
+            ospf_router_obj.create()
         return ospf_router_obj
 
-    def ospf_router_area(self, vrf, ospf_id, area_id, area_type=None):
+    def ospfv3_router(self, vrf, ospfv3_id, **kwargs):
         """
-        Create an OspfArea object.
-        If values differ from existing object, incoming
-        changes will be applied
+        Create Ospfv3Router object. If values differ from existing object,
+            incoming changes will be applied.
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
+            A Vrf object is also accepted
+        :param ospfv3_id: OSPF process ID between numbers 1-63
+        :param redistribute: List of types of redistribution methods for
+            the OSPF Process, with the options being
+            "bgp", "connected", "local_loopback, "rip", and "static"
+        :return: Ospfv3Router object
+        """
+        if "redistribute" not in kwargs:
+            kwargs["redistribute"] = ["connected", "static"]
+        if isinstance(vrf, str):
+            vrf = self.__get_vrf_from_switch(vrf)
+        ospfv3_router_obj = self.session.api.get_module(
+            self.session,
+            "Ospfv3Router",
+            ospfv3_id,
+            parent_vrf=vrf,
+            **kwargs
+        )
+        # Try to obtain data; if not, create
+        try:
+            ospfv3_router_obj.get()
+            # get() overwrites object's attributes with the switch config, so
+            # set them here after object is materialized, to keep the new ones
+            utils.set_config_attrs(ospfv3_router_obj, kwargs)
+            ospfv3_router_obj.apply()
+        except GenericOperationError:
+            ospfv3_router_obj.create()
+        return ospfv3_router_obj
 
+    def ospf_router_area(self, vrf, ospf_router, area_id, **kwargs):
+        """
+        Create an OspfArea object. If values differ from existing object,
+            incoming changes will be applied.
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to
-        :param ospf_id: OSPF process ID between numbers 1-63
+        :param ospf_router: OSPF process ID in [1, 63], an OspfRouter, or
+            Ospfv3Router object is also accepted.
         :param area_id: Unique identifier as a string in the form of x.x.x.x
         :param area_type: Alphanumeric defining how the external routing and
             summary LSAs for this area will be handled.
             Options are "default","nssa","nssa_no_summary","stub",
             "stub_no_summary"
-
+            if no value is passed, "default" is used
         :return: OspfArea object
         """
-        if area_type is None:
-            _area_type = 'default'
-        else:
-            _area_type = area_type
-
+        if "area_type" not in kwargs:
+            kwargs["area_type"] = "default"
+        if "ipsec_ah" not in kwargs:
+            kwargs["ipsec_ah"] = {}
+        if "ipsec_esp" not in kwargs:
+            kwargs["ipsec_esp"] = {}
         if isinstance(vrf, str):
             vrf = self.__get_vrf_from_switch(vrf)
-
-        if isinstance(ospf_id, int):
+        router = ospf_router
+        if isinstance(router, int):
             # Make OSPF Router into an object
             ospf_router_obj = self.session.api.get_module(
-                self.session, 'OspfRouter', ospf_id, parent_vrf=vrf)
-
+                self.session,
+                "OspfRouter",
+                ospf_router,
+                parent_vrf=vrf
+            )
             # Materialize OSPF Router to ensure its existence
             ospf_router_obj.get()
             # Set variable as an object
-            ospf_router = ospf_router_obj
-        else:
-            # Set ospf_router variable as OspfRouter object
-            ospf_router = ospf_id
-
+            router = ospf_router_obj
         # Create OspfArea object
         ospf_area_obj = self.session.api.get_module(
-            self.session, 'OspfArea', area_id, parent_ospf_router=ospf_router,
-            area_type=_area_type, ipsec_ah={}, ipsec_esp={})
-
+            self.session,
+            "OspfArea",
+            area_id,
+            parent_ospf_router=router,
+            **kwargs
+        )
         # Try to obtain data; if not, create
         try:
             ospf_area_obj.get()
-            # Change attributes
-            if area_type is not None:
-                ospf_area_obj.area_type = area_type
-            # Apply changes
+            # get() overwrites object's attributes with the switch config, so
+            # set them here after object is materialized, to keep the new ones
+            utils.set_config_attrs(ospf_area_obj, kwargs)
             ospf_area_obj.apply()
         except GenericOperationError:
-            # Create object inside switch
-            ospf_area_obj.apply()
-
+            ospf_area_obj.create()
         return ospf_area_obj
 
-    def ospf_interface(self, vrf, ospf_id, area_id, interface_name):
+    def __get_ospf_router(self, ospf_id, vrf):
+        """
+        Get OSPF Router object from switch, this avoids making changes to it.
+            Note the __double_leading_underscore that signifies that this is
+            meant to be used only inside this module.
+        :param ospf_id: OSPF process ID in [1,63]
+        :param vrf: Vrf (object)
+        :return: OspfRouter (object), materialized
+        """
+        ospf_router_obj = self.session.api.get_module(
+            self.session,
+            "OspfRouter",
+            ospf_id,
+            parent_vrf=vrf
+        )
+        ospf_router_obj.get()
+        return ospf_router_obj
+
+    def __get_ospfv3_router(self, ospfv3_id, vrf):
+        """
+        Get OSPFv3 Router object from switch, this avoids making changes to it.
+            Note the __double_leading_underscore that signifies that this is
+            meant to be used only inside this module.
+        :param ospfv3_id: OSPFv3 process ID in [1,63]
+        :param vrf: Vrf (object)
+        :return: Ospfv3Router (object), materialized
+        """
+        ospfv3_router_obj = self.session.api.get_module(
+            self.session,
+            "Ospfv3Router",
+            ospfv3_id,
+            parent_vrf=vrf
+        )
+        ospfv3_router_obj.get()
+        return ospfv3_router_obj
+
+    def __get_ospf_area(self, area_id, ospf_router):
+        """
+        Get OSPFv3 Area object from switch, this avoids making changes to it.
+            Note the __double_leading_underscore that signifies that this is
+            meant to be used only inside this module.
+        :param area_id: Unique identifier as a string in the form of x.x.x.x
+        :param ospf_router: OspfRouter (object) or Ospfv3Router (object)
+        :return: Ospfv3Router (object), materialized
+        """
+        ospf_area_obj = self.session.api.get_module(
+            self.session,
+            "OspfArea",
+            area_id,
+            parent_ospf_router=ospf_router
+        )
+        ospf_area_obj.get()
+        return ospf_area_obj
+
+    def ospfv3_router_area(self, vrf, ospfv3_id, area_id, **kwargs):
+        """
+        Create OspfArea object. If values differ from existing object, incoming
+            changes will be applied.
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to
+        :param ospfv3_id: OSPFv3 process ID in [1,63], an Ospfv3Router object
+            is also accepted.
+        :param area_id: Unique identifier as a string in the form of x.x.x.x
+        :param area_type: Alphanumeric defining how the external routing and
+            summary LSAs for this area will be handled.
+            Options are "default","nssa","nssa_no_summary","stub",
+            "stub_no_summary"
+            if no value is passed, "default" is used
+        :return: OspfArea object
+        """
+        if isinstance(vrf, str):
+            vrf = self.__get_vrf_from_switch(vrf)
+        ospfv3_router = ospfv3_id
+        if isinstance(ospfv3_id, int):
+            ospfv3_router = self.__get_ospfv3_router(ospfv3_id, vrf)
+        return self.ospf_router_area(vrf, ospfv3_router, area_id, **kwargs)
+
+    def ospf_interface(self, vrf, ospf_id, area_id, interface_name, **kwargs):
         """
         Create a OspfInterface object.
-
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
             A Vrf object is also accepted
         :param ospf_id: OSPF process ID between numbers 1-63
@@ -690,41 +790,22 @@ class PyaoscxFactory():
             attached to the OSPF area
         :return: OspfInterface object
         """
-
         if isinstance(vrf, str):
             vrf = self.__get_vrf_from_switch(vrf)
-
+        ospf_router = ospf_id
         if isinstance(ospf_id, int):
-            # Make Ospf ID into an object
-            ospf_router_obj = self.session.api.get_module(
-                self.session, 'OspfRouter', ospf_id, parent_vrf=vrf)
-
-            # Materialize OSPF Router to ensure its existence
-            ospf_router_obj.get()
-
-            # Set variable as an object
-            ospf_router = ospf_router_obj
-        else:
-            ospf_router = ospf_id
-
+            ospf_router = self.__get_ospf_router(ospf_id, vrf)
+        area = area_id
         if isinstance(area_id, str):
-            # Create OspfArea object
-            ospf_area_obj = self.session.api.get_module(
-                self.session, 'OspfArea', area_id,
-                parent_ospf_router=ospf_router)
-            # Materialize it
-            ospf_area_obj.get()
-
-            # Set variable as an object
-            area = ospf_area_obj
-        else:
-            area = area_id
-
+            area = self.__get_ospf_area(area_id, ospf_router)
         # Make Ospf ID into an object
         ospf_interface = self.session.api.get_module(
-            self.session, 'OspfInterface', interface_name,
-            parent_ospf_area=area)
-
+            self.session,
+            "OspfInterface",
+            interface_name,
+            parent_ospf_area=area,
+            **kwargs
+        )
         # Try to obtain data; if not, create
         try:
             ospf_interface.get()
@@ -733,6 +814,38 @@ class PyaoscxFactory():
             ospf_interface.apply()
 
         return ospf_interface
+
+    def ospfv3_interface(
+        self,
+        vrf,
+        ospf_id,
+        area_id,
+        interface_name,
+        **kwargs
+    ):
+        """
+        Create a OspfInterface object.
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
+            A Vrf object is also accepted
+        :param ospfv3_id: OSPFv3 process ID between numbers 1-63
+            An OSPFv3 Router is accepted
+        :param area_id: Unique identifier as a string in the form of x.x.x.x
+        :param interface_name: Alphanumeric name of the interface that will be
+            attached to the OSPF area
+        :return: OspfInterface object
+        """
+        if isinstance(vrf, str):
+            vrf = self.__get_vrf_from_switch(vrf)
+        ospf_router = ospf_id
+        if isinstance(ospf_id, int):
+            ospf_router = self.__get_ospfv3_router(ospf_id, vrf)
+        return self.ospf_interface(
+            vrf,
+            ospf_router,
+            area_id,
+            interface_name,
+            **kwargs
+        )
 
     def vlan_and_svi(self, vlan_id, vlan_name, vlan_int_name,
                      vlan_desc=None, ipv4=None, vrf_name="default",
@@ -1298,7 +1411,7 @@ class PyaoscxFactory():
         try:
             # Get the remote configuration, but the local one takes precedence
             queue_obj.get()
-            utils.create_attrs(queue_obj, kwargs) # so it gets re-applied here
+            utils.create_attrs(queue_obj, kwargs)  # so it gets re-applied here
             queue_obj.apply()
         except GenericOperationError:
             queue_obj.create()

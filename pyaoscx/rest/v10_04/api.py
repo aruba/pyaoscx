@@ -26,10 +26,11 @@ class v10_04(API):
         self.valid_depths = [0, 1, 2, 3, 4]
 
     def _create_ospf_area(self, module_class, session, index_id, **kwargs):
-        # Add data for correct Ospf Area creation
-        other_config = {
-            "stub_default_cost": 1,
-            "stub_metric_type": "metric_non_comparable"
-        }
-        return module_class(session, index_id, other_config=other_config,
-                            **kwargs)
+        if "other_config" not in kwargs:
+            # If user does not pass value for other_config provide default
+            # value, it's needed for correct OSPF Area creation
+            kwargs["other_config"] = {
+                "stub_default_cost": 1,
+                "stub_metric_type": "metric_non_comparable"
+            }
+        return module_class(session, index_id, **kwargs)
