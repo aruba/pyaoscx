@@ -11,7 +11,6 @@ from netaddr import mac_eui48
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
-from pyaoscx.utils.connection import connected
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 import pyaoscx.utils.util as utils

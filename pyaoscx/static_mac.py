@@ -14,8 +14,6 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.mac import Mac
 
-from pyaoscx.utils.connection import connected
-
 import pyaoscx.utils.util as utils
 
 
