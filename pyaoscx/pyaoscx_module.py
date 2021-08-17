@@ -302,3 +302,11 @@ class PyaoscxModule(ABC):
                 else:
                     if getattr(self, param_name) is None:
                         setattr(self, param_name, deepcopy(param))
+
+    def get_info_format(self):
+        """
+        Method used to obtain correct object format for referencing inside
+            other objects
+        return: Object format depending on the API Version
+        """
+        return self.session.api.get_index(self)
