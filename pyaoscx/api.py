@@ -166,6 +166,7 @@ class API(ABC):
             "Mac": "mac",
             "StaticMac": "static_mac",
             "Qos": "qos",
+            "QosCos": "qos_cos",
         }
 
         try:

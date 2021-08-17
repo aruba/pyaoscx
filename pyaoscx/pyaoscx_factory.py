@@ -1207,3 +1207,34 @@ class PyaoscxFactory():
         except GenericOperationError:
             qos_obj.apply()
         return qos_obj
+
+    def qos_cos(self, code_point, **kwargs):
+        """
+        Gets a QoS COS trust mode object.
+        :param code_point: Integer to identify an entry a QoS COS trust mode
+            object.
+        :return: Returns a QoS COS trust mode object.
+        """
+        if not isinstance(code_point, int):
+            raise ValueError("ERROR: Code Point must be an integer.")
+
+        qos_cos_obj = self.session.api.get_module(
+            self.session,
+            "QosCos",
+            code_point
+        )
+
+        # Try to obtain data only
+        qos_cos_obj.get()
+
+        # Review kwargs to change configurable attributes inside the object
+        change_needed = False
+        for attr, value in kwargs.items():
+            if attr in qos_cos_obj.config_attrs:
+                setattr(qos_cos_obj, attr, value)
+                change_needed = True
+
+        if change_needed:
+            qos_cos_obj.apply()
+
+        return qos_cos_obj
