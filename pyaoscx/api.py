@@ -167,6 +167,7 @@ class API(ABC):
             "StaticMac": "static_mac",
             "Qos": "qos",
             "QosCos": "qos_cos",
+            "QosDscp": "qos_dscp",
         }
 
         try:

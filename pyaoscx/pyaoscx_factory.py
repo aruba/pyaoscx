@@ -1238,3 +1238,35 @@ class PyaoscxFactory():
             qos_cos_obj.apply()
 
         return qos_cos_obj
+
+    def qos_dscp(self, code_point, **kwargs):
+        """
+        Retrieves a QoS DSCP trust mode map entry as an object.
+        :param code_point: Integer to identify an entry a QoS DSCP trust mode
+            object.
+        :return: Returns a QoS DSCP trust mode object.
+        """
+
+        if not isinstance(code_point, int):
+            raise Exception("ERROR: Code point must be an integer.")
+
+        qos_dscp_obj = self.session.api.get_module(
+            self.session,
+            "QosDscp",
+            code_point
+        )
+
+        # Try to obtain data only
+        qos_dscp_obj.get()
+
+        # Review kwargs to change configurable attributes inside the object
+        change_needed = False
+        for attr, value in kwargs.items():
+            if attr in qos_dscp_obj.config_attrs:
+                setattr(qos_dscp_obj, attr, value)
+                change_needed = True
+
+        if change_needed:
+            qos_dscp_obj.apply()
+
+        return qos_dscp_obj
