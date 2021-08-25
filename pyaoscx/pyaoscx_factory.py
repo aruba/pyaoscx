@@ -1270,3 +1270,35 @@ class PyaoscxFactory():
             qos_dscp_obj.apply()
 
         return qos_dscp_obj
+
+    def queue(self, qos_name, queue_number, **kwargs):
+        """
+        Create a Queue object.
+        :param qos_name: String with a user-defined name for a QoS object.
+        :param queue_number: Integer representing a queue priority, with zero
+            being the lowest priority. The maximum number of queues is
+            hardware-dependent.
+        :return: Queue object.
+        """
+        if not isinstance(qos_name, str):
+            raise ValueError("ERROR: QoS name must be a string.")
+
+        if not isinstance(queue_number, int):
+            raise ValueError("ERROR: Queue number must be an integer.")
+
+        queue_obj = self.session.api.get_module(
+            self.session,
+            "Queue",
+            qos_name,
+            queue_number=queue_number,
+            **kwargs
+        )
+
+        # Try to obtain data; if unable to, create
+        try:
+            queue_obj.get()
+        except GenericOperationError:
+            queue_obj.apply()
+
+        # return object
+        return queue_obj

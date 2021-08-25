@@ -1,0 +1,249 @@
+# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# Apache License 2.0
+
+import json
+import logging
+
+from pyaoscx.utils import util as utils
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.request_error import HttpRequestError
+from pyaoscx.pyaoscx_module import PyaoscxModule
+
+from pyaoscx.qos import QoS
+
+
+class Queue(PyaoscxModule):
+    """
+    Provide configuration management for Queues on AOS-CX devices.
+    """
+
+    indices = ["queue_number", "qos_name"]
+    resource_uri_name = "queues"
+
+    def __init__(self, session, qos_name, queue_number, **kwargs):
+        """
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :param qos_name: String with a user-defined name for a QoS object.
+        :param queue_number: Integer representing a queue priority, which are
+            numbered in priority order, with zero being the lowest priority.
+            The maximum number of queues is hardware dependent.
+        """
+        self.session = session
+        self.__queue_number = queue_number
+        self.__qos_name = qos_name
+        # List of configuration attributes
+        self.config_attrs = []
+
+        # Original attributes
+        self._original_attributes = {}
+        self.materialized = False
+        # Set arguments needed for correct creation
+        utils.set_creation_attrs(self, **kwargs)
+        # Attribute used to know if object was changed recently
+        self.__modified = False
+
+        self.base_uri = "{0}/{1}/{2}".format(
+            QoS.base_uri,
+            qos_name,
+            self.resource_uri_name
+        )
+
+        self.path = "{0}/{1}".format(
+            self.base_uri,
+            self.queue_number
+        )
+
+    @property
+    def queue_number(self):
+        """
+        Method to retrieve the queue_number identifier of this object.
+        :return: returns the queue number of this object.
+        """
+        return self.__queue_number
+
+    @property
+    def qos_name(self):
+        """
+        Method to retrieve the qos_name identifier of this object.
+        :return: returns the QoS name of this object.
+        """
+        return self.__qos_name
+
+    @PyaoscxModule.connected
+    def get(self, depth=None, selector=None):
+        """
+        Perform a GET call to retrieve data for a Queue table entry and fill
+            object with the incoming attributes.
+        :param depth: Integer deciding how many levels into the API JSON that
+            references will be returned.
+        :param selector: Alphanumeric option to select specific information to
+            return.
+        :return: Returns True if there is not an exception raised
+        """
+        logging.info("Retrieving the switch %s Queue", self.queue_number)
+
+        data = self._get_data(depth, selector)
+
+        # Add dictionary as attributes for the object
+        utils.create_attrs(self, data)
+
+        if selector is None and self.session.api.default_selector in \
+                self.session.api.configurable_selectors:
+            utils.set_config_attrs(self, data, "config_attrs")
+
+        # Set original attributes
+        self._original_attributes = data
+
+        self.materialized = True
+
+        return True
+
+    @classmethod
+    def get_all(cls, session, qos_name):
+        """
+        Perform a GET call to retrieve all system Queues for given QoS from a
+            switch.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :return: Dictionary containing all system QoS' Queues.
+        """
+        logging.info("Retrieving all the switch Queues for %s QoS", qos_name)
+
+        uri = "{0}{1}{2}/{3}/{4}".format(
+            session.base_url,
+            cls.base_uri,
+            QoS.base_uri,
+            qos_name,
+            cls.resource_uri_name)
+
+        try:
+            response = session.s.get(uri, verify=False, proxies=session.proxy)
+        except Exception as e:
+            raise HttpRequestError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        queues_dict = {}
+
+        data = json.loads(response.text)
+        uri_list = session.api.get_uri_from_data(data)
+        for uri in uri_list:
+            number, queue = cls.from_uri(session, uri)
+            queues_dict[number] = queue
+
+        return queues_dict
+
+    @PyaoscxModule.connected
+    def apply(self):
+        """
+        Main method used to either create or update an existing
+            Queue table entry.
+        Checks whether the Queue exists in the switch.
+        Calls self.update() if object is being updated.
+        Calls self.create() if a new object is being created.
+        :return modified: Boolean, True if object was created or modified
+            False otherwise.
+        """
+        if self.materialized:
+            self.__modified = self.update()
+        else:
+            self.__modified = self.create()
+        return self.modified
+
+    @PyaoscxModule.connected
+    def update(self):
+        """
+        Perform a PUT call to apply changes to an existing Queue table entry.
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
+        """
+        queue_data = utils.get_attrs(self, self.config_attrs)
+        return self._put_data(queue_data)
+
+    @PyaoscxModule.connected
+    def create(self):
+        """
+        Perform a POST request to create a new Queue using the object's
+            attributes as the request body. An exception is raised if object
+            cannot be created.
+        :return modified: Boolean, True if entry was created.
+        """
+        queue_data = utils.get_attrs(self, self.config_attrs)
+        queue_data["queue_number"] = self.queue_number
+        queue_data["qos_name"] = self.qos_name
+
+        return self._post_data(queue_data)
+
+    @PyaoscxModule.connected
+    def delete(self):
+        """
+        Perform a DELETE call to delete Queue table entry.
+        """
+
+        self._send_data(self.path, None, "DELETE", "delete")
+
+        utils.delete_attrs(self, self.config_attrs)
+
+    @classmethod
+    def from_response(cls, session, response_data):
+        """
+        Create a Queue object given a related response_data.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :param response_data: The response can be either a
+            dictionary: {
+                "strict": "/rest/v10.08/system/qos/"<QoS name>/queues/7"
+                }
+            or a
+            string: "/rest/v10.08/system/qos/"<QoS name>/queues/7"
+        :return: Queue Object
+        """
+        # Check if response is a dictionary, if so, get its value
+        if isinstance(response_data, dict):
+            data = list(response_data.items())[0][1]
+        else:
+            # when not a dictionary, it's a string
+            data = response_data
+
+        # Get queue number from uri
+        data_arr = data.split("/")
+        queue_number = data_arr[-1]
+        qos_name = data_arr[data_arr.index(QoS.resource_uri_name) + 1]
+
+        return cls(session, qos_name, queue_number)
+
+    @classmethod
+    def from_uri(cls, session, uri):
+        """
+        Create a Queue object given a Queue URI.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :param uri: a String with a URI.
+        :return name, queue: tuple with the Queue object and its name.
+        """
+        # Get queue number from uri
+        uri_arr = uri.split("/")
+        queue_number = uri_arr[-1]
+        qos_name = uri_arr[uri_arr.index(QoS.resource_uri_name) + 1]
+        queue = cls(session, qos_name, queue_number)
+
+        return queue_number, queue
+
+    def get_uri(self):
+        """
+        Method used to obtain this instance's URI
+        :return: Object's URI.
+        """
+        return self.path
+
+    def was_modified(self):
+        """
+        Getter method to check it object has been modified.
+        :return: Boolean True if the object was recently modified.
+        """
+        return self.__modified
+
+    def __str__(self):
+        return "Queue {0}".format(self.queue_number)

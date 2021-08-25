@@ -168,6 +168,7 @@ class API(ABC):
             "Qos": "qos",
             "QosCos": "qos_cos",
             "QosDscp": "qos_dscp",
+            "Queue": "queue",
         }
 
         try:
