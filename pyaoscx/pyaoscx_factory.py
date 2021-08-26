@@ -838,7 +838,7 @@ class PyaoscxFactory():
     def acl_entry(self, list_name, list_type, sequence_num, action='permit',
                   count=None, protocol=None, src_ip=None, dst_ip=None,
                   dst_l4_port_min=None, dst_l4_port_max=None, src_mac=None,
-                  dst_mac=None, ethertype=None):
+                  dst_mac=None, ethertype=None, **kwargs):
         """
         Create an AclEntry object
 
@@ -868,6 +868,8 @@ class PyaoscxFactory():
             Example:
                 '01:02:03:04:05:06'
         :param ethertype: Optional integer EtherType number
+        :param kwargs: Optional keyword arguments for more detailed
+            configuration
 
         :return acl_entry: A AclEntry object
 
@@ -885,7 +887,7 @@ class PyaoscxFactory():
             action=action, count=count, protocol=protocol, src_ip=src_ip,
             dst_ip=dst_ip, dst_l4_port_min=dst_l4_port_min,
             dst_l4_port_max=dst_l4_port_max, src_mac=src_mac,
-            dst_mac=dst_mac, ethertype=ethertype)
+            dst_mac=dst_mac, ethertype=ethertype, **kwargs)
 
         # Try to obtain data; if not, create
         try:
