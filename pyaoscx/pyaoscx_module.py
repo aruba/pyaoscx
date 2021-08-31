@@ -4,6 +4,8 @@
 import json
 import logging
 import functools
+from copy import deepcopy
+
 import pyaoscx.utils.util as utils
 from abc import ABC, abstractmethod
 from pyaoscx.exceptions.verification_error import VerificationError
@@ -25,10 +27,10 @@ class PyaoscxModule(ABC):
         :return ensure_connected: Function
         '''
         @functools.wraps(fnct)
-        def ensure_connected(self, *args):
+        def ensure_connected(self, *args, **kwargs):
             if not self.session.connected:
                 self.session.open()
-            return fnct(self, *args)
+            return fnct(self, *args, **kwargs)
         return ensure_connected
 
     def materialized(fnct):
@@ -242,3 +244,61 @@ class PyaoscxModule(ABC):
                 ".format(
                     display_verb,
                     type(self).__name__))
+
+    @staticmethod
+    def _is_replace_required(current, replacement, immutable_parameter_names):
+        """
+        Compares two PYAOSCX modules to determine if a replace (delete+create)
+        is required. To do so, all the immutable parameters are checked; in
+        case any of them differs a replace is required. Note that if the
+        replacement object has a None parameter then a replace is not required
+        because they just get ignored, null parameters are understood as
+        'keep the current value' by the REST API.
+
+        :param current: Module representing the current switch configuration
+        :param replacement: Another Module (same type) object to compare to
+        :param immutable_parameter_names: the names of parameters that cannot
+            change once the module has been created
+        :return: True if a replacement is required
+        """
+        for param_name in immutable_parameter_names:
+            if hasattr(current, param_name) and\
+               hasattr(replacement, param_name):
+                # In this case, a common parameter has a different value in the
+                # potential replacement config, so a replacement is required
+                old = getattr(current, param_name)
+                new = getattr(replacement, param_name)
+                if new is not None and old != new:
+                    return True
+            elif hasattr(replacement, param_name):
+                # In this case the replacement has an attribute that the
+                # current lacks, so a replacement is required
+                if getattr(replacement, param_name) is not None:
+                    return True
+
+    def _extract_missing_parameters_from(self, other):
+        """
+        Extract the missing configuration parameters from another
+        PYAOSCX Module, to incorporate them as their own. This is useful when
+        replacing (delete+create) Modules. If the Module has to be replaced,
+        the parameters that are not specified (locally) should remain
+        unchanged (switch), so it is necessary to extract them from the switch
+        before performing the replacement.
+
+        :param other: the other module to extract the parameters
+        """
+
+        # Until we are able to read the Schema we need to keep a list of the
+        # the names of mutable an immutable parameters. Once we are capable of
+        # using the schema, the information can be taken from there.
+        all_param_names = (self.immutable_parameter_names +
+                           self.mutable_parameter_names)
+        for param_name in all_param_names:
+            if hasattr(other, param_name):
+                param = getattr(other, param_name)
+                if not hasattr(self, param_name):
+                    if param is not None:
+                        setattr(self, param_name, deepcopy(param))
+                else:
+                    if getattr(self, param_name) is None:
+                        setattr(self, param_name, deepcopy(param))

@@ -1,16 +1,15 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import json
+import logging
+import re
+
+from pyaoscx.utils import util as utils
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
-
-
-import json
-import logging
-import re
-import pyaoscx.utils.util as utils
 
 
 class AclEntry(PyaoscxModule):
@@ -34,6 +33,55 @@ class AclEntry(PyaoscxModule):
         "tcp": 6,
         "udp": 17
     }
+
+    # These parameters cannot be changed once the ACE is created
+    # If any of them is set for update the entire ACE must be
+    # replaced (delete and re-create). This list is needed while
+    # we are not able to read the schema.
+    immutable_parameter_names = [
+        "action",
+        "count",
+        "dscp",
+        "dst_ip",
+        "dst_ip_group",
+        "dst_l4_port_group",
+        "dst_l4_port_max",
+        "dst_l4_port_min",
+        "dst_mac",
+        "ecn",
+        "ethertype",
+        "fragment",
+        "icmp_code",
+        "icmp_type",
+        "ip_precedence",
+        "log",
+        "pcp",
+        "protocol",
+        "sequence_number",
+        "src_ip",
+        "src_ip_group",
+        "src_l4_port_group",
+        "src_l4_port_max",
+        "src_l4_port_min",
+        "src_mac",
+        "tcp_ack",
+        "tcp_cwr",
+        "tcp_ece",
+        "tcp_established",
+        "tcp_fin",
+        "tcp_psh",
+        "tcp_rst",
+        "tcp_syn",
+        "tcp_urg",
+        "tos",
+        "ttl",
+        "vlan",
+    ]
+
+    # This list needs to be maintained only while we are not
+    # able to read the schema. It is required when extracting
+    # parameters to create copies.
+    mutable_parameter_names = ["comment"]
 
     def __init__(self,
                  session,
@@ -204,26 +252,55 @@ class AclEntry(PyaoscxModule):
 
     @PyaoscxModule.connected
     def apply(self):
-        '''
+        """
         Main method used to either create a new ACL Entry or update an existing
-        AclEntry.
-        Checks whether the ACL Entry exists in the switch
-        Calls self.update() if ACL Entry being updated
-        Calls self.create() if a new ACL Entry is being created
+        one. It is possible that in case the are differences between the ACE on
+        the switch and the local representation on immutable attributes a
+        replace (delete+create) will take place. Note that unspecified
+        parameters will be kept intact.
 
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
-        '''
+        :return modified: Boolean, True if object was created or modified.
+
+        """
+
         if not self.__parent_acl.materialized:
             self.__parent_acl.apply()
 
         modified = False
-        if self.materialized:
-            modified = self.update()
-        else:
+
+        remote_ace = AclEntry(
+            self.session, self.sequence_number, self.__parent_acl)
+
+        try:
+            # Should get all configurable attributes, not just the one that
+            # are available for writing
+            remote_ace.get(selector="configuration")
+        except GenericOperationError:
+            # If the get fails, the ACE doesn't exist, so a simple
+            # create will suffice
+            logging.info(
+                "ACE %s for ACL %s will be created",
+                self.sequence_number, self.__parent_acl.name)
             modified = self.create()
-        # Set internal attribute
-        self.__modified = modified
+        else:
+            self._extract_missing_parameters_from(remote_ace)
+            # Get was successful, so the ACE already exists
+            if PyaoscxModule._is_replace_required(
+                    current=remote_ace,
+                    replacement=self,
+                    immutable_parameter_names=self.immutable_parameter_names
+            ):
+                remote_ace.delete()
+                logging.info("ACE %s for ACL %s will be replaced",
+                             self.sequence_number, self.__parent_acl.name)
+                modified = self.create()
+            else:
+                # A replace was not required, so it is possible that an
+                # update will suffice. Extracting the parameters form
+                # the remote works as a materialization
+                self.materialized = True
+                modified = self.update()
+
         return modified
 
     @PyaoscxModule.connected
