@@ -8,7 +8,6 @@ import re
 from pyaoscx.utils import util as utils
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
@@ -260,7 +259,6 @@ class AclEntry(PyaoscxModule):
         parameters will be kept intact.
 
         :return modified: Boolean, True if object was created or modified.
-
         """
 
         if not self.__parent_acl.materialized:
@@ -352,6 +350,11 @@ class AclEntry(PyaoscxModule):
 
             # Object was modified
             modified = True
+
+        if modified:
+            self.__parent_acl._update_version()
+            self.__parent_acl.apply()
+
         return modified
 
     @PyaoscxModule.connected
@@ -404,6 +407,9 @@ class AclEntry(PyaoscxModule):
 
         # Get all object's data
         self.get()
+
+        self.__parent_acl._update_version()
+        self.__parent_acl.apply()
 
         # Object was created, means modified
         return True

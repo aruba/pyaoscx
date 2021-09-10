@@ -1,15 +1,16 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.exceptions.response_error import ResponseError
-from pyaoscx.exceptions.generic_op_error import GenericOperationError
-
-from pyaoscx.pyaoscx_module import PyaoscxModule
-
 import json
 import logging
 import re
-import pyaoscx.utils.util as utils
+
+from random import randint
+
+from pyaoscx.utils import util as utils
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.utils.list_attributes import ListDescriptor
 
 
@@ -43,6 +44,8 @@ class ACL(PyaoscxModule):
         self.cfg_aces = []
         # Attribute used to know if object was changed recently
         self.__modified = False
+        # Set an initial random version
+        self._update_version()
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -196,7 +199,6 @@ class ACL(PyaoscxModule):
         """
         # Variable returned
         modified = False
-        acl_data = {}
 
         acl_data = utils.get_attrs(self, self.config_attrs)
 
@@ -213,6 +215,11 @@ class ACL(PyaoscxModule):
             modified = False
 
         else:
+            # The version should change every time the ACL (or any of
+            # its entries) change so that it is written to hardware
+            self._update_version()
+            acl_data["cfg_version"] = self.cfg_version
+
             post_data = json.dumps(acl_data, sort_keys=True, indent=4)
 
             try:
@@ -394,6 +401,26 @@ class ACL(PyaoscxModule):
         """
 
         return self.__modified
+
+    def _update_version(self):
+        """
+        Whenever the ACL (or any of its entries) change,the version should
+        be updated so that it gets written to hardware. If the version
+        doesn't change, the new configuration won't get to the hardware
+        """
+
+        new_cfg_version = randint(-9007199254740991, 9007199254740991)
+        if not hasattr(self, "cfg_version"):
+            logging.warning(
+                "ACL %s didn't have a version configured. %d was added",
+                str(self), new_cfg_version)
+        else:
+            logging.warning(
+                "ACL %s was modified, but the version wasn't, "
+                "so the version was changed automatically to %d",
+                str(self), new_cfg_version)
+
+        self.cfg_version = new_cfg_version
 
     ####################################################################
     # IMPERATIVES FUNCTIONS

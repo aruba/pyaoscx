@@ -1992,36 +1992,32 @@ class Interface(PyaoscxModule):
         specifically applies an ACL to Ingress traffic of the interface
 
         :param acl_name: Alphanumeric String that is the name of the ACL
-        :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify the
-            type of ACL
+        :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify
+            the type of ACL
         :return: True if object was changed
-
         """
-        import random
 
         # Create Acl object
         acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)
+        # Get the current version
+        acl_obj.get()
 
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
             if hasattr(self, 'aclv6_in_cfg_version') and \
-                self.aclv6_in_cfg_version is None:
-                self.aclv6_in_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
-
-        if list_type == "ipv4":
+               self.aclv6_in_cfg_version is None:
+                self.aclv6_in_cfg_version = acl_obj.cfg_version
+        elif list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
             if hasattr(self, 'aclv4_in_cfg_version') and \
-                self.aclv4_in_cfg_version is None:
-                self.aclv4_in_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
-        if list_type == "mac":
+               self.aclv4_in_cfg_version is None:
+                self.aclv4_in_cfg_version = acl_obj.cfg_version
+        elif list_type == "mac":
             self.aclmac_in_cfg = acl_obj
             if hasattr(self, 'aclmac_in_cfg_version') and \
-                self.aclmac_in_cfg_version is None:
-                self.aclmac_in_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+               self.aclmac_in_cfg_version is None:
+                self.aclmac_in_cfg_version = acl_obj.cfg_version
 
         # Apply changes
         return self.apply()
@@ -2034,35 +2030,33 @@ class Interface(PyaoscxModule):
         interface
 
         :param acl_name: Alphanumeric String that is the name of the ACL
-        :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify the
-            type of ACL
+        :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify
+            the type of ACL
         :return: True if object was changed
 
         """
-        import random
 
         # Create Acl object
         acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)
+        # Get the current version
+        acl_obj.get()
 
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
             if hasattr(self, 'aclv6_out_cfg_version') and \
-                self.aclv6_out_cfg_version is None:
-                self.aclv6_out_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
-        if list_type == "ipv4":
+               self.aclv6_out_cfg_version is None:
+                self.aclv6_out_cfg_version = acl_obj.cfg_version
+        elif list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
             if hasattr(self, 'aclv4_out_cfg_version') and \
-                self.aclv4_out_cfg_version is None:
-                self.aclv4_out_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
-        if list_type == "mac":
+               self.aclv4_out_cfg_version is None:
+                self.aclv4_out_cfg_version = acl_obj.cfg_version
+        elif list_type == "mac":
             self.aclmac_out_cfg = acl_obj
             if hasattr(self, 'aclmac_out_cfg_version') and \
-                self.aclmac_out_cfg_version is None:
-                self.aclmac_out_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+               self.aclmac_out_cfg_version is None:
+                self.aclmac_out_cfg_version = acl_obj.cfg_version
 
         # Routeing
         self.routing = True
