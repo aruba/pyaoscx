@@ -883,6 +883,7 @@ class Interface(PyaoscxModule):
     # IMPERATIVES FUNCTIONS
     ####################################################################
 
+    @PyaoscxModule.materialized
     def configure_l2(self, phys_ports=None, ipv4=None, vlan_ids_list=None,
                      vlan_tag=1, lacp="passive", description=None,
                      admin="up", fallback_enabled=False, mc_lag=False,
@@ -890,7 +891,7 @@ class Interface(PyaoscxModule):
                      trunk_allowed_all=False,
                      native_vlan_tag=True):
         """
-        Configure a Interface object, set the attributes to a L2 LAG
+        Configure an Interface object, set the attributes to a L2 LAG
         and apply() changes inside Switch
 
         :param phys_ports: List of physical ports to aggregate (e.g. ["1/1/1",
@@ -926,15 +927,6 @@ class Interface(PyaoscxModule):
         :return: True if object was changed
 
         """
-
-        if not self.materialized:
-            raise VerificationError('Interface {}'.format(
-                self.name), 'Object not materialized')
-
-        '''
-        Set ALL incoming attributes
-        '''
-
         # Set Physical Ports
         if phys_ports is not None:
             self.interfaces = []
@@ -948,11 +940,12 @@ class Interface(PyaoscxModule):
         # Set lacp
         self.lacp = lacp
 
-        # Set Mode
-        self.vlan_mode = vlan_mode
+        # Set Mode, but keep it as it was if it receives None
+        if vlan_mode:
+            self.vlan_mode = vlan_mode
 
-        if self.vlan_mode == 'access':
-            # Set VLAN Tag into Object
+        if vlan_mode == 'access':
+            # Convert VLAN Tag into Object
             if isinstance(vlan_tag, int):
                 # Create Vlan object
                 vlan_tag = Vlan(self.session, vlan_tag)
@@ -961,7 +954,7 @@ class Interface(PyaoscxModule):
                 self.vlan_tag = vlan_tag
 
         # Modify if trunk
-        elif self.vlan_mode == 'trunk':
+        elif vlan_mode == 'trunk':
             if vlan_tag is None:
                 vlan_tag = 1
 
@@ -979,7 +972,6 @@ class Interface(PyaoscxModule):
                 self.vlan_mode = 'native-untagged'
 
             if not trunk_allowed_all:
-                self.vlan_mode = 'native-untagged'
                 # Set VLAN Trunks
                 if vlan_ids_list is not None:
                     self.vlan_trunks = []
@@ -987,9 +979,6 @@ class Interface(PyaoscxModule):
                         vlan_obj = Vlan(self.session, vlan)
                         vlan_obj.get()
                         self.vlan_trunks.append(vlan_obj)
-
-            elif trunk_allowed_all:
-                self.vlan_mode = 'native-untagged'
 
         # Set description
         if description is not None:
@@ -1004,19 +993,16 @@ class Interface(PyaoscxModule):
                 pass
 
         # Set IPv4
-        if ipv4 is not None and ipv4 != []:
-            for i in range(len(ipv4)):
-                if i == 0:
-                    self.ip4_address = ipv4[i]
-                else:
-                    self.ip4_address_secondary.append(ipv4[i])
-        # If IPv4 is empty, delete
-        elif ipv4 == []:
+        if ipv4 == []:
             self.ip4_address = None
             self.ip4_address_secondary = None
+        elif isinstance(ipv4, list):
+            self.ip4_address = ipv4[0]
+            self.ip4_address_secondary = ipv4[1:]
 
-        # Set all remaining attributes for a Lag to be a L2
         self.routing = False
+
+        # Set all remaining attributes for a Lag to be an L2
         if self.__is_special_type:
             self.other_config["mclag_enabled"] = mc_lag
             self.other_config["lacp-fallback"] = fallback_enabled
@@ -1024,11 +1010,12 @@ class Interface(PyaoscxModule):
         # Apply Changes inside Switch
         return self.apply()
 
+    @PyaoscxModule.materialized
     def configure_l3(self, phys_ports=None, ipv4=None, ipv6=None,
                      vrf="default", lacp="passive", description=None,
                      admin="up", fallback_enabled=False, mc_lag=False):
         """
-        Configure a Interface object, if not materialized, materialize it and
+        Configure an Interface object, if not materialized, materialize it and
         then set the attributes to a L3 LAG
         and apply() changes inside Switch
 
@@ -1061,14 +1048,6 @@ class Interface(PyaoscxModule):
         :return: True if object was changed
         """
 
-        if not self.materialized:
-            raise VerificationError(
-                'Interface {}'.format(self.name), 'Object not materialized')
-
-        '''
-        Set ALL incoming attributes
-        '''
-
         # Set Physical Ports
         if phys_ports is not None:
             self.interfaces = []
@@ -1081,16 +1060,12 @@ class Interface(PyaoscxModule):
                 self.interfaces.append(port_obj)
 
         # Set IPv4
-        if ipv4 is not None and ipv4 != []:
-            for i in range(len(ipv4)):
-                if i == 0:
-                    self.ip4_address = ipv4[i]
-                else:
-                    self.ip4_address_secondary.append(ipv4[i])
-        # If IPv4 is empty, delete
-        elif ipv4 == []:
+        if ipv4 == []:
             self.ip4_address = None
             self.ip4_address_secondary = None
+        elif isinstance(ipv4, list):
+            self.ip4_address = ipv4[0]
+            self.ip4_address_secondary = ipv4[1:]
 
         # Set IPv6
         if ipv6 is not None and ipv6 != []:
@@ -1138,12 +1113,14 @@ class Interface(PyaoscxModule):
         vrf_obj.get()
         self.vrf = vrf_obj
 
-        # Set all remaining attributes for a Lag to be a L3
         self.routing = True
+
+        # Set all remaining attributes for a Lag to be an L3
         if self.__is_special_type:
             self.other_config["mclag_enabled"] = mc_lag
             self.other_config["lacp-fallback"] = fallback_enabled
         self.vlan_mode = "native-untagged"
+
         # Apply Changes inside Switch
         return self.apply()
 

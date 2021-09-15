@@ -41,11 +41,11 @@ class PyaoscxModule(ABC):
         :return is_materialized: Function
         """
         @functools.wraps(fnct)
-        def is_materialized(self, *args):
+        def is_materialized(self, *args, **kwargs):
             if not self.materialized:
                 raise VerificationError("Object {}".format(self),
                                         " not materialized")
-            return fnct(self, *args)
+            return fnct(self, *args, **kwargs)
         return is_materialized
 
     base_uri = ""

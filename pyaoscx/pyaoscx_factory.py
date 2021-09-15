@@ -125,13 +125,12 @@ class PyaoscxFactory():
         interface_obj = self.session.api.get_module(
             self.session, 'Interface',
             name)
-
+        # Try to get the interface, if it doesn't exist, create it
         try:
-            # Try to create, if object exists then get
-            interface_obj.apply()
+            interface_obj.get()
 
         except GenericOperationError:
-            interface_obj.get()
+            interface_obj.apply()
 
         return interface_obj
 
