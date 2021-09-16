@@ -236,6 +236,18 @@ class PyaoscxFactory():
 
         return vlan_obj
 
+    def __get_vrf_from_switch(self, name):
+        """
+        Get VRF from switch, this avoids making changes to the VRF object.
+            Note the __double_leading_underscore that signifies that this is
+            meant to be used only inside this module.
+        :param name: VRF name
+        :return: Vrf object, materialized
+        """
+        vrf = self.session.api.get_module(self.session, "Vrf", name)
+        vrf.get()
+        return vrf
+
     def vrf(self, name, route_distinguisher=None, vrf_type=None):
         """
         Create a Vrf object. If values differ from existing object, incoming
@@ -310,9 +322,7 @@ class PyaoscxFactory():
             _keepalive_port = keepalive_port
         if keepalive_vrf is not None:
             if isinstance(keepalive_vrf, str):
-                keepalive_vrf = self.session.api.get_module(
-                    self.session, 'Vrf', keepalive_vrf)
-                keepalive_vrf.get()
+                keepalive_vrf = self.__get_vrf_from_switch(keepalive_vrf)
 
         if isl_port is not None:
             if isinstance(isl_port, str):
@@ -372,12 +382,7 @@ class PyaoscxFactory():
         :return: BgpRouter object
         """
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         bgp_router_obj = self.session.api.get_module(
             self.session, 'BgpRouter', asn, parent_vrf=vrf,
@@ -413,12 +418,7 @@ class PyaoscxFactory():
         :return: BgpRouter object
         """
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         redistribute_data = {}
 
@@ -485,12 +485,7 @@ class PyaoscxFactory():
                             'ipv4-unicast', or 'ipv6-unicast'")
 
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         if isinstance(bgp_router_asn, int):
             # Make BGP Router into an object
@@ -605,12 +600,7 @@ class PyaoscxFactory():
             _redistribute = redistribute
 
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         ospf_router_obj = self.session.api.get_module(
             self.session, 'OspfRouter', ospf_id, parent_vrf=vrf,
@@ -653,12 +643,7 @@ class PyaoscxFactory():
             _area_type = area_type
 
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         if isinstance(ospf_id, int):
             # Make OSPF Router into an object
@@ -707,12 +692,7 @@ class PyaoscxFactory():
         """
 
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         if isinstance(ospf_id, int):
             # Make Ospf ID into an object
@@ -923,12 +903,7 @@ class PyaoscxFactory():
         :return: VRF_Address_Family object
         """
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         vrf_address_fam_obj = self.session.api.get_module(
             self.session, 'VrfAddressFamily', address_family,
@@ -965,12 +940,7 @@ class PyaoscxFactory():
                             'ipv4-unicast', or 'ipv6-unicast'")
 
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         if isinstance(bgp_router_asn, int):
             # Make BGP Router into an object
@@ -1015,12 +985,7 @@ class PyaoscxFactory():
         """
 
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
 
         static_route_obj = self.session.api.get_module(
             self.session, 'StaticRoute', destination_address_prefix,
@@ -1072,12 +1037,7 @@ class PyaoscxFactory():
         """
 
         if isinstance(vrf, str):
-            # Make VRF into an object
-            vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', vrf)
-            # Materialize VRF to ensure its existence
-            vrf_obj.get()
-            vrf = vrf_obj
+            vrf = self.__get_vrf_from_switch(vrf)
         static_route = destination_address_prefix
         if isinstance(destination_address_prefix, str):
             # Make a Static Route Object
