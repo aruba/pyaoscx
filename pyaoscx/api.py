@@ -155,6 +155,7 @@ class API(ABC):
             "VrfAddressFamily": "vrf_address_family",
             "OspfRouter": "ospf_router",
             "Ospfv3Router": "ospfv3_router",
+            "OspfVlink": "ospf_virtual_link",
             "OspfArea": "ospf_area",
             "OspfInterface": "ospf_interface",
             "DhcpRelay": "dhcp_relay",

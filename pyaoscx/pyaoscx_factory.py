@@ -847,6 +847,67 @@ class PyaoscxFactory():
             **kwargs
         )
 
+    def ospf_vlink(self, vrf, ospf_router, area_id, peer_router, **kwargs):
+        """
+        Create a OspfVlink object. Defaults to using OspfRouter, when providing
+            the OSPF process ID.
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
+            A Vrf object is also accepted
+        :param ospf_router: OSPF process ID number in [1,63]
+            An OSPF Router object is also accepted (both v2, and v3 versions)
+        :param area_id: Unique identifier as a string in the form of x.x.x.x
+        :param peer_router: ID of the peer OSPF router as IP address in
+            x.x.x.x form
+        :return: OspfVlink object
+        """
+        if isinstance(vrf, str):
+            vrf = self.__get_vrf_from_switch(vrf)
+        if isinstance(ospf_router, int):
+            router = self.__get_ospf_router(ospf_router, vrf)
+        area = area_id
+        if isinstance(area_id, str):
+            area = self.__get_ospf_area(area_id, router)
+        # Get OspfVlink from peer_router
+        vlink = self.session.api.get_module(
+            self.session,
+            "OspfVlink",
+            peer_router,
+            parent_ospf_area=area,
+            **kwargs
+        )
+        try:
+            # Get the remote configuration, but the local one takes precedence
+            vlink.get()
+            utils.set_config_attrs(vlink, kwargs)  # so it gets re-applied here
+            vlink.apply()
+        except GenericOperationError:
+            vlink.apply()  # if can't get it, create
+        return vlink
+
+    def ospfv3_vlink(self, vrf, ospf_router, area_id, peer_router, **kwargs):
+        """
+        Create a OspfVlink object.
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
+            A Vrf object is also accepted
+        :param ospf_router: OSPFv3 process ID number in [1, 63]
+            An Ospfv3Router object is also accepted
+        :param area_id: Unique identifier as a string in the form of x.x.x.x
+        :param peer_router: ID of the peer OSPFv3 router as IP address in
+            x.x.x.x form
+        :return: OspfVlink object
+        """
+        if isinstance(vrf, str):
+            vrf = self.__get_vrf_from_switch(vrf)
+        if isinstance(ospf_router, int):
+            router = self.__get_ospfv3_router(ospf_router, vrf)
+        return self.ospf_vlink(
+            vrf,
+            router,
+            area_id,
+            peer_router,
+            **kwargs
+        )
+
     def vlan_and_svi(self, vlan_id, vlan_name, vlan_int_name,
                      vlan_desc=None, ipv4=None, vrf_name="default",
                      vlan_port_desc=None):
