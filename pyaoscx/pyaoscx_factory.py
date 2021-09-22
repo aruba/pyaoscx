@@ -1305,3 +1305,26 @@ class PyaoscxFactory():
 
         # return object
         return queue_obj
+
+    def queue_profile(self, name, **kwargs):
+        """
+        Create a Queue Profile object
+        :param name: name of the profile
+        :return: Queue Profile object
+        """
+        profile = self.session.api.get_module(
+            self.session,
+            "QueueProfile",
+            index_id=name,
+            **kwargs
+        )
+        try:
+            # Get the remote configuration, but the local one takes precedence
+            profile.get()
+            utils.create_attrs(profile, kwargs)  # so it gets re-applied here
+        except GenericOperationError:
+            pass
+        finally:
+            # Apply the local configuration to the switch
+            profile.apply()
+        return profile
