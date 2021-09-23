@@ -170,6 +170,7 @@ class API(ABC):
             "QosDscp": "qos_dscp",
             "Queue": "queue",
             "QueueProfile": "queue_profile",
+            "QueueProfileEntry": "queue_profile_entry",
         }
 
         try:

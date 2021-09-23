@@ -1328,3 +1328,35 @@ class PyaoscxFactory():
             # Apply the local configuration to the switch
             profile.apply()
         return profile
+
+    def queue_profile_entry(self, queue_number, queue_profile, **kwargs):
+        """
+        Create a Queue Profile Entry object
+        :param queue_number: Number that identifies the entry
+        :param queue_profile: A Queue Profile object
+        :return: Queue Profile Entry object
+        """
+        if isinstance(queue_profile, str):
+            queue_profile = self.session.api.get_module(
+                self.session,
+                "QueueProfile",
+                index_id=queue_profile
+        )
+
+        entry = self.session.api.get_module(
+            self.session,
+            "QueueProfileEntry",
+            index_id=queue_number,
+            parent_profile=queue_profile,
+            **kwargs
+        )
+        try:
+            # Get the remote configuration, but the local one takes precedence
+            entry.get()
+            utils.create_attrs(entry, kwargs)  # so it gets re-applied here
+        except GenericOperationError:
+            pass
+        finally:
+            # Apply the local configuration to the switch
+            entry.apply()
+        return entry
