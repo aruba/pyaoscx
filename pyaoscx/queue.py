@@ -9,7 +9,7 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.request_error import HttpRequestError
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.qos import QoS
+from pyaoscx.qos import Qos
 
 
 class Queue(PyaoscxModule):
@@ -24,7 +24,7 @@ class Queue(PyaoscxModule):
         """
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param qos_name: String with a user-defined name for a QoS object.
+        :param qos_name: String with a user-defined name for a Qos object.
         :param queue_number: Integer representing a queue priority, which are
             numbered in priority order, with zero being the lowest priority.
             The maximum number of queues is hardware dependent.
@@ -44,7 +44,7 @@ class Queue(PyaoscxModule):
         self.__modified = False
 
         self.base_uri = "{0}/{1}/{2}".format(
-            QoS.base_uri,
+            Qos.base_uri,
             qos_name,
             self.resource_uri_name
         )
@@ -66,7 +66,7 @@ class Queue(PyaoscxModule):
     def qos_name(self):
         """
         Method to retrieve the qos_name identifier of this object.
-        :return: returns the QoS name of this object.
+        :return: returns the Qos name of this object.
         """
         return self.__qos_name
 
@@ -102,18 +102,18 @@ class Queue(PyaoscxModule):
     @classmethod
     def get_all(cls, session, qos_name):
         """
-        Perform a GET call to retrieve all system Queues for given QoS from a
+        Perform a GET call to retrieve all system Queues for given Qos from a
             switch.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :return: Dictionary containing all system QoS' Queues.
+        :return: Dictionary containing all system Qos' Queues.
         """
-        logging.info("Retrieving all the switch Queues for %s QoS", qos_name)
+        logging.info("Retrieving all the switch Queues for %s Qos", qos_name)
 
         uri = "{0}{1}{2}/{3}/{4}".format(
             session.base_url,
             cls.base_uri,
-            QoS.base_uri,
+            Qos.base_uri,
             qos_name,
             cls.resource_uri_name)
 
@@ -194,10 +194,10 @@ class Queue(PyaoscxModule):
             connection to the device.
         :param response_data: The response can be either a
             dictionary: {
-                "strict": "/rest/v10.08/system/qos/"<QoS name>/queues/7"
+                "strict": "/rest/v10.08/system/qos/"<Qos name>/queues/7"
                 }
             or a
-            string: "/rest/v10.08/system/qos/"<QoS name>/queues/7"
+            string: "/rest/v10.08/system/qos/"<Qos name>/queues/7"
         :return: Queue Object
         """
         # Check if response is a dictionary, if so, get its value
@@ -210,7 +210,7 @@ class Queue(PyaoscxModule):
         # Get queue number from uri
         data_arr = data.split("/")
         queue_number = data_arr[-1]
-        qos_name = data_arr[data_arr.index(QoS.resource_uri_name) + 1]
+        qos_name = data_arr[data_arr.index(Qos.resource_uri_name) + 1]
 
         return cls(session, qos_name, queue_number)
 
@@ -226,7 +226,7 @@ class Queue(PyaoscxModule):
         # Get queue number from uri
         uri_arr = uri.split("/")
         queue_number = uri_arr[-1]
-        qos_name = uri_arr[uri_arr.index(QoS.resource_uri_name) + 1]
+        qos_name = uri_arr[uri_arr.index(Qos.resource_uri_name) + 1]
         queue = cls(session, qos_name, queue_number)
 
         return queue_number, queue
