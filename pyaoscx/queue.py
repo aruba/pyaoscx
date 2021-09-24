@@ -150,7 +150,7 @@ class Queue(PyaoscxModule):
             self.__modified = self.update()
         else:
             self.__modified = self.create()
-        return self.modified
+        return self.__modified
 
     @PyaoscxModule.connected
     def update(self):
@@ -172,7 +172,6 @@ class Queue(PyaoscxModule):
         """
         queue_data = utils.get_attrs(self, self.config_attrs)
         queue_data["queue_number"] = self.queue_number
-        queue_data["qos_name"] = self.qos_name
 
         return self._post_data(queue_data)
 

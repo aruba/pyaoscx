@@ -4,6 +4,7 @@
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.dns import Dns
 from pyaoscx.configuration import Configuration
+from pyaoscx.utils import util as utils
 
 
 class PyaoscxFactory():
@@ -1296,9 +1297,12 @@ class PyaoscxFactory():
 
         # Try to obtain data; if unable to, create
         try:
+            # Get the remote configuration, but the local one takes precedence
             queue_obj.get()
-        except GenericOperationError:
+            utils.create_attrs(queue_obj, kwargs) # so it gets re-applied here
             queue_obj.apply()
+        except GenericOperationError:
+            queue_obj.create()
 
         # return object
         return queue_obj
