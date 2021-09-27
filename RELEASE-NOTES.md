@@ -1,3 +1,17 @@
+# 2.1.0
+
+## Notable Changes
+
+* Added support for the following modules:
+   * MAC
+   * QoS
+   * PoE
+* Added support for REST version 10.08
+* Bug fixes in ACL and Interface modules
+* General code quality improvements for maintainability
+* netaddr was added as a dependency
+
+
 # 2.0.0
 
 ## Notable Changes
