@@ -156,7 +156,7 @@ class Configuration():
         return modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def get_full_config(self, config_name="running-config"):

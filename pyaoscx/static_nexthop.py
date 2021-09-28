@@ -501,5 +501,5 @@ class StaticNexthop(PyaoscxModule):
         return next_id
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################

@@ -530,7 +530,7 @@ class AclEntry(PyaoscxModule):
         return self.__modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def modify(self,

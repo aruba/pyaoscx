@@ -423,7 +423,7 @@ class ACL(PyaoscxModule):
         self.cfg_version = new_cfg_version
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def add_acl_entry(self,

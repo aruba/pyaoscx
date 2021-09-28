@@ -215,7 +215,7 @@ class Dns(PyaoscxModule):
         return self.__modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def setup_mgmt_nameservers(self, primary=None, secondary=None):

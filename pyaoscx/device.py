@@ -149,7 +149,7 @@ class Device(PyaoscxFactory):
         return self.firmware_version
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def update_banner(self, banner_info, banner_type='banner'):

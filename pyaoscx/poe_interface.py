@@ -239,7 +239,7 @@ class PoEInterface(Interface):
         return self.__modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     @PyaoscxModule.materialized

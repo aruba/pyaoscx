@@ -948,7 +948,7 @@ class Interface(AbstractInterface):
         return True
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def set_state(self, state="up"):

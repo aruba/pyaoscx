@@ -409,7 +409,7 @@ class DhcpRelay(PyaoscxModule):
         return self.__modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def add_ipv4_addresses(self, ipv4_list):

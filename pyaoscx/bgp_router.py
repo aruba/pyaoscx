@@ -442,7 +442,7 @@ class BgpRouter(PyaoscxModule):
         return self.__modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def create_bgp_neighbors(self,

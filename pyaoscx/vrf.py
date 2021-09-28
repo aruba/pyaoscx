@@ -476,7 +476,7 @@ class Vrf(PyaoscxModule):
         return self.__modified
 
     ####################################################################
-    # IMPERATIVES FUNCTIONS
+    # IMPERATIVE FUNCTIONS
     ####################################################################
 
     def add_address_family(self, family_type="ipv4_unicast", export_target=[],
