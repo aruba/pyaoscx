@@ -16,6 +16,7 @@ import pyaoscx.utils.util as utils
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.verification_error import VerificationError
+from pyaoscx.exceptions.parameter_error import ParameterError
 
 from pyaoscx.ipv6 import Ipv6
 from pyaoscx.pyaoscx_module import PyaoscxModule
@@ -1918,20 +1919,84 @@ class Interface(PyaoscxModule):
         # Apply changes
         return self.apply()
 
-    def update_interface_qos_profile(self, qos_profile_details):
+    @PyaoscxModule.materialized
+    def update_interface_qos(self, qos):
         """
-        Update QoS schedule profile attached to a Interface
+        Update QoS attached to this Interface
 
-        :param qos_profile_details: dict of QoS schedule profile.
+        :param qos: string to define a QoS to operate on this interface.
         :return: True if object was changed
-
         """
-        # Update Values
-        self.qos = qos_profile_details
+        # Verify argument type and value
+        if not isinstance(qos, str):
+            raise ParameterError(
+                "ERROR: QoS must be in a string format")
+
+        self.qos = qos
 
         # Apply changes
         return self.apply()
 
+    @PyaoscxModule.materialized
+    def update_interface_queue_profile(self, queue_profile):
+        """
+        Update the Queue Profile for this interface.
+
+        :param queue_profile: string to define the queue profile of
+            this Interface.
+        :return: True if object was changed.
+        """
+
+        # Verify argument type and value
+        if not isinstance(queue_profile, str):
+            raise ParameterError(
+                "ERROR: Queue Profile must be in a string format")
+
+        self.q_profile = queue_profile
+
+        # Apply changes
+        return self.apply()
+
+    @PyaoscxModule.materialized
+    def update_interface_qos_trust_mode(self, qos_trust_mode, cos_override=None,
+                                        dscp_override=None):
+        """
+        Update the QoS trust mode of this port.
+
+        :param qos_trust_mode: string to define the QoS trust mode. It can be
+            either "cos" or "dscp".
+        :return: True if object was changed.
+        """
+
+        # Verify argument type and value
+        if not isinstance(qos_trust_mode, str):
+            raise ParameterError(
+                "ERROR: QoS trust mode must be in a string format")
+
+        allowed_trust_modes = ["cos", "dscp"]
+        if qos_trust_mode not in allowed_trust_modes:
+            raise VerificationError("ERROR: QoS trust mode must be one of: ",
+                                    allowed_trust_modes)
+
+        # Set trust mode in a key-value format
+        self.qos_config["qos_trust"] = qos_trust_mode
+
+        if cos_override:
+            if not isinstance(cos_override, int):
+                raise ParameterError("ERROR: COS Override must be in integer"
+                                     "format")
+            self.qos_config["cos_override"] = cos_override
+        if dscp_override:
+            if not isinstance(dscp_override, int):
+                raise ParameterError("ERROR: DSCP Override must be in integer"
+                                     "format")
+            self.cos_config["dscp_override"] = dscp_override
+
+
+        # Apply changes
+        return self.apply()
+
+    @PyaoscxModule.materialized
     def update_interface_qos_rate(self, qos_rate):
         """
         Update the rate limit values configured for
