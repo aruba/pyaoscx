@@ -25,7 +25,7 @@ class v10_04(API):
         self.compound_index_separator = ","
         self.valid_depths = [0, 1, 2, 3, 4]
 
-    def _create_ospf_area(module_class, session, index_id, **kwargs):
+    def _create_ospf_area(self, module_class, session, index_id, **kwargs):
         # Add data for correct Ospf Area creation
         other_config = {
             "stub_default_cost": 1,
