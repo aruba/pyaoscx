@@ -410,15 +410,21 @@ class ACL(PyaoscxModule):
         """
 
         new_cfg_version = randint(-9007199254740991, 9007199254740991)
-        if not hasattr(self, "cfg_version"):
-            logging.warning(
-                "ACL %s didn't have a version configured. %d was added",
-                str(self), new_cfg_version)
-        else:
-            logging.warning(
-                "ACL %s was modified, but the version wasn't, "
-                "so the version was changed automatically to %d",
-                str(self), new_cfg_version)
+
+        if self.materialized:
+            if hasattr(self, "cfg_version"):
+                logging.warning(
+                    "ACL %s was modified, but the version wasn't, "
+                    "so the version was changed automatically to %d",
+                    str(self),
+                    new_cfg_version
+                )
+            else:
+                logging.warning(
+                    "ACL %s didn't have a version configured. %d was added",
+                    str(self),
+                    new_cfg_version
+                )
 
         self.cfg_version = new_cfg_version
 

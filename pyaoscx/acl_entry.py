@@ -4,6 +4,7 @@
 import json
 import logging
 import re
+import warnings
 
 from pyaoscx.utils import util as utils
 from pyaoscx.exceptions.response_error import ResponseError
@@ -294,7 +295,7 @@ class AclEntry(PyaoscxModule):
                 modified = self.create()
             else:
                 # A replace was not required, so it is possible that an
-                # update will suffice. Extracting the parameters form
+                # update will suffice. Extracting the parameters from
                 # the remote works as a materialization
                 self.materialized = True
                 modified = self.update()
@@ -320,22 +321,32 @@ class AclEntry(PyaoscxModule):
             class_uri=self.base_uri,
             sequence_number=self.sequence_number)
 
-        # Compare dictionaries
-        if acl_entry_data == self.__original_attributes:
+        if not self.__was_modified():
             # Object was not modified
             modified = False
 
         else:
+            # Normally objects will pull from the switch only writable
+            # attributes, but because of the replace (delete/create) behaviour
+            # implemented for ACL Entries, we usually pull all configurable
+            # attributes. Which means that hey have to be removed from the
+            # request before being sent to the switch
+            for key in acl_entry_data:
+                if key not in self.immutable_parameter_names:
+                    acl_entry_data.pop(key)
+
             post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
 
             try:
-                response = self.session.s.put(uri,
-                                              verify=False,
-                                              data=post_data,
-                                              proxies=self.session.proxy)
+                response = self.session.s.put(
+                    uri,
+                    verify=False,
+                    data=post_data,
+                    proxies=self.session.proxy
+                )
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(response.text,
@@ -355,6 +366,7 @@ class AclEntry(PyaoscxModule):
             self.__parent_acl._update_version()
             self.__parent_acl.apply()
 
+        self.__modified = modified
         return modified
 
     @PyaoscxModule.connected
@@ -412,6 +424,7 @@ class AclEntry(PyaoscxModule):
         self.__parent_acl.apply()
 
         # Object was created, means modified
+        self.__modified = True
         return True
 
     @PyaoscxModule.connected
@@ -520,12 +533,46 @@ class AclEntry(PyaoscxModule):
         '''
         return self.session.api.get_index(self)
 
+    @property
+    def modified(self):
+        return self.__modified
+
+    def __was_modified(self):
+        """
+        Determine if the object was modified since the last materialization
+        """
+        current = utils.get_attrs(self, self.config_attrs)
+        original = self.__original_attributes
+        if current == original:
+            return False
+        # Because ACL gets all configurable parameters and not just the
+        # writable ones those two dictionaries could be different but because
+        # on is missing members that the other one has. So it is necessary to
+        # check that the missing members are set as None in the other.
+        modified = False
+        for key,value in current.items():
+            if key in original:
+                modified |= (value != original[key])
+            else:
+                modified |= (value is not None)
+        for key,value in original.items():
+            if key in current:
+                modified |= (value != current[key])
+            else:
+                modified |= (value is not None)
+
+        return modified
+
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified,
             False otherwise.
         """
+        warnings.warn(
+            "This method will be removed in a future version",
+            DeprecationWarning
+        )
 
         return self.__modified
 
