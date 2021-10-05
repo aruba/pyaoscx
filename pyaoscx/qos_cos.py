@@ -76,13 +76,15 @@ class QosCos(PyaoscxModule):
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
 
-        if selector is None and self.session.api.default_selector in \
-                self.session.api.configurable_selectors:
-            utils.set_config_attrs(
-                self, data, 'config_attrs')
+        if selector in self.session.api.configurable_selectors:
+            utils.set_config_attrs(self, data, "config_attrs")
 
         # Set original attributes
         self._original_attributes = data
+
+        self.__color = data["color"]
+        self.__description = data["description"]
+        self.__local_priority = data["local_priority"]
 
         self.materialized = True
 
@@ -220,52 +222,62 @@ class QosCos(PyaoscxModule):
     def __str__(self):
         return "QoS COS trust mode {0}".format(self.code_point)
 
-    ####################################################################
-    # IMPERATIVE FUNCTIONS
-    ####################################################################
-
-    @PyaoscxModule.materialized
-    def set_color(self, color):
+    @property
+    def color(self):
         """
-        Updates the value of the color of this QoS COS trust mode instance.
+        Getter method for the color property.
+        """
+        return self.__color
+
+    @color.setter
+    def color(self, color):
+        """
+        Updates the value of the color of this QoS COS instance.
         :param color: String to identify the color which may be used later in
             the pipeline in packet-drop decision points. Example: "green".
-        :return: Boolean True if no exception is raised.
         """
         # Verify data type
         if not isinstance(color, str):
             raise ValueError("ERROR: Color value must be a string.")
 
-        self.color = color
+        self.__color = color
 
-        return self.apply()
-
-    @PyaoscxModule.materialized
-    def set_description(self, description):
+    @property
+    def description(self):
         """
-        Updates the value of the color of this QoS COS trust mode instance.
+        Getter method for the description property
+        """
+        return self.__description
+
+    @description.setter
+    def description(self, description):
+        """
+        Updates the description of this QoS COS instance.
         :param description: String used for customer documentation
-        :return: Boolean True if no exception is raised.
         """
+        # Verify data type
         if not isinstance(description, str):
-            raise ValueError("ERROR: Description value must a string.")
+            raise ValueError("ERROR: Description value must be a string.")
 
-        self.description = description
+        self.__description = description
 
-        return self.apply()
-
-    @PyaoscxModule.materialized
-    def set_local_priority(self, priority):
+    @property
+    def local_priority(self):
         """
-        Updates the value of the local priority of this QoS instance.
+        Getter method for the local_priority
+        """
+        return self.__local_priority
+
+    @local_priority.setter
+    def local_priority(self, priority):
+        """
+        Updates the value of the local priority of this QoS COS instance.
         :param priority: Integer to represent an internal meta-data value that
             will be associated with the packet. This value will be used later
             to select the egress queue for the packet.
-        :return: Boolean True if no exception is raised.
         """
+        # Verify data type
         if not isinstance(priority, int):
             raise ValueError("ERROR: Priority must be an integer.")
 
-        self.local_priority = priority
-
-        return self.apply()
+        self.__local_priority = priority
