@@ -4,9 +4,9 @@
 import json
 import logging
 
-from pyaoscx.utils import util as utils
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.exceptions.request_error import HttpRequestError
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -105,7 +105,7 @@ class QosDscp(PyaoscxModule):
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise HttpRequestError("GET", e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)

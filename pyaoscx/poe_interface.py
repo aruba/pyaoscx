@@ -1,8 +1,8 @@
 # (C) Copyright 2019-2020 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.exceptions.request_error import HttpRequestError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.response_error import ResponseError
 
 from pyaoscx.interface import Interface
 from pyaoscx.pyaoscx_module import PyaoscxModule
@@ -96,7 +96,7 @@ class PoEInterface(Interface):
                 uri, verify=False, params=payload, proxies=self.session.proxy)
 
         except Exception as e:
-            raise HttpRequestError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -174,7 +174,7 @@ class PoEInterface(Interface):
                     proxies=self.session.proxy)
 
             except Exception as e:
-                raise HttpRequestError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
