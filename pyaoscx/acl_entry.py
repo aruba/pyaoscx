@@ -331,7 +331,7 @@ class AclEntry(PyaoscxModule):
             # implemented for ACL Entries, we usually pull all configurable
             # attributes. Which means that hey have to be removed from the
             # request before being sent to the switch
-            for key in acl_entry_data:
+            for key in list(acl_entry_data):
                 if key not in self.immutable_parameter_names:
                     acl_entry_data.pop(key)
 
