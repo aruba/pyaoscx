@@ -2013,15 +2013,15 @@ class Interface(PyaoscxModule):
         """
         rate_limits = {}
         if qos_rate is not None:
-            for k, v in qos_rate.items():
-                for i, c in enumerate(v):
-                    if not c.isdigit():
+            for traffic_type, rate in qos_rate.items():
+                for idx, char in enumerate(rate):
+                    if not char.isdigit():
                         break
-                number = v[:i]
-                unit = v[i:].lstrip()
+                number = rate[:idx]
+                unit = rate[idx:]
 
-                rate_limits[k] = number
-                rate_limits[k + '_units'] = unit
+                rate_limits[traffic_type] = int(number)
+                rate_limits[traffic_type + '_units'] = unit
 
         self.rate_limits = rate_limits
 
