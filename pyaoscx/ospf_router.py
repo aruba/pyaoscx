@@ -160,7 +160,7 @@ class OspfRouter(PyaoscxModule):
         uri_list = session.api.get_uri_from_data(data)
         for uri in uri_list:
             # Create a OspfRouter object and adds it to parent Vrf object list
-            instance_tag, ospf = OspfRouter.from_uri(session, parent_vrf, uri)
+            instance_tag, ospf = cls.from_uri(session, parent_vrf, uri)
             # Load all OSPF Router data from within the Switch
             ospf.get()
             ospf_dict[instance_tag] = ospf
