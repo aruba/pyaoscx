@@ -73,6 +73,9 @@ class QosCos(PyaoscxModule):
 
         data = self._get_data(depth, selector)
 
+        depth = depth or self.session.api.default_depth
+        selector = selector or self.session.api.default_selector
+
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
 
