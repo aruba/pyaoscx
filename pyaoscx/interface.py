@@ -9,6 +9,7 @@ import re
 from warnings import warn
 from netaddr import mac_eui48
 from netaddr import EUI as MacAddress
+from copy import deepcopy
 
 import pyaoscx.vrf as vrf_mod
 import pyaoscx.utils.util as utils
@@ -179,7 +180,7 @@ class Interface(PyaoscxModule):
             )
 
         # Set original attributes
-        self.__original_attributes = data
+        self.__original_attributes = deepcopy(data)
 
         # Set a list of interfaces as an attribute
         if hasattr(self, 'interfaces') and self.interfaces is not None:
@@ -722,7 +723,7 @@ class Interface(PyaoscxModule):
                     "SUCCESS: Updating Interface table and Port table '{}' succeeded".format(
                         self.name))
             # Set new original attributes
-            self.__original_attributes = interface_data
+            self.__original_attributes = deepcopy(interface_data)
             # Object was modified
             modified = True
         return modified
@@ -1958,13 +1959,22 @@ class Interface(PyaoscxModule):
         return self.apply()
 
     @PyaoscxModule.materialized
-    def update_interface_qos_trust_mode(self, qos_trust_mode, cos_override=None,
-                                        dscp_override=None):
+    def update_interface_qos_trust_mode(
+            self,
+            qos_trust_mode,
+            cos_override=None,
+            dscp_override=None
+    ):
         """
         Update the QoS trust mode of this port.
-
-        :param qos_trust_mode: string to define the QoS trust mode. It can be
-            either "cos" or "dscp".
+        :param qos_trust_mode: string to define the QoS trust mode for the
+            interface. It can be either "cos", "dscp" or "none". To set the
+            interface to use the global configuration use "global" instead.
+        :param cos_override: integer with the COS entry id to associate
+            with the interface instead of automatic values. In range [0,7]
+        :param dscp_override: integer with the DSCP entry id to associate
+            with the interface instead of the automatic values. In the
+            range [0,63]
         :return: True if object was changed.
         """
 
@@ -1973,13 +1983,17 @@ class Interface(PyaoscxModule):
             raise ParameterError(
                 "ERROR: QoS trust mode must be in a string format")
 
-        allowed_trust_modes = ["cos", "dscp"]
+        allowed_trust_modes = ["cos", "dscp", "none", "global"]
         if qos_trust_mode not in allowed_trust_modes:
             raise VerificationError("ERROR: QoS trust mode must be one of: ",
                                     allowed_trust_modes)
 
         # Set trust mode in a key-value format
-        self.qos_config["qos_trust"] = qos_trust_mode
+        if qos_trust_mode == "global":
+            if "qos_trust" in self.qos_config:
+                del self.qos_config["qos_trust"]
+        else:
+            self.qos_config["qos_trust"] = qos_trust_mode
 
         if cos_override:
             if not isinstance(cos_override, int):
@@ -1991,7 +2005,6 @@ class Interface(PyaoscxModule):
                 raise ParameterError("ERROR: DSCP Override must be in integer"
                                      "format")
             self.cos_config["dscp_override"] = dscp_override
-
 
         # Apply changes
         return self.apply()
