@@ -4,9 +4,12 @@
 import json
 import logging
 
+from urllib.parse import quote, unquote
+
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
@@ -35,10 +38,16 @@ class OspfInterface(PyaoscxModule):
     ):
         self.session = session
         # Assign ID
-        self.__interface_name = interface_name
+        self.__interface_name = quote(interface_name)
         # Assign parent OspfArea object
         self.__parent_ospf_area = parent_ospf_area
-        self.port = None
+        port_name = kwargs.pop("port", interface_name)
+        if port_name != interface_name:
+            raise VerificationError(
+                "OSPF interfaces must have the same name as the "
+                "interface they are associated with."
+            )
+        self._set_port(interface_name)
         # List used to determine attributes related to the OSPF Interface
         # configuration
         self.config_attrs = []
@@ -51,12 +60,12 @@ class OspfInterface(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
         self.base_uri = self.__parent_ospf_area.path + "/ospf_interfaces"
-        self.path = "{0}/{1}".format(self.base_uri, self.__interface_name)
+        self.path = "{0}/{1}".format(self.base_uri, self.interface_name)
         self.__parent_ospf_area.update_ospf_interfaces(self)
 
     @property
     def interface_name(self):
-        return self.__interface_name
+        return unquote(self.__interface_name)
 
     @property
     def modified(self):
@@ -64,6 +73,14 @@ class OspfInterface(PyaoscxModule):
         Return boolean with whether this object has been modified
         """
         return self.__modified
+
+    @property
+    def port(self):
+        return self.interface_name
+
+    def _set_port(self, name):
+        from pyaoscx.interface import Interface
+        self.__port = Interface(self.session, name)
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -78,6 +95,7 @@ class OspfInterface(PyaoscxModule):
         """
         logging.info("Retrieving %s from switch", str(self))
         data = self._get_data(depth, selector)
+        self._set_port(self.interface_name)
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
         # Determines if the OSPF Interfaces is configurable
@@ -94,11 +112,6 @@ class OspfInterface(PyaoscxModule):
         # Remove ID
         if "interface_name" in self._original_attributes:
             self._original_attributes.pop("interface_name")
-        # If the OSPF Interface has a port inside the switch
-        if self.port:
-            from pyaoscx.interface import Interface
-            self.port = Interface.from_response(self.session, self.port)
-            self.port.get()
         # Sets object as materialized
         # Information is loaded from the Device
         self.materialized = True
@@ -170,11 +183,10 @@ class OspfInterface(PyaoscxModule):
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise
         """
-        ospf_interface_data = utils.get_attrs(self, self.config_attrs)
+        put_data = utils.get_attrs(self, self.config_attrs)
         # Get port uri
-        if self.port:
-            ospf_interface_data["port"] = self.port.get_info_format()
-        self.__modified = self._put_data(ospf_interface_data)
+        put_data["port"] = self.__port.get_info_format()
+        self.__modified = self._put_data(put_data)
         return self.__modified
 
     @PyaoscxModule.connected
@@ -184,10 +196,11 @@ class OspfInterface(PyaoscxModule):
             Only returns if an exception is not raised
         :return: True if OSPF Interface table entry was added
         """
-        ospf_interface_data = utils.get_attrs(self, self.config_attrs)
-        ospf_interface_data["interface_name"] = self.__interface_name
+        post_data = utils.get_attrs(self, self.config_attrs)
+        post_data["port"] = self.__port.get_info_format()
+        post_data["interface_name"] = self.interface_name
 
-        self.__modified = self._post_data(ospf_interface_data)
+        self.__modified = self._post_data(post_data)
         return self.__modified
 
     @PyaoscxModule.connected
@@ -254,7 +267,7 @@ class OspfInterface(PyaoscxModule):
     def __str__(self):
         return "{0} with interface_name {1}".format(
             type(self).__name__,
-            self.__interface_name
+            self.interface_name
         )
 
     def get_uri(self):

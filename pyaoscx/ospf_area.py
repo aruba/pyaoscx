@@ -91,12 +91,16 @@ class OspfArea(PyaoscxModule):
         # Determines if the OSPF Area is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, "config_attrs", ["area_id"])
+            utils.set_config_attrs(
+                self,
+                data,
+                "config_attrs",
+                self.indices
+            )
         # Set original attributes
+        if "area_id" in data:
+            del data["area_id"]
         self._original_attributes = data
-        # Remove ID
-        if "area_id" in self._original_attributes:
-            self._original_attributes.pop("area_id")
         # Sets object as materialized
         # Information is loaded from the Device
         self.materialized = True
@@ -140,7 +144,10 @@ class OspfArea(PyaoscxModule):
         for uri in uri_list:
             # Create an OspfArea object
             area_id, ospf_area = OspfArea.from_uri(
-                session, parent_ospf_router, uri)
+                session,
+                parent_ospf_router,
+                uri
+            )
             # Load all OSPF Router data from within the Switch
             ospf_area.get()
             ospf_area_dict[area_id] = ospf_area
@@ -171,14 +178,15 @@ class OspfArea(PyaoscxModule):
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise
         """
-        ospf_area_data = utils.get_attrs(self, self.config_attrs)
-        # get() doesn't pull the value of the spi field in these fields, so
-        # these need to be removed for the PUT request
-        unwanted_attributes = ("ipsec_ah", "ipsec_esp")
-        for attr in unwanted_attributes:
-            if attr in ospf_area_data:
-                del ospf_area_data[attr]
-        self.__modified = self._put_data(ospf_area_data)
+        # IMPORTANT: OSPF Area's ipsec_ah, ipsec_esp, and other_config MUST be
+        # configured together, so if any of them needs to be updated, existing
+        # values MUST be sent for all other attributes that have not changed
+        # NOTE: "other_config" is mistakenly not getting added to
+        # self.config_attrs, so this is fixed here
+        if "other_config" not in self.config_attrs:
+            self.config_attrs.append("other_config")
+        put_data = utils.get_attrs(self, self.config_attrs)
+        self.__modified = self._put_data(put_data)
         return self.__modified
 
     @PyaoscxModule.connected
@@ -188,10 +196,10 @@ class OspfArea(PyaoscxModule):
             Only returns if an exception is not raised
         :return modified: Boolean, True if entry was created
         """
-        ospf_area_data = utils.get_attrs(self, self.config_attrs)
-        ospf_area_data["area_id"] = self.area_id
+        post_data = utils.get_attrs(self, self.config_attrs)
+        post_data["area_id"] = self.area_id
 
-        self.__modified = self._post_data(ospf_area_data)
+        self.__modified = self._post_data(post_data)
         return self.__modified
 
     @PyaoscxModule.connected
