@@ -6,9 +6,11 @@ import logging
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
+from pyaoscx.device import Device
 
 
 class Qos(PyaoscxModule):
@@ -222,3 +224,34 @@ class Qos(PyaoscxModule):
 
     def __str__(self):
         return "Qos {0}".format(self.name)
+
+    @classmethod
+    def set_global_trust_mode(cls, session, trust_mode):
+        """
+        Sets the global trust mode for the switch.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :param trust_mode: A string to set the global trust mode, which can be
+            one of the following: "cos", "dscp", "none", or "default".
+            Use the default option to use the switch's default trust mode.
+        :return: Returns True if configuration was modified, False otherwise.
+        """
+        logging.info("Setting global Qos trust mode.")
+
+        # Verify trust mode value
+        allowed_trust_modes = ["cos", "dscp", "none", "default"]
+        if trust_mode not in allowed_trust_modes:
+            raise VerificationError(
+                "ERROR: QoS trust mode must be one of: ",
+                allowed_trust_modes
+            )
+
+        device = Device(session)
+        device.get()
+        if trust_mode == "default":
+            if "qos_trust" in device.qos_config:
+                del device.qos_config["qos_trust"]
+        else:
+            device.qos_config["qos_trust"] = trust_mode
+
+        return device.apply()

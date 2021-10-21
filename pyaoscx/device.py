@@ -10,6 +10,7 @@ from pyaoscx.session import Session
 import pyaoscx.utils.util as utils
 
 
+from copy import deepcopy
 import logging
 import json
 
@@ -28,6 +29,7 @@ class Device(PyaoscxFactory):
         # Used to set attributes
         self.config_attrs = []
         self.materialized = False
+        self.__original_attributes = {}
         # Set firmware version
         self.get_firmware_version()
 
@@ -40,23 +42,31 @@ class Device(PyaoscxFactory):
 
         '''
         logging.info("Retrieving the switch attributes and capabilities")
-        attributes = [
-            'software_version',
-            'software_images',
-            'software_info',
-            'platform_name',
-            'hostname',
-            'boot_time',
-            'mgmt_intf_status',
-            'aruba_central',
-            'capabilities',
-            'capacities',
-            'admin_password_set',
-            'other_config',
-            'domain_name'
+
+        non_configurable_attrs = [
+            "software_version",
+            "software_images",
+            "software_info",
+            "platform_name",
+            "boot_time",
+            "mgmt_intf_status",
+            "aruba_central",
+            "capabilities",
+            "capacities",
+            "admin_password_set",
         ]
 
-        attributes_list = ','.join(attributes)
+        configurable_attrs = [
+            "qos_config",
+            "hostname",
+            "other_config",
+            "domain_name",
+        ]
+
+        # Concatenate both config and non-config attrs without duplicates
+        all_attributes = list(set(non_configurable_attrs + configurable_attrs))
+
+        attributes_list = ','.join(all_attributes)
         uri = "{}system?attributes={}&depth={}".format(
             self.session.base_url, attributes_list,
             self.session.api.default_depth)
@@ -77,8 +87,27 @@ class Device(PyaoscxFactory):
         # Create class attributes using util.create_attrs
         utils.create_attrs(self, data)
 
+        utils.set_config_attrs(
+            self,
+            data,
+            "config_attrs",
+            non_configurable_attrs
+        )
+
+        # Save original attributes
+        self.__original_attributes = deepcopy(
+            utils.get_attrs(self, self.config_attrs)
+        )
         # Set device as materialized
         self.materialized = True
+
+    @property
+    def modified(self):
+        """
+        Verifies if there has been a modification for this object or not.
+        """
+        device_data = utils.get_attrs(self, self.config_attrs)
+        return device_data != self.__original_attributes
 
     @PyaoscxModule.connected
     def get_subsystems(self):
@@ -86,7 +115,8 @@ class Device(PyaoscxFactory):
          Perform GET call to retrieve subsystem attributes and create a dictionary containing them
         '''
         # Log
-        logging.info("Retrieving the switch subsystem attributes and capabilities")
+        logging.info(
+            "Retrieving the switch subsystem attributes and capabilities")
 
         # Attribute list
         attributes = [
@@ -147,6 +177,44 @@ class Device(PyaoscxFactory):
         self.firmware_version = data["current_version"]
         # Return Version
         return self.firmware_version
+
+    @PyaoscxModule.materialized
+    def apply(self):
+        """
+        Main method to update an existing Device object.
+        :return modified: Boolean, True if object was created or modified
+            False otherwise.
+        """
+        return self.update()
+
+    @PyaoscxModule.materialized
+    def update(self):
+        """
+        Perform a PUT call to apply changes to a Device object.
+        :return modified: Boolean, True if object was created or modified
+            False otherwise.
+        """
+        if not self.modified:
+            return False
+
+        device_data = utils.get_attrs(self, self.config_attrs)
+        put_data = json.dumps(device_data)
+
+        try:
+            response = self.session.request("PUT", "system", data=put_data)
+        except Exception as e:
+            raise ResponseError("PUT", e)
+
+        if not utils._response_ok(response, "PUT"):
+            raise GenericOperationError(
+                response.text,
+                response.status_code
+            )
+
+        # Set new original attributes
+        self.__original_attributes = deepcopy(device_data)
+
+        return True
 
     ####################################################################
     # IMPERATIVE FUNCTIONS
