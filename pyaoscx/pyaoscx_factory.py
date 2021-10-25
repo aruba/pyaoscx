@@ -286,86 +286,52 @@ class PyaoscxFactory():
 
         return vrf_obj
 
-    def vsx(self, role=None, isl_port=None, keepalive_vrf=None,
-            keepalive_peer=None, keepalive_src=None, vsx_mac=None,
-            keepalive_port=None):
+    def vsx(self, **kwargs):
         """
         Create a Vsx object.  If values differ from existing object, incoming
-        changes will be applied
-
-        :param role: Alphanumeric role that the system will be in the VSX pair.
-            The options are "primary" or "secondary"
-        :param isl_port: Alphanumeric name of the interface that will function
-            as the inter-switch link
-            A Interface object is also accepted
-        :param keepalive_vrf: Alphanumeric name of the VRF that the keepalive
-            connection will reside on.
-            A Vrf object is also accepted
-        :param keepalive_peer: Alphanumeric IP address of the VSX Peer that
-            will be reached as the keepalive connection.
-            Example:
-                '1.1.1.1'
-        :param keepalive_src: Alphanumeric IP address on the switch that will
-            function as the keepalive connection source.
-            Example:
-                '1.1.1.1'
-        :param vsx_mac: Alphanumeric MAC address that will function as the VSX
-            System MAC.
-            Example:
-                '01:02:03:04:05:06'
-        :param keepalive_port: Numeric Keepalive UDP port. Defaults to 7678
-        :return: Vsx object
+            changes will be applied
+        :return: A Vsx object
+        :rtype: Vsx
         """
-        if keepalive_port is None:
-            _keepalive_port = 7678
-        else:
-            _keepalive_port = keepalive_port
-        if keepalive_vrf is not None:
+        keepalive_vrf = kwargs.get("keepalive_vrf")
+        if keepalive_vrf:
             if isinstance(keepalive_vrf, str):
                 keepalive_vrf = self.__get_vrf_from_switch(keepalive_vrf)
-
-        if isl_port is not None:
+            kwargs["keepalive_vrf"] = keepalive_vrf.get_info_format()
+        software_update_vrf = kwargs.get("software_update_vrf")
+        if software_update_vrf:
+            if isinstance(software_update_vrf, str):
+                software_update_vrf = self.__get_vrf_from_switch(
+                    software_update_vrf
+                )
+            kwargs["software_update_vrf"] = (
+                software_update_vrf.get_info_format()
+            )
+        isl_port = kwargs.get("isl_port")
+        if isl_port:
             if isinstance(isl_port, str):
                 isl_port = self.session.api.get_module(
-                    self.session, 'Interface', isl_port)
+                    self.session, "Interface", isl_port
+                )
                 isl_port.get()
             # Check ISL Port routing
             if isl_port.routing:
                 # Set routing to False
                 isl_port.routing = False
                 isl_port.apply()
-
-        vsx_obj = self.session.api.get_module(
-            self.session, 'Vsx', device_role=role,
-            isl_port=isl_port, keepalive_peer_ip=keepalive_peer,
-            keepalive_src_ip=keepalive_src, keepalive_vrf=keepalive_vrf,
-            system_mac=vsx_mac, keepalive_udp_port=_keepalive_port)
-
+            kwargs["isl_port"] = isl_port.get_info_format()
+        vsx_obj = self.session.api.get_module(self.session, "Vsx", **kwargs)
         # Try to obtain data; if not, create
         try:
             vsx_obj.get()
-            # Configure variables in case something changes
-            if role is not None:
-                vsx_obj.device_role = role
-            if isl_port is not None:
-                vsx_obj.isl_port = isl_port
-            if keepalive_peer is not None:
-                vsx_obj.keepalive_peer_ip = keepalive_peer
-            if keepalive_src is not None:
-                vsx_obj.keepalive_src_ip = keepalive_src
-            if keepalive_vrf is not None:
-                vsx_obj.keepalive_vrf = keepalive_vrf
-            if vsx_mac is not None:
-                vsx_obj.system_mac = vsx_mac
-            if _keepalive_port is not None:
-                vsx_obj.keepalive_udp_port = _keepalive_port
-            # Apply changes
-            vsx_obj.apply()
-
+            # get() overwrites object's attributes with the switch config, so
+            # set them here after object is materialized, to keep the new ones
+            utils.set_config_attrs(vsx_obj, kwargs)
         except GenericOperationError:
+            pass
+        finally:
             # Create object inside switch
             vsx_obj.apply()
-
         return vsx_obj
 
     def bgp_router_asn(self, vrf, asn, router_id=None):
