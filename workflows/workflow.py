@@ -26,7 +26,7 @@ try:
     # inside of the Switch
     vlan1 = Vlan(s, 1)
     # Perform a GET request to obtain all data and materialize object
-    vlan1.get()
+    vlan1.get(selector='writable')
     # Now, we are able to modify the objects internal attributes
     vlan1.voice = True
     # Apply changes
