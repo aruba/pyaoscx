@@ -1925,11 +1925,12 @@ class Interface(PyaoscxModule):
         """
         Update QoS attached to this Interface
 
-        :param qos: string to define a QoS to operate on this interface.
+        :param qos: string to define a QoS to operate on this interface. Use
+            None to remove the Qos attached to this interface.
         :return: True if object was changed
         """
         # Verify argument type and value
-        if not isinstance(qos, str):
+        if not isinstance(qos, str) and qos is not None:
             raise ParameterError(
                 "ERROR: QoS must be in a string format")
 
