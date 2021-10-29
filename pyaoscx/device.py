@@ -453,3 +453,10 @@ class Device(PyaoscxFactory):
 
         # If no errors detected
         return result
+
+    def vsx_capable(self):
+        """
+        Return whether this device supports the VSX functionality
+        :return: True if device supports VSX
+        """
+        return hasattr(self, "capabilities") and "vsx" in self.capabilities
