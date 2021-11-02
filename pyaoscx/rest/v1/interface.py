@@ -946,3 +946,28 @@ class Interface(AbstractInterface):
         # Update values with new ones
         self.get()
         return True
+
+    ####################################################################
+    # IMPERATIVE FUNCTIONS
+    ####################################################################
+
+    def set_state(self, state="up"):
+        """
+        Either enable or disable the Interface by setting Interface's
+            admin_state to "up" or "down"
+
+        :param state: State to set the interface to
+        :return: True if object was changed
+
+        """
+        # Set interface to default settings
+        self.admin = state
+        if "lag" not in self.name:
+            try:
+                self.user_config["admin"] = state
+            except AttributeError:
+                # For loopback
+                pass
+
+        # Apply Changes
+        return self.apply()
