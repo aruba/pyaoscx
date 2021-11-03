@@ -2209,16 +2209,12 @@ class Interface(PyaoscxModule):
 
     def speed_duplex_configure(self, speeds=["1000"],
                                duplex_enable=False,
-                               override=False,
                                autonegotiation=False):
         """
         Configure the Interface speed and duplex mode.
         :param speed: List of allowed Interface speeds
         :param duplex_enable: True to enable full duplex and false to
                               use half duplex
-        :param override: change the user config override instead of the
-                         normal user config. Only use this option if
-                         you have other override configurations.
         :param autonegotiation: Enable auto negotiation on the interface
         :return: True if object changed
         """
@@ -2227,17 +2223,8 @@ class Interface(PyaoscxModule):
             raise VerificationError(
                 "Interface {}".format(self.name), "Object not materialized")
 
-        autoneg = "on" if autonegotiation else "off"
-        duplex = "full" if duplex_enable else "half"
-        speeds = ",".join(speeds)
-
-        if override:
-            self.user_config_override["autoneg"] = autoneg
-            self.user_config_override["duplex"] = duplex
-            self.user_config_override["speeds"] = speeds
-        else:
-            self.user_config["autoneg"] = autoneg
-            self.user_config["duplex"] = duplex
-            self.user_config["speeds"] = speeds
+        self.user_config["autoneg"] = "on" if autonegotiation else "off"
+        self.user_config["duplex"]  = "full" if duplex_enable else "half"
+        self.user_config["speeds"]  = ",".join(speeds)
 
         return self.apply()
