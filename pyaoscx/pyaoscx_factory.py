@@ -123,14 +123,19 @@ class PyaoscxFactory():
         :return: Interface object
         """
         interface_obj = self.session.api.get_module(
-            self.session, 'Interface',
-            name)
-        # Try to get the interface, if it doesn't exist, create it
+            self.session,
+            "Interface",
+            name
+        )
         try:
-            interface_obj.get()
+            # Try to create the interface
+            interface_obj.create()
 
         except GenericOperationError:
-            interface_obj.apply()
+            # The GenericOperationError is risen if the POST request was
+            # executed correctly, but the switch didn't accept it. This means
+            # that the interface already exists.
+            interface_obj.get()
 
         return interface_obj
 
