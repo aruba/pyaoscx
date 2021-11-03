@@ -886,12 +886,20 @@ class Interface(PyaoscxModule):
     ####################################################################
 
     @PyaoscxModule.materialized
-    def configure_l2(self, phys_ports=None, ipv4=None, vlan_ids_list=None,
-                     vlan_tag=1, lacp="passive", description=None,
-                     admin="up", fallback_enabled=False, mc_lag=False,
-                     vlan_mode='native-untagged',
-                     trunk_allowed_all=False,
-                     native_vlan_tag=True):
+    def configure_l2(
+        self,
+        phys_ports=None,
+        ipv4=None,
+        vlan_ids_list=None,
+        vlan_tag=1,
+        lacp="passive",
+        description=None,
+        fallback_enabled=False,
+        mc_lag=False,
+        vlan_mode="native-untagged",
+        trunk_allowed_all=False,
+        native_vlan_tag=True
+    ):
         """
         Configure an Interface object, set the attributes to a L2 LAG
         and apply() changes inside Switch
@@ -913,8 +921,6 @@ class Interface(PyaoscxModule):
             "passive" if not specified
         :param description: Optional description for the interface. Defaults
             to nothing if not specified.
-        :param admin: Optional administratively-configured state of the port.
-            Defaults to "up" if not specified
         :param fallback_enabled: Boolean to determine if the LAG uses LACP
             fallback. Defaults to False if not specified.
         :param mc_lag: Boolean to determine if the LAG is multi-chassis.
@@ -985,14 +991,6 @@ class Interface(PyaoscxModule):
         # Set description
         if description is not None:
             self.description = description
-        # Set admin
-        self.admin = admin
-        if "lag" not in self.name:
-            try:
-                self.user_config["admin"] = admin
-            except AttributeError:
-                # For loopback
-                pass
 
         # Set IPv4
         if ipv4 == []:
@@ -1013,9 +1011,17 @@ class Interface(PyaoscxModule):
         return self.apply()
 
     @PyaoscxModule.materialized
-    def configure_l3(self, phys_ports=None, ipv4=None, ipv6=None,
-                     vrf="default", lacp="passive", description=None,
-                     admin="up", fallback_enabled=False, mc_lag=False):
+    def configure_l3(
+        self,
+        phys_ports=None,
+        ipv4=None,
+        ipv6=None,
+        vrf="default",
+        lacp="passive",
+        description=None,
+        fallback_enabled=False,
+        mc_lag=False
+    ):
         """
         Configure an Interface object, if not materialized, materialize it and
         then set the attributes to a L3 LAG
@@ -1041,8 +1047,6 @@ class Interface(PyaoscxModule):
             "passive" if not specified.
         :param description: Optional description for the interface. Defaults to
             nothing if not specified.
-        :param admin: Optional administratively-configured state of the port.
-            Defaults to "up" if not specified
         :param fallback_enabled: Boolean to determine if the LAG uses LACP
             fallback. Defaults to False if not specified.
         :param mc_lag: Boolean to determine if the LAG is multi-chassis.
@@ -1101,14 +1105,6 @@ class Interface(PyaoscxModule):
         # Set description
         if description is not None:
             self.description = description
-        # Set admin
-        self.admin = admin
-        if "lag" not in self.name:
-            try:
-                self.user_config["admin"] = admin
-            except AttributeError:
-                # For loopback
-                pass
 
         # Set VRF
         vrf_obj = vrf_mod.Vrf(self.session, vrf)
@@ -1158,8 +1154,6 @@ class Interface(PyaoscxModule):
             to nothing if not specified.
         :param int_type: Type of interface; generally should be "vlan" for
             SVI's. Defaults to vlan
-        :param user_config: User configuration to apply to interface. Defaults
-            to "up" if not specified.
         :return: True if object was changed
 
         """
@@ -1232,14 +1226,6 @@ class Interface(PyaoscxModule):
 
             self.vrf = vrf
 
-        # Set user config
-        self.admin = user_config
-        try:
-            self.user_config["admin"] = user_config
-        except AttributeError:
-            # Ignore if attribute error
-            pass
-
         # Set type
         self.type = int_type
 
@@ -1249,27 +1235,23 @@ class Interface(PyaoscxModule):
         # Apply changes
         return self.apply()
 
+    @PyaoscxModule.materialized
     def add_ipv4_address(self, ip_address):
         """
         Configure a Interface object to add a new IPv4 address to it and
-        calls apply(), applying changes inside Switch
-
+            calls apply(), applying changes inside Switch
         :param ip_address: IPv4 address to assign to the interface.
             Example:
                 "1.1.1.1"
         :return: True if object was changed
         """
-
-        if not self.materialized:
-            raise VerificationError(
-                'Interface {}'.format(self.name), 'Object not materialized')
-
         # Set incoming IPv4 address
         self.ip4_address = ip_address
 
         # Apply changes inside switch
         return self.apply()
 
+    @PyaoscxModule.materialized
     def add_ipv6_address(self, ip_address, address_type="global-unicast"):
         """
         Configure a Interface object to append a IPv6 address to its
@@ -1283,12 +1265,6 @@ class Interface(PyaoscxModule):
             Defaults to global-unicast
         :return: Ipv6 object.
         """
-
-        if not self.materialized:
-            raise VerificationError(
-                'Interface {}'.format(self.name),
-                'Object not materialized')
-
         # Verify if incoming address is a string
         if isinstance(ip_address, str):
             # Create Ipv6 object -- add it to ipv6_addresses internal list
@@ -1389,27 +1365,21 @@ class Interface(PyaoscxModule):
 
         # Set all remaining attributes to create a loopback
 
-        # Set both admin and user up
-        self.admin = 'up'
-        if "lag" not in self.name:
-            try:
-                self.user_config["admin"] = 'up'
-            except AttributeError:
-                # For loopback
-                pass
+        # when configuring a loopback interface, it must be powered on
+        self.admin_state = "up"
 
         self.ospf_if_type = "ospf_iftype_loopback"
 
         # Apply changes to switch
         return self.apply()
 
+    @PyaoscxModule.materialized
     def configure_vxlan(self, source_ipv4=None, description=None,
                         dest_udp_port=4789):
         """
         Configure VXLAN table entry for a logical L3
-        Interface. If the VXLAN Interface already exists and an IPv4
-        address is given, the function will update the IPv4 address.
-
+            Interface. If the VXLAN Interface already exists and an IPv4
+            address is given, the function will update the IPv4 address.
         :param source_ipv4: Optional source IPv4 address to assign to the
             VXLAN interface. Defaults to nothing if not specified.
             Example:
@@ -1420,24 +1390,13 @@ class Interface(PyaoscxModule):
             will use.  Default is set to 4789
         :return: True if object was changed
         """
-
-        if not self.materialized:
-            raise VerificationError(
-                'Interface {}'.format(self.name), 'Object not materialized')
-
         # Set Values
         self.options["local_ip"] = source_ipv4
         self.options["vxlan_dest_udp_port"] = str(dest_udp_port)
 
         self.type = "vxlan"
-        # Both user and admin up
-        self.admin = 'up'
-        if "lag" not in self.name:
-            try:
-                self.user_config["admin"] = 'up'
-            except AttributeError:
-                # For loopback
-                pass
+        # when configuring a vxlan interface, it must be powered on
+        self.admin_state = "up"
 
         if description is not None:
             self.description = description
@@ -1703,27 +1662,24 @@ class Interface(PyaoscxModule):
         # Set interface to default settings
         return self.__set_to_default()
 
-    def set_state(self, state="up"):
-        """
-        Either enable or disable the interface by setting Interface's
-            admin_state to "up" or "down"
+    @property
+    def admin_state(self):
+        return self.admin
 
-        :param state: State to set the interface to
-            Defaults to up
-        :return: True if object was changed
-
+    @admin_state.setter
+    def admin_state(self, state):
         """
-        # Set interface to default settings
+        Set the admin state. This will power the interface on or off
+        :param state: new power state, "up" to turn interface on, "down" to
+            turn it off
+        """
         self.admin = state
-        if "lag" not in self.name:
-            try:
-                self.user_config["admin"] = state
-            except AttributeError:
-                # For loopback
-                pass
-
-        # Apply Changes
-        return self.apply()
+        if (
+            "lag" not in self.name
+            and hasattr(self, "user_config")
+            and isinstance(self.user_config, dict)
+        ):
+            self.user_config["admin"] = state
 
     def configure_vsx(self, active_forwarding, vsx_sync, act_gw_mac,
                       act_gw_ip):
@@ -1778,43 +1734,30 @@ class Interface(PyaoscxModule):
         # Apply changes
         return self.apply()
 
-    def configure_l3_ipv4_port(self, ip_address=None,
-                               port_desc=None, port_admin_state="up",
-                               vrf="default"):
+    def configure_l3_ipv4_port(
+        self, ip_address=None, port_desc=None, vrf="default"
+    ):
         """
         Function will enable routing on the port and update the IPv4 address
             if given.
-
         :param ip_address: IPv4 address to assign to the interface. Defaults
             to nothing if not specified.
             Example:
                 '1.1.1.1'
         :param port_desc: Optional description for the interface. Defaults to
             nothing if not specified.
-        :param port_admin_state: Optional administratively-configured state of
-            the port.
-            Defaults to "up" if not specified
         :param vrf: Name of the VRF to which the Port belongs. Defaults to
             "default" if not specified.
         :return: True if object was changed
-
         """
-
         # Set IPv4
+
         if ip_address is not None:
             self.ip4_address = ip_address
 
         # Set description
         if port_desc is not None:
             self.description = port_desc
-        # Set admin
-        self.admin = port_admin_state
-        if "lag" not in self.name:
-            try:
-                self.user_config["admin"] = port_admin_state
-            except AttributeError:
-                # For loopback
-                pass
 
         # Set vrf
         vrf_obj = self.session.api.get_module(
@@ -2207,24 +2150,22 @@ class Interface(PyaoscxModule):
         self.port_security["enable"] = False
         return self.apply()
 
-    def speed_duplex_configure(self, speeds=["1000"],
-                               duplex_enable=False,
-                               autonegotiation=False):
+    @PyaoscxModule.materialized
+    def speed_duplex_configure(
+        self,
+        speeds=["1000"],
+        duplex="half",
+        autonegotiation="off"
+    ):
         """
         Configure the Interface speed and duplex mode.
         :param speed: List of allowed Interface speeds
-        :param duplex_enable: True to enable full duplex and false to
-                              use half duplex
-        :param autonegotiation: Enable auto negotiation on the interface
+        :param duplex_enable: "full" for full duplex or "half" for half duplex
+        :param autonegotiation: switch autonegotiation "on" or "off"
         :return: True if object changed
         """
-
-        if not self.materialized:
-            raise VerificationError(
-                "Interface {}".format(self.name), "Object not materialized")
-
-        self.user_config["autoneg"] = "on" if autonegotiation else "off"
-        self.user_config["duplex"]  = "full" if duplex_enable else "half"
-        self.user_config["speeds"]  = ",".join(speeds)
+        self.user_config["autoneg"] = autonegotiation
+        self.user_config["duplex"] = duplex
+        self.user_config["speeds"] = ",".join(speeds)
 
         return self.apply()
