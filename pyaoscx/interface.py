@@ -72,6 +72,10 @@ class Interface(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
+    @property
+    def modified(self):
+        return self.__modified
+
     def __set_name(self, name):
         '''
         Set name attribute in the proper form for Interface object
