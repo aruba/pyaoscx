@@ -255,3 +255,19 @@ class Qos(PyaoscxModule):
             device.qos_config["qos_trust"] = trust_mode
 
         return device.apply()
+
+    @classmethod
+    def set_global_schedule_profile(cls, session, profile):
+        """
+        Sets the global schedule profile (the name of a Qos object) for the
+            switch.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :param profile: Name of a schedule profile (the name of a Qos object)
+            to set as the global schedule profile
+        """
+        logging.info("Setting global schedule profile to: ", profile)
+        device = Device(session)
+        device.get()
+        setattr(device, "qos_default", profile)
+        return device.apply()

@@ -44,39 +44,40 @@ class Device(PyaoscxFactory):
         logging.info("Retrieving the switch attributes and capabilities")
 
         non_configurable_attrs = [
-            "software_version",
-            "software_images",
-            "software_info",
-            "platform_name",
-            "boot_time",
-            "mgmt_intf_status",
+            "admin_password_set",
             "aruba_central",
+            "boot_time",
             "capabilities",
             "capacities",
-            "admin_password_set",
+            "mgmt_intf_status",
+            "platform_name",
+            "software_images",
+            "software_info",
+            "software_version",
         ]
 
         configurable_attrs = [
-            "qos_config",
+            "domain_name",
             "hostname",
             "other_config",
-            "domain_name",
+            "qos_config",
+            "qos_default",
+            "q_profile_default",
         ]
 
         # Concatenate both config and non-config attrs without duplicates
         all_attributes = list(set(non_configurable_attrs + configurable_attrs))
 
         attributes_list = ','.join(all_attributes)
-        uri = "{}system?attributes={}&depth={}".format(
-            self.session.base_url, attributes_list,
-            self.session.api.default_depth)
+        uri = "system?attributes={}&depth={}".format(
+            attributes_list,
+            self.session.api.default_depth
+        )
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, proxies=self.session.proxy)
-
+            response = self.session.request("GET", uri)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)

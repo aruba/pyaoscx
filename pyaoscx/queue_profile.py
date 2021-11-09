@@ -6,10 +6,11 @@ import logging
 import warnings
 
 from pyaoscx.utils import util as utils
-from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
+from pyaoscx.pyaoscx_module import PyaoscxModule
+from pyaoscx.device import Device
 
 class QueueProfile(PyaoscxModule):
     """
@@ -225,3 +226,18 @@ class QueueProfile(PyaoscxModule):
             DeprecationWarning
         )
         return self.modified
+
+    @classmethod
+    def set_global_queue_profile(cls, session, profile):
+        """
+        Sets the global queue profile for the switch
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :param profile: Name of a queue profile to set as the global queue
+            profile
+        """
+        logging.info("Setting global queue profile to: %s", profile)
+        device = Device(session)
+        device.get()
+        setattr(device, "q_profile_default", profile)
+        return device.apply()
