@@ -332,8 +332,8 @@ class AclEntry(PyaoscxModule):
             # attributes. Which means that hey have to be removed from the
             # request before being sent to the switch
             for key in list(acl_entry_data):
-                if key not in self.immutable_parameter_names:
-                    acl_entry_data.pop(key)
+                if key in self.immutable_parameter_names:
+                    del acl_entry_data[key]
 
             post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
 
