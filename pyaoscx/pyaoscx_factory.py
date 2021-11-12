@@ -331,7 +331,8 @@ class PyaoscxFactory():
             vsx_obj.get()
             # get() overwrites object's attributes with the switch config, so
             # set them here after object is materialized, to keep the new ones
-            utils.set_config_attrs(vsx_obj, kwargs)
+            for key, value in kwargs.items():
+                setattr(vsx_obj, key, value)
         except GenericOperationError:
             pass
         finally:
