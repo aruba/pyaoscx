@@ -248,13 +248,25 @@ class Qos(PyaoscxModule):
 
         device = Device(session)
         device.get()
+        # If the incoming value is the same as the current one,
+        # there's no need to change it
+        if device.qos_config.get("qos_trust") == trust_mode:
+            return False
+
+        modified = False
         if trust_mode == "default":
             if "qos_trust" in device.qos_config:
+                modified = (
+                    device.qos_config["qos_trust"]
+                    != device.qos_defaults["qos_trust"]
+                )
                 del device.qos_config["qos_trust"]
         else:
             device.qos_config["qos_trust"] = trust_mode
+            modified = True
 
-        return device.apply()
+        device.apply()
+        return modified
 
     @classmethod
     def set_global_schedule_profile(cls, session, profile):

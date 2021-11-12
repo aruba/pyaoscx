@@ -54,6 +54,7 @@ class Device(PyaoscxFactory):
             "software_images",
             "software_info",
             "software_version",
+            "qos_defaults",
         ]
 
         configurable_attrs = [
