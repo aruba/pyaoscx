@@ -238,6 +238,7 @@ class QueueProfile(PyaoscxModule):
         """
         logging.info("Setting global queue profile to: %s", profile)
         device = Device(session)
-        device.get()
+        if not device.materialized:
+            device.get()
         setattr(device, "q_profile_default", profile)
         return device.apply()

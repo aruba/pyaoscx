@@ -1,24 +1,26 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.pyaoscx_factory import PyaoscxFactory
-from pyaoscx.pyaoscx_module import PyaoscxModule
-from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.exceptions.response_error import ResponseError
-from pyaoscx.exceptions.verification_error import VerificationError
-from pyaoscx.session import Session
-import pyaoscx.utils.util as utils
-
-
 from copy import deepcopy
+
 import logging
 import json
 
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.verification_error import VerificationError
 
-class Device(PyaoscxFactory):
+from pyaoscx.utils import util as utils
+
+from pyaoscx.session import Session
+from pyaoscx.pyaoscx_factory import PyaoscxFactory, Singleton
+from pyaoscx.pyaoscx_module import PyaoscxModule
+
+
+class Device(PyaoscxFactory, metaclass=Singleton):
     '''
-    Represents a Device and all of its attributes. Keeping all the important information
-    inside one class.
+    Represents a Device and all of its attributes. Keeping all the important
+    information inside one class.
     '''
 
     base_uri = "system"

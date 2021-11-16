@@ -11,11 +11,11 @@ from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.utils import util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
 
-from pyaoscx.bgp_router import BgpRouter
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.static_route import StaticRoute
 from pyaoscx.vrf_address_family import VrfAddressFamily
 
+from pyaoscx.device import Device
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
@@ -167,8 +167,12 @@ class Vrf(PyaoscxModule):
         # Information is loaded from the Device
         self.materialized = True
 
+        device = Device(self.session)
+        if not device.materialized:
+            device.get()
+
         # Clean BGP Router settings
-        if self.bgp_routers == []:
+        if "bgp" in device.capabilities and self.bgp_routers == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.bgp_router import BgpRouter
             # Set BGP Routers if any
@@ -184,7 +188,7 @@ class Vrf(PyaoscxModule):
             VrfAddressFamily.get_all(self.session, self)
 
         # Clean OSPF Routers settings
-        if self.ospf_routers == []:
+        if "ospfv2" in device.capabilities and self.ospf_routers == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.ospf_router import OspfRouter
             # Set OSPF Routers if any
@@ -192,7 +196,7 @@ class Vrf(PyaoscxModule):
             OspfRouter.get_all(self.session, self)
 
         # If no OSPFv3 Routers are present
-        if self.ospfv3_routers == []:
+        if "ospfv3" in device.capabilities and self.ospfv3_routers == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.ospfv3_router import Ospfv3Router
             # Add all ospfv3_routers (if any) to parent Vrf object
@@ -391,7 +395,7 @@ class Vrf(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, response_data):
-        '''
+        """
         Create a Vrf object given a response_data related to the Vrf object
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -404,12 +408,25 @@ class Vrf(PyaoscxModule):
             or a
             string: "/rest/v1/system/vrfs/test_vrf"
         :return: Vrf object
-
-        '''
-        vrf_name_arr = session.api.get_keys(
-            response_data, Vrf.resource_uri_name)
-        vrf_name = vrf_name_arr[0]
-        return Vrf(session, vrf_name)
+        """
+        # An interfaces's VRF is returned with an empty index in some
+        # switch models (confirmed with a 4100), this empty index causes a
+        # subsequent GET request to fail, because the constructed URI is
+        # not correct, this may be due to these models supporting a single
+        # VRF. This behavior occurs with the default VRF, so it's safe to
+        # use "default" when the value gotten in the response is the empty
+        # string
+        # TODO: determine if this is correct/intended behavior to take into
+        # account for a possible refactor/rework to check for this earlier
+        if next(iter(response_data)) == "":
+            vrf_name = "default"
+        else:
+            vrf_name_arr = session.api.get_keys(
+                response_data,
+                cls.resource_uri_name
+            )
+            vrf_name = vrf_name_arr[0]
+        return cls(session, vrf_name)
 
     @classmethod
     def from_uri(cls, session, uri):

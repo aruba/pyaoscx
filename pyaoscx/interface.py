@@ -1,4 +1,3 @@
-
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
@@ -1028,9 +1027,8 @@ class Interface(PyaoscxModule):
     ):
         """
         Configure an Interface object, if not materialized, materialize it and
-        then set the attributes to a L3 LAG
-        and apply() changes inside Switch
-
+            then set the attributes to a L3 LAG and apply() changes inside
+            Switch.
         :param phys_ports: List of physical ports to aggregate (e.g. ["1/1/1",
             "1/1/2", "1/1/3"]) or list of Interface Objects.
         :param ipv4: Optional list of IPv4 address to assign
@@ -1045,8 +1043,7 @@ class Interface(PyaoscxModule):
             Example:
                 ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
         :param vrf: VRF to attach the SVI to. Defaults to "default" if not
-            specified
-            A Vrf object is also accepted
+            specified. A Vrf object is also accepted
         :param lacp: Should be either "passive" or "active." Defaults to
             "passive" if not specified.
         :param description: Optional description for the interface. Defaults to
@@ -1111,9 +1108,10 @@ class Interface(PyaoscxModule):
             self.description = description
 
         # Set VRF
-        vrf_obj = vrf_mod.Vrf(self.session, vrf)
-        vrf_obj.get()
-        self.vrf = vrf_obj
+        if isinstance(vrf, str):
+            vrf = vrf_mod.Vrf(self.session, vrf)
+            vrf.get()
+        self.vrf = vrf
 
         self.routing = True
 

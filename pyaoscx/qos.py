@@ -247,7 +247,8 @@ class Qos(PyaoscxModule):
             )
 
         device = Device(session)
-        device.get()
+        if not device.materialized:
+            device.get()
         # If the incoming value is the same as the current one,
         # there's no need to change it
         if device.qos_config.get("qos_trust") == trust_mode:

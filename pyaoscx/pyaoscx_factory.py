@@ -6,32 +6,27 @@ from pyaoscx.dns import Dns
 from pyaoscx.configuration import Configuration
 from pyaoscx.utils import util as utils
 
+class Singleton(type):
+    """
+    Metaclass to turn classes into a Singleton.
+    """
+    __instance = None
+    def __call__(cls, *args, **kwargs):
+        if not cls.__instance:
+            cls.__instance = super(Singleton, cls).__call__(*args, **kwargs)
+        return cls.__instance
 
-class PyaoscxFactory():
+
+class PyaoscxFactory(metaclass=Singleton):
     '''
     Provide a Factory class to instantiate all pyaoscx Modules
-    through specific methods.
+        through specific methods. This class is superseded by the Device class,
+        use the Device class instead of this one.
     Using the API Version given by the Session
     '''
 
-    __instance__ = None
-
     def __init__(self, session):
-
         self.session = session
-        if PyaoscxFactory.__instance__ is None:
-            PyaoscxFactory.__instance__ = self
-        else:
-            raise Exception("You cannot create another PyaoscxFactory class")
-
-    @staticmethod
-    def get_instance(session):
-        """
-        Static method to fetch the current instance.
-        """
-        if not PyaoscxFactory.__instance__:
-            PyaoscxFactory(session)
-        return PyaoscxFactory.__instance__
 
     def configuration(self):
         """
