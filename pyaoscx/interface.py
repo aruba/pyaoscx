@@ -1890,17 +1890,15 @@ class Interface(PyaoscxModule):
     def update_interface_queue_profile(self, queue_profile):
         """
         Update the Queue Profile for this interface.
-
-        :param queue_profile: string to define the queue profile of
-            this Interface.
+        :param queue_profile: Queue Profile name for this Interface.
+            None is used to remove an existing Queue Profile.
         :return: True if object was changed.
         """
 
-        # Verify argument type and value
-        if not isinstance(queue_profile, str):
+        if queue_profile is not None and not isinstance(queue_profile, str):
             raise ParameterError(
-                "ERROR: Queue Profile must be in a string format")
-
+                "ERROR: queue_profile must be a string or None"
+            )
         self.q_profile = queue_profile
 
         # Apply changes
