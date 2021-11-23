@@ -10,6 +10,8 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 import json
 import logging
 import re
+from urllib.parse import quote_plus, unquote_plus
+
 import pyaoscx.utils.util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
 from pyaoscx.static_nexthop import StaticNexthop
@@ -28,7 +30,9 @@ class StaticRoute(PyaoscxModule):
 
         self.session = session
         # Assign IP
-        self.__set_name(prefix)
+        self.prefix = unquote_plus(prefix)
+        self.reference_address = quote_plus(self.prefix)
+        self.address_family = utils.get_ip_version(self.prefix)
         # Assign parent Vrf object
         self.__set_vrf(parent_vrf)
         self._uri = uri
@@ -46,24 +50,6 @@ class StaticRoute(PyaoscxModule):
 
         # Attribute used to know if object was changed recently
         self.__modified = False
-
-    def __set_name(self, address):
-        '''
-        Set name attribute in the proper form for Static Route
-        :param address: Static Route IP address
-        '''
-
-        # Add attributes to class
-        self.prefix = None
-        self.reference_address = None
-
-        if r'%2F' in address or r'%2C' in address or r'%3A' in address:
-            self.prefix = utils._replace_percents_ip(address)
-            self.reference_address = address
-        else:
-            self.prefix = address
-            self.reference_address = utils._replace_special_characters_ip(
-                self.prefix)
 
     def __set_vrf(self, parent_vrf):
         '''
@@ -307,6 +293,10 @@ class StaticRoute(PyaoscxModule):
 
         :return: Boolean, True if entry was created
         '''
+        # Add 'address_family' as a config attribute and remove duplicates
+        self.config_attrs.append("address_family")
+        self.config_attrs = list(set(self.config_attrs))
+
         static_route_data = {}
 
         static_route_data = utils.get_attrs(self, self.config_attrs)

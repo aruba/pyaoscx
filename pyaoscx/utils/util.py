@@ -1,8 +1,11 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+from netaddr import IPNetwork
+
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.parameter_error import ParameterError
 
 
 def create_attrs(obj, data_dictionary):
@@ -290,3 +293,17 @@ def file_upload(session, file_path, complete_uri):
 
     # Return true if successful
     return True
+
+def get_ip_version(ip):
+    """
+    Map if given IP address is v4 or v6. Will raise an exception if given
+        address if invalid.
+    :param ip: String with an IP address.
+    :return: String with the IP version. Can be either ipv4 or ipv6.
+    """
+    try:
+        ip_net = IPNetwork(ip)
+        return 'ipv{}'.format(ip_net.version)
+    except ValueError:
+        msg = "Invalid IP Address: {}".format(ip)
+        raise ParameterError(msg)
