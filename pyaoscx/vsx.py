@@ -1,7 +1,6 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from copy import deepcopy
 import functools
 import logging
 
@@ -52,23 +51,12 @@ class Vsx(PyaoscxModule):
         :return: Returns True if there is not an exception raised
         """
         logging.info("Retrieving the switch VSX configuration")
-
-        data = self._get_data(depth, selector)
-
-        # Add dictionary as attributes for the object
-        utils.create_attrs(self, data)
-        isl_port = data.pop("isl_port", None)
-        keepalive_vrf = data.pop("keepalive_vrf", None)
-        software_update_vrf = data.pop("software_update_vrf", None)
-
-        # Determines if VSX is configurable
-        if selector in self.session.api.configurable_selectors:
-            # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, "config_attrs")
-
-        # Set original attributes
-        self._original_attributes = deepcopy(data)
-
+        # this is common for all PyaoscxModule derived classes
+        self._get_and_copy_data(depth, selector)
+        # this is specific for this class
+        isl_port = self._original_attributes.get("isl_port")
+        keepalive_vrf = self._original_attributes.get("keepalive_vrf")
+        update_vrf = self._original_attributes.get("software_update_vrf")
         # If the VSX has a isl_port inside the switch and a new one is not
         # being added
         if isl_port:
@@ -84,11 +72,11 @@ class Vsx(PyaoscxModule):
                 "keepalive_vrf",
                 self.__get_vrf(next(iter(keepalive_vrf))),
             )
-        if software_update_vrf:
+        if update_vrf:
             setattr(
                 self,
                 "software_update_vrf",
-                self.__get_vrf(next(iter(software_update_vrf))),
+                self.__get_vrf(next(iter(update_vrf))),
             )
         # Sets object as materialized
         # Information is loaded from the Device

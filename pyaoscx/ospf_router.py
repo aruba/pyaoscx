@@ -83,31 +83,20 @@ class OspfRouter(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving %s from switch", str(self))
-        data = self._get_data(depth, selector)
+        logging.info("Retrieving %s from switch", self)
+        # this is common for all PyaoscxModule derived classes
+        self._get_and_copy_data(depth, selector, self.indices)
         # Delete unwanted data
-        if "areas" in data:
-            data.pop("areas")
-        # Add dictionary as attributes for the object
-        utils.create_attrs(self, data)
-        # Determines if the OSPF Router is configurable
-        if selector in self.session.api.configurable_selectors:
-            # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self,
-                data,
-                "config_attrs",
-                self.indices
-            )
+        if "areas" in self._original_attributes:
+            del self._original_attributes["areas"]
         # Set original attributes
-        self._original_attributes = data
         if "instance_tag" in self._original_attributes:
-            self._original_attributes.pop("instance_tag")
+            del self._original_attributes["instance_tag"]
         # Sets object as materialized
         # Information is loaded from the Device
         self.materialized = True
         # Set a list of passive_interfaces as an attribute
-        if self.passive_interfaces is not None:
+        if self.passive_interfaces:
             interfaces_list = []
             # Get all URI elements in the form of a list
             uri_list = self.session.api.get_uri_from_data(
@@ -118,8 +107,6 @@ class OspfRouter(PyaoscxModule):
             for uri in uri_list:
                 # Create an Interface object
                 _, iface = Interface.from_uri(self.session, uri)
-                # Materialize interface
-                iface.get()
                 # Add interface to list
                 interfaces_list.append(iface)
             # Set list as Interfaces

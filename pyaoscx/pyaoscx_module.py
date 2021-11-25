@@ -142,6 +142,30 @@ class PyaoscxModule(ABC):
         '''
         pass
 
+    def _get_and_copy_data(
+        self, depth=None, selector=None, unwanted_attrs=None
+    ):
+        """
+        Get data from switch with _get_data, and populate the object with the
+            data obtained. Note that this is meant to be a common block in the
+            get() method of modules derived from PyaoscxModule, and the
+            specifics of each module with the _original_attributes dictionary
+            should be done in each module's get() body
+        """
+        unwanted_attrs = unwanted_attrs or []
+        selector = selector or self.session.api.default_selector
+
+        data = self._get_data(depth, selector)
+
+        # Add dictionary as attributes for the object
+        utils.create_attrs(self, data)
+
+        self._original_attributes = deepcopy(data)
+
+        if selector in self.session.api.configurable_selectors:
+            # Set self.config_attrs and delete unwanted attributes
+            utils.set_config_attrs(self, data, "config_attrs", unwanted_attrs)
+
     def _get_data(self, depth, selector):
         """
         Perform a GET call to retrieve data from a switch.
