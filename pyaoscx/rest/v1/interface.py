@@ -9,6 +9,7 @@ from pyaoscx.ipv6 import Ipv6
 from pyaoscx.interface import Interface as AbstractInterface
 from pyaoscx.vlan import Vlan
 from pyaoscx.vrf import Vrf
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 import json
 import logging
@@ -488,6 +489,7 @@ class Interface(AbstractInterface):
 
         return facts_dict
 
+    @classmethod
     def from_response(cls, session, response_data):
         '''
         Create an Interface object given a response_data related to the
