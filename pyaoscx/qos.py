@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -281,7 +281,7 @@ class Qos(PyaoscxModule):
         :param profile: Name of a schedule profile (the name of a Qos object)
             to set as the global schedule profile
         """
-        logging.info("Setting global schedule profile to: ", profile)
+        logging.info("Setting global schedule profile to: %s", profile)
         device = Device(session)
         device.get()
         setattr(device, "qos_default", profile)
