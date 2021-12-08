@@ -6,10 +6,14 @@ import logging
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.unsupported_capability_error import (
+    UnsupportedCapabilityError
+)
 from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
+from pyaoscx.device import Device
 from pyaoscx.qos import Qos
 
 
@@ -33,8 +37,14 @@ class Queue(PyaoscxModule):
         self.session = session
         self.__queue_number = queue_number
         self.__qos_name = qos_name
+        # this is needed for the property, this is safe
+        self.__gmb_percent = None
         # List of configuration attributes
         self.config_attrs = []
+
+        # Get and remove gmb_percent from kwargs if given
+        if "gmb_percent" in kwargs:
+            self.gmb_percent = kwargs.pop("gmb_percent")
 
         # Original attributes
         self._original_attributes = {}
@@ -54,6 +64,18 @@ class Queue(PyaoscxModule):
             self.base_uri,
             self.queue_number
         )
+
+    @property
+    def gmb_percent(self):
+        return self.__gmb_percent
+
+    @gmb_percent.setter
+    def gmb_percent(self, value):
+        if not Device(self.session).is_capable("qos_sched_min_bandwidth"):
+            raise UnsupportedCapabilityError(
+                "This device can't configure a Queue's minimum bandwidth."
+            )
+        self.__gmb_percent = value
 
     @property
     def queue_number(self):
@@ -84,14 +106,16 @@ class Queue(PyaoscxModule):
         """
         logging.info("Retrieving the switch %s Queue", self.queue_number)
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
 
         # Add dictionary as attributes for the object
-        utils.create_attrs(self, data)
+        for k, v in data.items():
+            setattr(self, k, v)
 
-        if selector is None and self.session.api.default_selector in \
-                self.session.api.configurable_selectors:
-            utils.set_config_attrs(self, data, "config_attrs")
+        if selector in self.session.api.configurable_selectors:
+            self.config_attrs = list(data)
 
         # Set original attributes
         self._original_attributes = data

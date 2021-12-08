@@ -532,3 +532,14 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         :return: True if device supports VSX
         """
         return hasattr(self, "capabilities") and "vsx" in self.capabilities
+
+    def is_capable(self, capability):
+        """
+        Check if the current Device has the given capability.
+        :param capability: String name of a Device capability.
+        :return: True if Device is capable; False otherwise.
+        """
+        if not self.materialized:
+            self.get()
+
+        return capability in self.capabilities

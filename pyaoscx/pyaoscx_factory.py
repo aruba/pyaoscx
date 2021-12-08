@@ -1439,7 +1439,8 @@ class PyaoscxFactory(metaclass=Singleton):
         try:
             # Get the remote configuration, but the local one takes precedence
             queue_obj.get()
-            utils.create_attrs(queue_obj, kwargs)  # so it gets re-applied here
+            for k, v in kwargs.items():
+                setattr(queue_obj, k, v)
             queue_obj.apply()
         except GenericOperationError:
             queue_obj.create()
