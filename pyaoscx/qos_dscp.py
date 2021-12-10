@@ -84,9 +84,14 @@ class QosDscp(PyaoscxModule):
         # Set original attributes
         self._original_attributes = data
 
-        self.__color = data["color"]
-        self.__description = data["description"]
-        self.__local_priority = data["local_priority"]
+        if "cos" in data:
+            self.__cos = data["cos"]
+        if "color" in data:
+            self.__color = data["color"]
+        if "description" in data:
+            self.__description = data["description"]
+        if "local_priority" in data:
+            self.__local_priority = data["local_priority"]
 
         self.materialized = True
 
@@ -223,6 +228,28 @@ class QosDscp(PyaoscxModule):
         return "QoS DSCP trust mode {0}".format(self.code_point)
 
     @property
+    def cos(self):
+        """
+        Getter method for the cos property.
+        """
+        return self.__cos
+
+    @cos.setter
+    def cos(self, cos):
+        """
+        Updates the value of the cos of this QoS DSCP instance.
+        :param cos: Priority Code Point (PCP) that will be assigned to any IP
+            packet with the specified DSCP codepoint, if that packet's ingress
+            port has an effective trust mode of trust dscp. The new PCP is used
+            when the packet is transmitted out a port or trunk with a VLAN tag.
+            If the key is not specified, then no remark will occur.
+        """
+        # Verify data type
+        if not isinstance(cos, int):
+            raise ValueError("The value of cos must be an integer.")
+        self.__cos = cos
+
+    @property
     def color(self):
         """
         Getter method for the color property.
@@ -239,7 +266,6 @@ class QosDscp(PyaoscxModule):
         # Verify data type
         if not isinstance(color, str):
             raise ValueError("ERROR: Color value must be a string.")
-
         self.__color = color
 
     @property
@@ -258,7 +284,6 @@ class QosDscp(PyaoscxModule):
         # Verify data type
         if not isinstance(description, str):
             raise ValueError("ERROR: Description value must be a string.")
-
         self.__description = description
 
     @property
@@ -279,5 +304,4 @@ class QosDscp(PyaoscxModule):
         # Verify data type
         if not isinstance(priority, int):
             raise ValueError("ERROR: Priority must be an integer.")
-
         self.__local_priority = priority
