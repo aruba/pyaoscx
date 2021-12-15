@@ -4,6 +4,7 @@
 import json
 import logging
 import re
+from urllib.parse import quote_plus, unquote_plus
 
 from netaddr import EUI as MacAddress
 from netaddr import mac_eui48
@@ -101,7 +102,7 @@ class Mac(PyaoscxModule):
             self.base_uri,
             self.from_id,
             self.session.api.compound_index_separator,
-            utils._replace_special_characters(str(self.mac_address)))
+            quote_plus(str(self.mac_address)))
 
     def _set_configuration_items(self, selector):
         # Determines if the MAC is configurable
@@ -261,7 +262,7 @@ class Mac(PyaoscxModule):
         mac_addr = mac_pair[1]
         from_id = mac_pair[0]
 
-        mac_address = MacAddress(utils._replace_percents(mac_addr),
+        mac_address = MacAddress(unquote_plus(mac_addr),
                                  dialect=mac_format)
 
         return Mac(
@@ -289,7 +290,7 @@ class Mac(PyaoscxModule):
         from_id = index_pattern.match(uri).group("index1")
         reference_mac_addr = index_pattern.match(uri).group("index2")
 
-        mac_addr = MacAddress(utils._replace_percents(
+        mac_addr = MacAddress(unquote_plus(
             reference_mac_addr), dialect=mac_format)
 
         mac = Mac(session, from_id, mac_addr,
@@ -327,7 +328,7 @@ class Mac(PyaoscxModule):
                 self.base_uri,
                 self.from_id,
                 self.session.api.compound_index_separator,
-                utils._replace_special_characters(str(self.mac_address))
+                quote_plus(str(self.mac_address))
             )
 
         return self._uri

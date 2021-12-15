@@ -5,6 +5,7 @@ from copy import deepcopy
 
 import logging
 import json
+from urllib.parse import quote_plus
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
@@ -439,7 +440,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 'VRF',
                 "VRF needs to be provided in order" +
                 " to upload firmware from HTTP server")
-        http_path_encoded = utils._replace_special_characters(http_path)
+        http_path_encoded = quote_plus(http_path)
 
         # Build URI
         uri = '{base_url}firmware?image={part}&from={path}&vrf={vrf}'\

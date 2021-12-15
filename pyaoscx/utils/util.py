@@ -144,46 +144,6 @@ def set_config_attrs(obj, config_dict, config_attrs='config_attrs',
     obj.__setattr__(config_attrs, new_config_attrs)
 
 
-def _replace_special_characters(str_special_chars):
-    """
-    Replaces special characters in a string with their percent-encoded
-        counterparts
-        ':' -> '%3A'
-        '/' -> '%2F'
-        ',' -> '%2C'
-    (e.g. "1/1/9" -> "1%2F1%2F9")
-
-    :param str_special_chars: string in which to substitute characters
-    :return str_percents: new string with characters replaced by their
-        percent-encoded counterparts
-    """
-    str_percents = str_special_chars.replace(
-        ":", "%3A").replace(
-            "/", "%2F").replace(
-                ",", "%2C")
-    return str_percents
-
-
-def _replace_percents(str_percents):
-    """
-    Replaces percent-encoded pieces in a string with their special-character
-        counterparts
-        '%3A' -> ':'
-        '%2F' -> '/'
-        '%2C' -> ','
-    (e.g. "1%2F1%2F9" -> "1/1/9")
-
-    :param str_percents: string in which to substitute characters
-    :return str_special_chars: new string with percent phrases replaced by their
-        special-character counterparts
-    """
-    str_special_chars = str_percents.replace(
-        "%3A", ":").replace(
-        "%2F", "/").replace(
-        "%2C", ",")
-    return str_special_chars
-
-
 def _response_ok(response, call_type):
     """
     Checks whether API HTTP response contains the associated OK code.
@@ -200,38 +160,6 @@ def _response_ok(response, call_type):
     }
 
     return response.status_code in ok_codes[call_type]
-
-
-def _replace_percents_ip(str_percents):
-    """
-    Replaces percent-encoded pieces in a string with their special-character
-    counterparts
-        '%3A' -> ':'
-        '%2F' -> '/'
-        '%2C' -> ','
-    (e.g. "1/1/9" -> "1%2F1%2F9")
-
-    :param str_percents: string in which to substitute characters
-    :return str_special_chars: new string with percent phrases replaced by their special-
-        character counterparts
-    """
-    str_special_chars = str_percents.replace("%2F", "/").replace("%3A", ":")
-    return str_special_chars
-
-
-def _replace_special_characters_ip(str_special_chars):
-    """
-    Replaces special characters in a string with their percent-encoded
-        counterparts
-        '/' -> '%2F'
-    (e.g. "2001::fe80/64" -> "/2001::fe80%2F64")
-
-    :param str_special_chars: string in which to substitute characters
-    :return str_percents: new string with characters replaced by their percent-encoded
-        counterparts
-    """
-    str_percents = str_special_chars.replace("/", "%2F").replace(":", "%3A")
-    return str_percents
 
 
 def file_upload(session, file_path, complete_uri):

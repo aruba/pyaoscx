@@ -4,6 +4,7 @@
 import json
 import logging
 import re
+from urllib.parse import quote_plus, unquote_plus
 
 from warnings import warn
 from netaddr import mac_eui48
@@ -88,11 +89,11 @@ class Interface(PyaoscxModule):
         self.percents_name = None
 
         if r'%2F' in name or r'%2C' in name or r'%3A' in name:
-            self.name = utils._replace_percents(name)
+            self.name = unquote_plus(name)
             self.percents_name = name
         else:
             self.name = name
-            self.percents_name = utils._replace_special_characters(self.name)
+            self.percents_name = quote_plus(self.name)
 
     def __set_type(self):
         '''
@@ -416,7 +417,7 @@ class Interface(PyaoscxModule):
         # Obtain ID from URI
         index_pattern = re.compile(r'(.*)/(?P<index>.+)')
         name_percents = index_pattern.match(uri).group('index')
-        name = utils._replace_percents(name_percents)
+        name = unquote_plus(name_percents)
         # Create Interface object
         interface_obj = session.api.get_module(
             session, 'Interface',

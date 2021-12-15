@@ -4,6 +4,7 @@
 import json
 import logging
 import re
+from urllib.parse import quote_plus, unquote_plus
 import pyaoscx.utils.util as utils
 
 from pyaoscx.exceptions.response_error import ResponseError
@@ -50,11 +51,11 @@ class Ipv6(PyaoscxModule):
         self.reference_address = None
 
         if r"%2F" in address or r"%3A" in address:
-            self.address = utils._replace_percents_ip(address)
+            self.address = unquote_plus(address)
             self.reference_address = address
         else:
             self.address = address
-            self.reference_address = utils._replace_special_characters_ip(
+            self.reference_address = quote_plus(
                 self.address)
 
     def __set_interface(self, parent_int):

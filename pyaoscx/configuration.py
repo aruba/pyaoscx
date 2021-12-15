@@ -9,6 +9,7 @@ import pyaoscx.utils.util as utils
 
 import logging
 import json
+from urllib.parse import quote_plus
 
 
 class Configuration():
@@ -291,7 +292,7 @@ class Configuration():
                     "VRF needs to be provided in order to TFTP "
                     "the configuration from the switch")
 
-            tftp_path_encoded = utils._replace_special_characters(tftp_path)
+            tftp_path_encoded = quote_plus(tftp_path)
 
             if config_name != "running-config" and \
                     config_name != "startup-config":
@@ -438,7 +439,7 @@ class Configuration():
                     "VRF needs to be provided in order to TFTP "
                     "the configuration onto the switch")
 
-            tftp_path_encoded = utils._replace_special_characters(
+            tftp_path_encoded = quote_plus(
                 remote_file_tftp_path)
 
             if config_name != "running-config" and\

@@ -9,6 +9,7 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 import json
 import logging
 import re
+from urllib.parse import quote_plus, unquote_plus
 import pyaoscx.utils.util as utils
 
 
@@ -52,11 +53,11 @@ class AggregateAddress(PyaoscxModule):
         self.ip_prefix = None
         self.reference_ip_prefix = None
         if r"%2F" in ip_prefix:
-            self.ip_prefix = utils._replace_percents_ip(ip_prefix)
+            self.ip_prefix = unquote_plus(ip_prefix)
             self.reference_ip_prefix = ip_prefix
         else:
             self.ip_prefix = ip_prefix
-            self.reference_ip_prefix = utils._replace_special_characters_ip(
+            self.reference_ip_prefix = quote_plus(
                 self.ip_prefix)
 
     def __set_bgp_router(self, parent_bgp_router):

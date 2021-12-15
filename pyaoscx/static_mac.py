@@ -4,6 +4,7 @@
 import json
 import logging
 import re
+from urllib.parse import quote_plus, unquote_plus
 
 from netaddr import EUI as MacAddress
 from netaddr import mac_eui48
@@ -46,7 +47,7 @@ class StaticMac(Mac):
         """ Get the path for internal purposes """
         return "{0}/{1}".format(
             self.base_uri,
-            utils._replace_special_characters(str(self.mac_address)))
+            quote_plus(str(self.mac_address)))
 
     def _set_configuration_items(self, selector):
         # Determines if the Static MAC is configurable
@@ -88,7 +89,7 @@ class StaticMac(Mac):
         # Transform the MAC object to string to be sent to the switch
         self.mac_addr = str(self.mac_address)
         # Create the address representation for the URI
-        reference_address = utils._replace_special_characters(
+        reference_address = quote_plus(
             self.mac_addr)
         # Variable returned
         modified = False
@@ -135,7 +136,7 @@ class StaticMac(Mac):
 
         """
 
-        reference_address = utils._replace_special_characters(
+        reference_address = quote_plus(
             str(self.mac_address))
         uri = "{0}/{1}".format(
             self.base_uri,
@@ -174,7 +175,7 @@ class StaticMac(Mac):
             response_data, StaticMac.resource_uri_name)
         mac_addr = static_mac_arr[0]
         mac_address =MacAddress(
-            utils._replace_percents(mac_addr), dialect=mac_format)
+            unquote_plus(mac_addr), dialect=mac_format)
         return StaticMac(session, mac_addr, parent_vlan)
 
     @classmethod
@@ -196,7 +197,7 @@ class StaticMac(Mac):
         index_pattern = re.compile(r"(.*)static_macs/(?P<index>.+)")
         reference_mac_addr = index_pattern.match(uri).group("index")
 
-        mac_addr = MacAddress(utils._replace_percents(
+        mac_addr = MacAddress(unquote_plus(
             reference_mac_addr), dialect=mac_format)
 
         static_mac_obj = StaticMac(session, mac_addr, parent_vlan, uri=uri)

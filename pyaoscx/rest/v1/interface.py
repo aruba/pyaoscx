@@ -14,6 +14,7 @@ from pyaoscx.vrf import Vrf
 import json
 import logging
 import re
+from urllib.parse import unquote_plus
 import pyaoscx.utils.util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
 
@@ -402,7 +403,7 @@ class Interface(AbstractInterface):
         # Obtain ID from URI
         index_pattern = re.compile(r'(.*)/(?P<index>.+)')
         name_percents = index_pattern.match(uri).group('index')
-        name = utils._replace_percents(name_percents)
+        name = unquote_plus(name_percents)
         # Create Interface object
         interface_obj = Interface(session, name, uri=uri)
 
