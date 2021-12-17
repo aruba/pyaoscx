@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import functools
@@ -116,6 +116,24 @@ class Vsx(PyaoscxModule):
             return self.update()
         return self.create()
 
+    def _set_isl_port_for_requests(self):
+        """
+        Set the correct data for the isl_port attribute to use in POST and PUT
+        requests
+        """
+        if isinstance(self.isl_port, str):
+            # if it's a string, it's an interface name, so here it gets changed
+            # to an Interface instance
+            self.isl_port = self.session.api.get_module(
+                self.session, "Interface", self.isl_port
+            )
+        if not isinstance(self.isl_port, dict):
+            # if it's gotten to this point, it should be a either a dictionary,
+            # in which case nothing else is needed, or an Interface instance,
+            # in which case, the get_info_format() is called to get the
+            # dictionary
+            self.isl_port = self.isl_port.get_info_format()
+
     @PyaoscxModule.connected
     def update(self):
         """
@@ -131,6 +149,7 @@ class Vsx(PyaoscxModule):
                 "software_update_vrf"
             ] = self.software_update_vrf
         if hasattr(self, "isl_port") and self.isl_port:
+            self._set_isl_port_for_requests()
             put_data["isl_port"] = self.isl_port
         self.__modified = self._put_data(put_data)
         return self.__modified
@@ -154,11 +173,7 @@ class Vsx(PyaoscxModule):
                 )
             post_data["software_update_vrf"] = self.software_update_vrf
         if hasattr(self, "isl_port") and self.isl_port:
-            if isinstance(self.isl_port, str):
-                isl_port = self.session.api.get_module(
-                    self.session, "Interface", next(iter(isl_port))
-                )
-                self.isl_port = isl_port.get_info_format()
+            self._set_isl_port_for_requests()
             post_data["isl_port"] = self.isl_port
         if (
             hasattr(self, "keepalive_peer_ip")
