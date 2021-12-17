@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -212,7 +212,7 @@ class DhcpRelay(PyaoscxModule):
 
         else:
 
-            post_data = json.dumps(dhcp_relay_data, sort_keys=True, indent=4)
+            post_data = json.dumps(dhcp_relay_data)
 
             try:
                 response = self.session.s.put(
@@ -255,7 +255,7 @@ class DhcpRelay(PyaoscxModule):
             base_url=self.session.base_url,
             class_uri=DhcpRelay.base_uri
         )
-        post_data = json.dumps(dhcp_relay_data, sort_keys=True, indent=4)
+        post_data = json.dumps(dhcp_relay_data)
 
         try:
             response = self.session.s.post(

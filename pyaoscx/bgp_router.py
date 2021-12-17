@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.response_error import ResponseError
@@ -263,7 +263,7 @@ class BgpRouter(PyaoscxModule):
             modified = False
 
         else:
-            post_data = json.dumps(bgp_router_data, sort_keys=True, indent=4)
+            post_data = json.dumps(bgp_router_data)
 
             try:
                 response = self.session.s.put(uri,
@@ -305,7 +305,7 @@ class BgpRouter(PyaoscxModule):
 
         uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
                                              class_uri=self.base_uri)
-        post_data = json.dumps(bgp_data, sort_keys=True, indent=4)
+        post_data = json.dumps(bgp_data)
 
         try:
             response = self.session.s.post(uri,

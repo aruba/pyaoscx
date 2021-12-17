@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -299,7 +299,7 @@ class Vrf(PyaoscxModule):
             modified = False
 
         else:
-            post_data = json.dumps(vrf_data, sort_keys=True, indent=4)
+            post_data = json.dumps(vrf_data)
 
             try:
                 response = self.session.s.put(
@@ -342,7 +342,7 @@ class Vrf(PyaoscxModule):
             class_uri=Vrf.base_uri
         )
 
-        post_data = json.dumps(vrf_data, sort_keys=True, indent=4)
+        post_data = json.dumps(vrf_data)
         try:
             response = self.session.s.post(
                 uri, verify=False, data=post_data, proxies=self.session.proxy)

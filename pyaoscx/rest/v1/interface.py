@@ -1,5 +1,4 @@
-
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.response_error import ResponseError
@@ -597,7 +596,7 @@ class Interface(AbstractInterface):
             if 'type' in self.__original_attributes_int:
                 self.__original_attributes_int.pop('type')
             # Set put_int_data
-            put_int_data = json.dumps(int_data, sort_keys=True, indent=4)
+            put_int_data = json.dumps(int_data)
             # Compare dictionaries
             if int_data == self.__original_attributes_int:
                 # Object was not modified
@@ -769,7 +768,7 @@ class Interface(AbstractInterface):
         else:
 
             # Set put_port_data
-            put_port_data = json.dumps(port_data, sort_keys=True, indent=4)
+            put_port_data = json.dumps(port_data)
 
             # Bring Port information
             try:
@@ -808,7 +807,7 @@ class Interface(AbstractInterface):
             class_uri=Interface.base_uri_ports
         )
 
-        post_data_ports = json.dumps(port_data, sort_keys=True, indent=4)
+        post_data_ports = json.dumps(port_data)
         try:
             response = self.session.s.post(
                 uri_ports, verify=False, data=post_data_ports,
@@ -841,8 +840,7 @@ class Interface(AbstractInterface):
             interface_data['referenced_by'] = self.get_uri()
 
             # Set post_int_data
-            post_int_data = json.dumps(
-                interface_data, sort_keys=True, indent=4)
+            post_int_data = json.dumps(interface_data)
 
             # Bring Interface information
             try:
@@ -929,7 +927,7 @@ class Interface(AbstractInterface):
             self.__prev_interfaces = list(self.interfaces)
 
         # Set put_port_data
-        put_port_data = json.dumps(port_data, sort_keys=True, indent=4)
+        put_port_data = json.dumps(port_data)
 
         # Update Port information
         try:

@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -335,7 +335,7 @@ class AclEntry(PyaoscxModule):
                 if key in self.immutable_parameter_names:
                     del acl_entry_data[key]
 
-            post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
+            post_data = json.dumps(acl_entry_data)
 
             try:
                 response = self.session.s.put(
@@ -399,7 +399,7 @@ class AclEntry(PyaoscxModule):
                 acl_entry_data['protocol'] = self.protocol
         except Exception:
             pass
-        post_data = json.dumps(acl_entry_data, sort_keys=True, indent=4)
+        post_data = json.dumps(acl_entry_data)
 
         try:
             response = self.session.s.post(uri,

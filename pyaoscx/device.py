@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from copy import deepcopy
@@ -284,7 +284,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 class_uri=Device.base_uri
             )
             # Set data to be used inside PUT
-            put_data = json.dumps(config_data, sort_keys=True, indent=4)
+            put_data = json.dumps(config_data)
 
             try:
                 response = self.session.s.put(
@@ -353,7 +353,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 class_uri=Device.base_uri
             )
 
-            put_data = json.dumps(config_data, sort_keys=True, indent=4)
+            put_data = json.dumps(config_data)
 
             try:
                 response = self.session.s.put(

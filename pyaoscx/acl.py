@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -220,7 +220,7 @@ class ACL(PyaoscxModule):
             self._update_version()
             acl_data["cfg_version"] = self.cfg_version
 
-            post_data = json.dumps(acl_data, sort_keys=True, indent=4)
+            post_data = json.dumps(acl_data)
 
             try:
                 response = self.session.s.put(uri,
@@ -259,7 +259,7 @@ class ACL(PyaoscxModule):
 
         uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
                                              class_uri=ACL.base_uri)
-        post_data = json.dumps(acl_data, sort_keys=True, indent=4)
+        post_data = json.dumps(acl_data)
 
         try:
             response = self.session.s.post(uri,

@@ -493,7 +493,7 @@ class Interface(PyaoscxModule):
             class_uri=Interface.base_uri
         )
 
-        post_data = json.dumps(interface_data, sort_keys=True, indent=4)
+        post_data = json.dumps(interface_data)
 
         try:
             response = self.session.s.post(
@@ -709,7 +709,7 @@ class Interface(PyaoscxModule):
             modified = False
         else:
 
-            put_data = json.dumps(interface_data, sort_keys=True, indent=4)
+            put_data = json.dumps(interface_data)
 
             try:
                 response = self.session.s.put(
@@ -856,7 +856,7 @@ class Interface(PyaoscxModule):
             name=self.percents_name
         )
 
-        put_data = json.dumps(interface_data, sort_keys=True, indent=4)
+        put_data = json.dumps(interface_data)
 
         try:
             response = self.session.s.put(

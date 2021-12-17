@@ -175,8 +175,7 @@ class PoEInterface(Interface):
             modified = False
 
         else:
-            post_data = json.dumps(
-                poe_interface_data, sort_keys=True, indent=4)
+            post_data = json.dumps(poe_interface_data)
             try:
                 response = self.session.s.put(
                     uri, verify=False, data=post_data,
