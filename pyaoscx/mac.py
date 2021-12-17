@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -104,7 +104,7 @@ class Mac(PyaoscxModule):
             self.session.api.compound_index_separator,
             quote_plus(str(self.mac_address)))
 
-    def _set_configuration_items(self, selector):
+    def _set_configuration_items(self, data, selector):
         # Determines if the MAC is configurable
         if selector in self.session.api.configurable_selectors:
             # Sets self.config_attrs and delete ID from it
@@ -132,7 +132,7 @@ class Mac(PyaoscxModule):
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
 
-        self._set_configuration_items(selector)
+        self._set_configuration_items(data, selector)
 
         # Set original attributes
         self._original_attributes = data

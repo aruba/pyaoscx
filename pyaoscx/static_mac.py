@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -49,7 +49,7 @@ class StaticMac(Mac):
             self.base_uri,
             quote_plus(str(self.mac_address)))
 
-    def _set_configuration_items(self, selector):
+    def _set_configuration_items(self, data, selector):
         # Determines if the Static MAC is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
