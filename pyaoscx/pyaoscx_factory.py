@@ -1345,8 +1345,11 @@ class PyaoscxFactory(metaclass=Singleton):
         # Try to obtain data; if unable to, create
         try:
             qos_obj.get()
+            for k, v in kwargs.items():
+                setattr(qos_obj, k, v)
         except GenericOperationError:
-            qos_obj.apply()
+            pass  # not present in switch, not an error
+        qos_obj.apply()
         return qos_obj
 
     def qos_cos(self, code_point, **kwargs):
