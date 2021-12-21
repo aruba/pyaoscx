@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -39,8 +39,13 @@ class Queue(PyaoscxModule):
         self.__qos_name = qos_name
         # this is needed for the property, this is safe
         self.__gmb_percent = None
+        self.__burst = None
         # List of configuration attributes
         self.config_attrs = []
+
+        # Get and remove burst from kwargs if given
+        if "burst" in kwargs:
+            self.burst = kwargs.pop("burst")
 
         # Get and remove gmb_percent from kwargs if given
         if "gmb_percent" in kwargs:
@@ -64,6 +69,18 @@ class Queue(PyaoscxModule):
             self.base_uri,
             self.queue_number
         )
+
+    @property
+    def burst(self):
+        return self.__burst
+
+    @burst.setter
+    def burst(self, value):
+        if not Device(self.session).is_capable("qos_queue_burst"):
+            raise UnsupportedCapabilityError(
+                "This device can't configure a Queue's burst."
+            )
+        self.__burst = value
 
     @property
     def gmb_percent(self):
