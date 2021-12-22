@@ -221,8 +221,6 @@ class VrfAddressFamily(PyaoscxModule):
             False otherwise
 
         '''
-
-        vrf_address_family_data = {}
         vrf_address_family_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}/{address_family}".format(
@@ -268,9 +266,6 @@ class VrfAddressFamily(PyaoscxModule):
         Only returns if an exception is not raise
         return: True if entry was created
         '''
-
-        vrf_address_family_data = {}
-
         vrf_address_family_data = utils.get_attrs(self, self.config_attrs)
         vrf_address_family_data['address_family'] = self.address_family
 

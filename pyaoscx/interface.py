@@ -478,9 +478,6 @@ class Interface(PyaoscxModule):
 
         :return True if entry was created inside Device
         """
-
-        interface_data = {}
-
         interface_data = utils.get_attrs(self, self.config_attrs)
 
         interface_data['name'] = self.name
@@ -584,7 +581,6 @@ class Interface(PyaoscxModule):
         # Variable returned
         modified = False
 
-        interface_data = {}
         # Get interface PUT data depending on the configuration attributes
         # list
         interface_data = utils.get_attrs(self, self.config_attrs)

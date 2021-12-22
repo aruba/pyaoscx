@@ -245,7 +245,6 @@ class AggregateAddress(PyaoscxModule):
         """
         # Variable returned
         modified = False
-        agg_address_data = {}
 
         agg_address_data = utils.get_attrs(self, self.config_attrs)
 
@@ -297,9 +296,6 @@ class AggregateAddress(PyaoscxModule):
         :return modified: True if entry was created.
 
         """
-
-        ag_address_data = {}
-
         ag_address_data = utils.get_attrs(self, self.config_attrs)
         ag_address_data["address-family"] = self.address_family
         ag_address_data["ip_prefix"] = self.ip_prefix

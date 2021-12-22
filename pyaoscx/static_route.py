@@ -243,8 +243,6 @@ class StaticRoute(PyaoscxModule):
         # Variable returned
         modified = False
 
-        static_route_data = {}
-
         static_route_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}/{prefix}".format(
@@ -296,8 +294,6 @@ class StaticRoute(PyaoscxModule):
         # Add 'address_family' as a config attribute and remove duplicates
         self.config_attrs.append("address_family")
         self.config_attrs = list(set(self.config_attrs))
-
-        static_route_data = {}
 
         static_route_data = utils.get_attrs(self, self.config_attrs)
         static_route_data['prefix'] = self.prefix

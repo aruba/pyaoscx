@@ -234,8 +234,6 @@ class BgpNeighbor(PyaoscxModule):
         # Variable returned
         modified = False
 
-        bgp_neighbor_data = {}
-
         bgp_neighbor_data = utils.get_attrs(self, self.config_attrs)
 
         # Get ISL port uri
@@ -288,9 +286,6 @@ class BgpNeighbor(PyaoscxModule):
         :return modified: Boolean, True if entry was created
 
         """
-
-        bgp_neighbor_data = {}
-
         bgp_neighbor_data = utils.get_attrs(self, self.config_attrs)
         bgp_neighbor_data["ip_or_ifname_or_group_name"] = \
             self.ip_or_ifname_or_group_name

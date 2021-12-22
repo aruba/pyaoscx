@@ -93,7 +93,6 @@ class StaticMac(Mac):
             self.mac_addr)
         # Variable returned
         modified = False
-        static_mac_data = {}
 
         static_mac_data = utils.get_attrs(self, self.config_attrs)
 

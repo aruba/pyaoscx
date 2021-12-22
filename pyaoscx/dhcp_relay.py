@@ -193,7 +193,6 @@ class DhcpRelay(PyaoscxModule):
         """
         # Variable returned
         modified = False
-        dhcp_relay_data = {}
 
         dhcp_relay_data = utils.get_attrs(self, self.config_attrs)
 
@@ -244,9 +243,6 @@ class DhcpRelay(PyaoscxModule):
 
         :return modified: Boolean, True if entry was created
         """
-
-        dhcp_relay_data = {}
-
         dhcp_relay_data = utils.get_attrs(self, self.config_attrs)
         dhcp_relay_data["vrf"] = self.vrf.get_info_format()
         dhcp_relay_data["port"] = self.port.get_info_format()

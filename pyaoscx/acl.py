@@ -251,8 +251,6 @@ class ACL(PyaoscxModule):
         :return modified: Boolean, True if entry was created.
         """
 
-        acl_data = {}
-
         acl_data = utils.get_attrs(self, self.config_attrs)
         acl_data["name"] = self.name
         acl_data["list_type"] = self.list_type

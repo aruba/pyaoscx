@@ -236,8 +236,6 @@ class StaticNexthop(PyaoscxModule):
         # Variable returned
         modified = False
 
-        static_nexthop_data = {}
-
         static_nexthop_data = utils.get_attrs(self, self.config_attrs)
 
         # Get port uri
@@ -292,8 +290,6 @@ class StaticNexthop(PyaoscxModule):
 
         :return modified: Boolean, True if entry was created
         '''
-        static_nexthop_data = {}
-
         static_nexthop_data = utils.get_attrs(self, self.config_attrs)
         static_nexthop_data['id'] = self.id
 

@@ -798,8 +798,6 @@ class Interface(AbstractInterface):
 
         :return True if entry was created inside Device
         """
-
-        port_data = {}
         port_data = utils.get_attrs(self, self.config_attrs)
         port_data['name'] = self.name
 
@@ -834,7 +832,6 @@ class Interface(AbstractInterface):
                 class_uri=Interface.base_uri_interface
             )
 
-            interface_data = {}
             # Set data for Interface Table
             interface_data = utils.get_attrs(self, self.config_attrs_int)
             interface_data['name'] = self.name

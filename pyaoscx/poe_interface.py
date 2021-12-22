@@ -157,8 +157,6 @@ class PoEInterface(Interface):
         # Variable returned
         modified = False
 
-        poe_interface_data = {}
-
         poe_interface_data = utils.get_attrs(self, self.config_attrs)
 
         # Set URI

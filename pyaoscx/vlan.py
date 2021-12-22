@@ -201,8 +201,6 @@ class Vlan(PyaoscxModule):
         # Variable returned
         modified = False
 
-        vlan_data = {}
-
         vlan_data = utils.get_attrs(self, self.config_attrs)
 
         # Set all ACLs

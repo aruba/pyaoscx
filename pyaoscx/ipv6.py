@@ -241,7 +241,6 @@ class Ipv6(PyaoscxModule):
         """
         # Variable returned
         modified = False
-        ip6_data = {}
 
         ip6_data = utils.get_attrs(self, self.config_attrs)
 
@@ -297,8 +296,6 @@ class Ipv6(PyaoscxModule):
 
         :return modified: Boolean, True if entry was created
         """
-        ipv6_data = {}
-
         ipv6_data = utils.get_attrs(self, self.config_attrs)
         ipv6_data["address"] = self.address
 

@@ -248,8 +248,6 @@ class BgpRouter(PyaoscxModule):
         # Variable returned
         modified = False
 
-        bgp_router_data = {}
-
         bgp_router_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}/{asn}".format(
@@ -298,8 +296,6 @@ class BgpRouter(PyaoscxModule):
 
         :return modified: Boolean, True if entry was created
         """
-        bgp_data = {}
-
         bgp_data = utils.get_attrs(self, self.config_attrs)
         bgp_data["asn"] = self.asn
 

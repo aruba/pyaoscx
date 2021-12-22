@@ -313,7 +313,6 @@ class AclEntry(PyaoscxModule):
         # Variable returned
         modified = False
 
-        acl_entry_data = {}
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}/{sequence_number}".format(
@@ -378,9 +377,6 @@ class AclEntry(PyaoscxModule):
         :return modified: Boolean, True if entry was created
 
         '''
-
-        acl_entry_data = {}
-
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
         acl_entry_data['sequence_number'] = self.sequence_number
 

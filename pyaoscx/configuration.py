@@ -113,9 +113,6 @@ class Configuration():
         Perform a PUT call to apply changes to a Device Configuration
         :return modified: Boolean, True if object was modified
         """
-
-        system_data = {}
-
         system_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}".format(

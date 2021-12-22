@@ -279,8 +279,6 @@ class Vrf(PyaoscxModule):
             False otherwise
 
         '''
-        vrf_data = {}
-
         vrf_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}/{name}".format(
@@ -331,8 +329,6 @@ class Vrf(PyaoscxModule):
 
         :return modified: Boolean, True if entry was created
         '''
-
-        vrf_data = {}
         vrf_data = utils.get_attrs(self, self.config_attrs)
 
         vrf_data['name'] = self.name
