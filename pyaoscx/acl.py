@@ -61,10 +61,8 @@ class ACL(PyaoscxModule):
         """
         logging.info("Retrieving the switch ACLs")
 
-        depth = self.session.api.default_depth\
-            if depth is None else depth
-        selector = self.session.api.default_selector\
-            if selector is None else selector
+        depth = depth or self.session.api.default_depth
+        selector = selector or self.session.api.default_selector
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
