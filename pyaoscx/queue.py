@@ -225,8 +225,6 @@ class Queue(PyaoscxModule):
 
         self._send_data(self.path, None, "DELETE", "delete")
 
-        utils.delete_attrs(self, self.config_attrs)
-
     @classmethod
     def from_response(cls, session, response_data):
         """
