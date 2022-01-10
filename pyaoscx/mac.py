@@ -195,7 +195,6 @@ class Mac(PyaoscxModule):
             # Create a Mac object
             indices, mac = cls.from_uri(
                 session, parent_vlan, uri)
-            mac.get()
             mac_dict[indices] = mac
 
         return mac_dict
