@@ -94,6 +94,7 @@ class OspfInterface(PyaoscxModule):
         :return: Returns True if there is not an exception raised
         """
         logging.info("Retrieving %s from switch", str(self))
+        selector = selector or self.session.api.default_selector
         data = self._get_data(depth, selector)
         self._set_port(self.interface_name)
         # Add dictionary as attributes for the object

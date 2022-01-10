@@ -71,6 +71,8 @@ class Qos(PyaoscxModule):
         """
         logging.info("Retrieving %s QoS configuration from switch", self.name)
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
 
         # Add dictionary as attributes for the object

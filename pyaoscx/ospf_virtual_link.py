@@ -81,6 +81,8 @@ class OspfVlink(PyaoscxModule):
         """
         logging.info("Retrieving an OSPF VLink from switch")
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
 
         # Add dictionary as attributes for the object

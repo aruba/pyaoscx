@@ -82,6 +82,8 @@ class OspfArea(PyaoscxModule):
         """
         logging.info("Retrieving %s from switch", str(self))
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
         # Delete unwanted data
         if "ospf_interfaces" in data:

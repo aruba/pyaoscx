@@ -125,6 +125,8 @@ class Mac(PyaoscxModule):
         """
         logging.info("Retrieving the switch {}".format(self.display_name))
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
 
         # Add dictionary as attributes for the object

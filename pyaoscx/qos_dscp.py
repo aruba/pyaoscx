@@ -70,6 +70,8 @@ class QosDscp(PyaoscxModule):
         logging.info(
             "Retrieving the switch %s QoS DSCP trust mode.", self.code_point)
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
 
         depth = depth or self.session.api.default_depth

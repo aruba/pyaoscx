@@ -66,6 +66,8 @@ class Vlan(PyaoscxModule):
         '''
         logging.info("Retrieving the switch VLANs")
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
 
         # Delete unwanted data

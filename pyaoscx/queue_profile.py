@@ -64,6 +64,8 @@ class QueueProfile(PyaoscxModule):
         """
         logging.info("Retrieving " + str(self))
 
+        selector = selector or self.session.api.default_selector
+
         data = self._get_data(depth, selector)
 
         # Add dictionary as attributes for the object
