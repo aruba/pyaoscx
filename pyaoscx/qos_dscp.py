@@ -70,12 +70,10 @@ class QosDscp(PyaoscxModule):
         logging.info(
             "Retrieving the switch %s QoS DSCP trust mode.", self.code_point)
 
+        depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
 
         data = self._get_data(depth, selector)
-
-        depth = depth or self.session.api.default_depth
-        selector = selector or self.session.api.default_selector
 
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
