@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -6,7 +6,13 @@ import logging
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.unsupported_capability_error import (
+    UnsupportedCapabilityError
+)
+
 from pyaoscx.utils import util as utils
+
+from pyaoscx.device import Device
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -21,7 +27,7 @@ class QosDscp(PyaoscxModule):
 
     indices = ["code_point"]
 
-    def __init__(self, session, code_point):
+    def __init__(self, session, code_point, **kwargs):
         """
         Initialize a QoS DSCP trust mode object.
         :param session: pyaoscx.Session object used to represent logical
@@ -35,6 +41,11 @@ class QosDscp(PyaoscxModule):
         # configuration
         self.config_attrs = []
         self.materialized = False
+        if "cos" in kwargs:
+            self.cos = kwargs.pop("cos")
+        if "priority_code_point" in kwargs:
+            self.priority_code_point = kwargs.pop("priority_code_point")
+        utils.set_creation_attrs(self, **kwargs)
         # Attribute dictionary used to manage the original data
         # obtained from the GET
         self._original_attributes = {}
@@ -92,6 +103,8 @@ class QosDscp(PyaoscxModule):
             self.__description = data["description"]
         if "local_priority" in data:
             self.__local_priority = data["local_priority"]
+        if "priority_code_point" in data:
+            self.__priority_code_point = data["priority_code_point"]
 
         self.materialized = True
 
@@ -247,7 +260,40 @@ class QosDscp(PyaoscxModule):
         # Verify data type
         if not isinstance(cos, int):
             raise ValueError("The value of cos must be an integer.")
+        if not Device(self.session).is_capable("qos_cos_based_queueing"):
+            raise UnsupportedCapabilityError(
+                "This device doesn't support cos-based queueing"
+            )
         self.__cos = cos
+
+    @property
+    def priority_code_point(self):
+        """
+        Getter method for the priority_code_point property.
+        """
+        return self.__priority_code_point
+
+    @priority_code_point.setter
+    def priority_code_point(self, priority_code_point):
+        """
+        Updates the value of the priority_code_point of this QoS DSCP instance.
+        :param priority_code_point: Priority Code Point (PCP) that will be
+            assigned to any IP packet with the specified DSCP codepoint, if
+            that packet's ingress port has an effective trust mode of trust
+            dscp. The new PCP is used when the packet is transmitted out a port
+            or trunk with a VLAN tag.  If the key is not specified, then no
+            remark will occur.
+        """
+        # Verify data type
+        if not isinstance(priority_code_point, int):
+            raise ValueError(
+                "The value of priority_code_point must be an integer."
+            )
+        if not Device(self.session).is_capable("qos_dscp_map_cos_override"):
+            raise UnsupportedCapabilityError(
+                "This device doesn't support DSCP Map Cos Override"
+            )
+        self.__priority_code_point = priority_code_point
 
     @property
     def color(self):
