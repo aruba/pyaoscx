@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -2100,6 +2100,7 @@ class Interface(PyaoscxModule):
 
         if not hasattr(self, "port_security"):
             raise VerificationError(
+                "Unable to configure the port's security",
                 "Interface {} is not security capable".format(self.name))
 
         self.port_security["enable"] = True

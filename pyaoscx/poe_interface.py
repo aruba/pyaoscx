@@ -1,9 +1,13 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.unsupported_capability_error import (
+    UnsupportedCapabilityError
+)
 
+from pyaoscx.device import Device
 from pyaoscx.interface import Interface
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -59,6 +63,11 @@ class PoEInterface(Interface):
             return.
         :return: Returns True if there is not an exception raised
         """
+
+        device = Device(self.session)
+        if device.is_capable("quick_poe"):
+            raise UnsupportedCapabilityError("This device is not PoE capable.")
+
         logging.info("Retrieving the switch PoE Interface")
 
         depth = self.session.api.default_depth\
