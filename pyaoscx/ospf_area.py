@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -151,7 +151,6 @@ class OspfArea(PyaoscxModule):
                 uri
             )
             # Load all OSPF Router data from within the Switch
-            ospf_area.get()
             ospf_area_dict[area_id] = ospf_area
         return ospf_area_dict
 

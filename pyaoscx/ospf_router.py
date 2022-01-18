@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -149,7 +149,6 @@ class OspfRouter(PyaoscxModule):
             # Create a OspfRouter object and adds it to parent Vrf object list
             instance_tag, ospf = cls.from_uri(session, parent_vrf, uri)
             # Load all OSPF Router data from within the Switch
-            ospf.get()
             ospf_dict[instance_tag] = ospf
 
         return ospf_dict

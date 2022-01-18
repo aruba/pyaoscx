@@ -1,10 +1,10 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
 import logging
 
-from urllib.parse import quote, unquote
+from urllib.parse import quote_plus, unquote_plus
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.parameter_error import ParameterError
@@ -38,7 +38,7 @@ class OspfInterface(PyaoscxModule):
     ):
         self.session = session
         # Assign ID
-        self.__interface_name = quote(interface_name)
+        self.__interface_name = quote_plus(interface_name)
         # Assign parent OspfArea object
         self.__parent_ospf_area = parent_ospf_area
         port_name = kwargs.pop("port", interface_name)
@@ -60,12 +60,12 @@ class OspfInterface(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
         self.base_uri = self.__parent_ospf_area.path + "/ospf_interfaces"
-        self.path = "{0}/{1}".format(self.base_uri, self.interface_name)
+        self.path = "{0}/{1}".format(self.base_uri, quote_plus(interface_name))
         self.__parent_ospf_area.update_ospf_interfaces(self)
 
     @property
     def interface_name(self):
-        return unquote(self.__interface_name)
+        return unquote_plus(self.__interface_name)
 
     @property
     def modified(self):
@@ -96,23 +96,18 @@ class OspfInterface(PyaoscxModule):
         logging.info("Retrieving %s from switch", str(self))
         selector = selector or self.session.api.default_selector
         data = self._get_data(depth, selector)
-        self._set_port(self.interface_name)
+        if "port" in data:
+            del data["port"]
+        if "interface_name" in data:
+            del data["interface_name"]
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
         # Determines if the OSPF Interfaces is configurable
         if selector in self.session.api.configurable_selectors:
-            # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self,
-                data,
-                "config_attrs",
-                ["interface_name"]
-            )
+            utils.set_config_attrs(self, data, "config_attrs")
         # Set original attributes
         self._original_attributes = data
         # Remove ID
-        if "interface_name" in self._original_attributes:
-            self._original_attributes.pop("interface_name")
         # Sets object as materialized
         # Information is loaded from the Device
         self.materialized = True
@@ -155,7 +150,6 @@ class OspfInterface(PyaoscxModule):
                 uri
             )
             # Load all OSPF Interfaces data from within the Switch
-            ospf_interface.get()
             ospf_interface_dict[interface_name] = ospf_interface
         return ospf_interface_dict
 
