@@ -21,9 +21,9 @@ from pyaoscx.utils.list_attributes import ListDescriptor
 
 class Interface(AbstractInterface):
     '''
-    Provide configuration management for Interface and Ports for REST API Version 1.
-    Uses methods inside AbstractInterface and any ones different are
-    overridden by this class.
+    Provide configuration management for Interface and Ports for REST API
+        Version 1. Uses methods inside AbstractInterface and any ones different
+        are overridden by this class.
     '''
     base_uri = "system/ports"
     base_uri_ports = "system/ports"
@@ -285,50 +285,42 @@ class Interface(AbstractInterface):
             acl.get()
             self.aclv4_out_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv4_routed_in_cfg') and self.aclv4_routed_in_cfg is not None:
+        if hasattr(self, 'aclv4_routed_in_cfg') and self.aclv4_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_routed_in_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv4_routed_out_cfg') and self.aclv4_routed_out_cfg is not None:
+        if hasattr(self, 'aclv4_routed_out_cfg') and self.aclv4_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_routed_out_cfg = acl
 
-        if hasattr(self, 'aclv6_in_cfg') and self.aclv6_in_cfg is not None:
+        if hasattr(self, 'aclv6_in_cfg') and self.aclv6_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_in_cfg = acl
 
-        if hasattr(self, 'aclv6_out_cfg') and self.aclv6_out_cfg is not None:
+        if hasattr(self, 'aclv6_out_cfg') and self.aclv6_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_out_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv6_routed_in_cfg') and self.aclv6_routed_in_cfg is not None:
+        if hasattr(self, 'aclv6_routed_in_cfg') and self.aclv6_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_routed_in_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv6_routed_out_cfg') and self.aclv6_routed_out_cfg is not None:
+        if hasattr(self, 'aclv6_routed_out_cfg') and self.aclv6_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_out_cfg)
             # Materialize Acl object
@@ -414,8 +406,8 @@ class Interface(AbstractInterface):
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :return facts: Dictionary containing Interface IDs as keys and Interface
-            objects as values
+        :return facts: Dictionary containing Interface IDs as keys and
+            Interface objects as values.
         '''
         # Log
         logging.info("Retrieving the switch interfaces facts")
@@ -449,9 +441,7 @@ class Interface(AbstractInterface):
         ports_data = json.loads(response_ports.text)
 
         # Build interface URI
-        uri_interface =\
-        '{base_url}{class_uri}?depth={depth}'.format(
-            base_url=session.base_url,
+        uri_interface = "{class_uri}?depth={depth}".format(
             class_uri=Interface.base_uri_interface,
             depth=depth
         )
@@ -574,9 +564,8 @@ class Interface(AbstractInterface):
     def update(self):
         '''
         Perform a PUT call to update data for a Port and Interface table entry
-
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
         '''
         # Flag used to determine if Object was modified
         modified_port = True
@@ -716,13 +705,17 @@ class Interface(AbstractInterface):
             # Set values in correct form
             port_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
 
-        if "aclv4_routed_in_cfg" in port_data and self.aclv4_routed_in_cfg is not None:
+        if "aclv4_routed_in_cfg" in port_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
-            port_data["aclv4_routed_in_cfg"] = self.aclv4_routed_in_cfg.get_info_format()
+            port_data["aclv4_routed_in_cfg"] = (
+                self.aclv4_routed_in_cfg.get_info_format()
+            )
 
-        if "aclv4_routed_out_cfg" in port_data and self.aclv4_routed_out_cfg is not None:
+        if "aclv4_routed_out_cfg" in port_data and self.aclv4_routed_out_cfg:
             # Set values in correct form
-            port_data["aclv4_routed_out_cfg"] = self.aclv4_routed_out_cfg.get_info_format()
+            port_data["aclv4_routed_out_cfg"] = (
+                self.aclv4_routed_out_cfg.get_info_format()
+            )
 
         if "aclv6_in_cfg" in port_data and self.aclv6_in_cfg is not None:
             # Set values in correct form
@@ -732,13 +725,17 @@ class Interface(AbstractInterface):
             # Set values in correct form
             port_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
 
-        if "aclv6_routed_in_cfg" in port_data and self.aclv6_routed_in_cfg is not None:
+        if "aclv6_routed_in_cfg" in port_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
-            port_data["aclv6_routed_in_cfg"] = self.aclv6_routed_in_cfg.get_info_format()
+            port_data["aclv6_routed_in_cfg"] = (
+                self.aclv6_routed_in_cfg.get_info_format()
+            )
 
-        if "aclv6_routed_out_cfg" in port_data and self.aclv6_routed_out_cfg is not None:
+        if "aclv6_routed_out_cfg" in port_data and self.aclv6_routed_out_cfg:
             # Set values in correct form
-            port_data["aclv6_routed_out_cfg"] = self.aclv6_routed_out_cfg.get_info_format()
+            port_data["aclv6_routed_out_cfg"] = (
+                self.aclv6_routed_out_cfg.get_info_format()
+            )
 
         # Set addresses the correct way
         if self.ip6_addresses is not None:

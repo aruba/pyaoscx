@@ -13,7 +13,6 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
-
 class Ipv6(PyaoscxModule):
     """
     Provide configuration management for IPv6 on AOS-CX devices.

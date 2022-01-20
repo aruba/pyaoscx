@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.api import API
@@ -61,7 +61,8 @@ class Session:
     def from_session(cls, req_session, base_url, credentials=None):
         '''
         Create a session from an existing request Session. It allows to create
-        an internal session from an already-authenticated and serialized session
+        an internal session from an already-authenticated and serialized
+            session
         :param req_session: Existing Request Session object
         :param base_url: Url needed to create Session Object
         :param credentials: Dictionary with user and password credentials
@@ -140,15 +141,17 @@ class Session:
                                    timeout=5, proxies=self.proxy)
         except requests.exceptions.ConnectTimeout:
             raise Exception(
-                'ERROR: Error connecting to host: connection attempt timed out.')
+                'Error connecting to host: connection attempt timed out.'
+            )
 
         if response.status_code != 200:
             raise Exception('FAIL: Login failed with status code %d: %s' %
                             (response.status_code, response.text))
 
         cookies = self.s.cookies
-        self.connected = hasattr(cookies, '_cookies') and \
-                       self.ip in cookies._cookies
+        self.connected = (
+            hasattr(cookies, '_cookies') and self.ip in cookies._cookies
+        )
 
         if not self.connected:
             raise LoginError("Cookies were not set correctly. Login failed")
@@ -216,18 +219,21 @@ class Session:
                 base_url + "login", data=login_data, verify=False,
                 timeout=5, proxies=s.proxies)
         except requests.exceptions.ConnectTimeout:
-            logging.warning('ERROR: Error connecting to host: connection\
-                attempt timed out.')
-            raise LoginError('ERROR: Error connecting to host:\
-                connection attempt timed out.')
+            logging.warning(
+                "ERROR: Error connecting to host: "
+                "connection attempt timed out."
+            )
+            raise LoginError(
+                "ERROR: Error connecting to host: "
+                "connection attempt timed out."
+            )
         except requests.exceptions.ProxyError as err:
             logging.warning('ERROR: %s' % str(err))
             raise LoginError('ERROR: %s' % err)
         # Response OK check needs to be passed "PUT" since this
         # POST call returns 200 instead of conventional 201
         if not utils._response_ok(response, "PUT"):
-            if response.status_code == UNAUTHORIZED \
-                    and handle_zeroized_device:
+            if response.status_code == UNAUTHORIZED and handle_zeroized_device:
                 # Try to login with default credentials:
                 ztp_login_data = {"username": username}
                 response = s.post(
@@ -243,12 +249,17 @@ class Session:
                     if utils._response_ok(response, "PUT"):
                         logging.info("SUCCESS: Login succeeded")
                         return s
-            logging.warning("FAIL: Login failed\
-                with status code %d: %s" % (
-                response.status_code, response.text))
-            raise LoginError("FAIL: Login failed with\
-                status code %d: %s" % (
-                response.status_code, response.text), response.status_code)
+            logging.warning(
+                "FAIL: Login failed with status code %d: %s",
+                response.status_code,
+                response.text
+            )
+            raise LoginError(
+                "FAIL: Login failed with status code {0}: {1}".format(
+                    response.status_code, response.text
+                ),
+                response.status_code
+            )
         else:
             logging.info("SUCCESS: Login succeeded")
             return s

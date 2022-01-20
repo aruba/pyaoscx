@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
@@ -6,8 +6,8 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 class ListDescriptor(list):
     '''
-    Attribute descriptor class to keep track of a list that contains pyaoscx_module
-    objects simulating a Reference to a resource.
+    Attribute descriptor class to keep track of a list that contains
+        pyaoscx_module objects simulating a Reference to a resource.
     If the list changes, then every pyaoscx_module object has to be changed.
     '''
 
@@ -64,7 +64,7 @@ class ReferenceList(list):
         Also covers slice assignment.
         """
         try:
-            oldvalue = self.__getitem__(key)
+            _ = self.__getitem__(key)
         except KeyError:
             list.__setitem__(self, key, value)
         else:
@@ -74,7 +74,7 @@ class ReferenceList(list):
         """
         Delete self.key
         """
-        oldvalue = list.__getitem__(self, key)
+        _ = list.__getitem__(self, key)
         list.__delitem__(self, key)
 
     def pop(self):
@@ -100,7 +100,7 @@ class ReferenceList(list):
         """
         Remove first occurrence of value
         """
-        index = list.index(self, element)
+        _ = list.index(self, element)
         list.remove(self, element)
         try:
             # Delete element with a DELETE request
@@ -123,5 +123,5 @@ class ReferenceList(list):
         """
         Stable sort *IN PLACE*
         """
-        oldlist = self[:]
+        _ = self[:]
         list.sort(self, cmpfunc)

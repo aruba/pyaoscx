@@ -276,18 +276,14 @@ class Interface(PyaoscxModule):
             acl.get()
             self.aclv4_out_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv4_routed_in_cfg') and self.aclv4_routed_in_cfg is not None:
+        if hasattr(self, 'aclv4_routed_in_cfg') and self.aclv4_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_routed_in_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv4_routed_out_cfg') and self.aclv4_routed_out_cfg is not None:
+        if hasattr(self, 'aclv4_routed_out_cfg') and self.aclv4_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_out_cfg)
             # Materialize Acl object
@@ -308,18 +304,14 @@ class Interface(PyaoscxModule):
             acl.get()
             self.aclv6_out_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv6_routed_in_cfg') and self.aclv6_routed_in_cfg is not None:
+        if hasattr(self, 'aclv6_routed_in_cfg') and self.aclv6_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_routed_in_cfg = acl
 
-        if hasattr(
-                self,
-                'aclv6_routed_out_cfg') and self.aclv6_routed_out_cfg is not None:
+        if hasattr(self, 'aclv6_routed_out_cfg') and self.aclv6_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_out_cfg)
             # Materialize Acl object
@@ -423,7 +415,6 @@ class Interface(PyaoscxModule):
 
         return name, interface_obj
 
-
     @classmethod
     def get_facts(cls, session):
         '''
@@ -431,8 +422,8 @@ class Interface(PyaoscxModule):
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :return facts: Dictionary containing Interface IDs as keys and Interface
-            objects as values
+        :return facts: Dictionary containing Interface IDs as keys and
+            Interface objects as values.
         '''
         # Log
         logging.info("Retrieving the switch interfaces facts")
@@ -441,9 +432,7 @@ class Interface(PyaoscxModule):
         interface_depth = session.api.default_facts_depth
 
         # Build URI
-        uri =\
-        '{base_url}{class_uri}?depth={depth}'.format(
-            base_url=session.base_url,
+        uri = "{class_uri}?depth={depth}".format(
             class_uri=Interface.base_uri,
             depth=interface_depth
         )
@@ -570,28 +559,26 @@ class Interface(PyaoscxModule):
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing Interface or Port
-        table entry
-
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+            table entry
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
         '''
         # Variable returned
         modified = False
 
         # Get interface PUT data depending on the configuration attributes
         # list
-        interface_data = utils.get_attrs(self, self.config_attrs)
+        iface_data = utils.get_attrs(self, self.config_attrs)
 
         # Check if VRF is inside the data related to interface
         if hasattr(self, 'vrf') and self.vrf is not None:
             # Set VRF in the correct format for PUT
-            interface_data['vrf'] = self.vrf.get_info_format()
+            iface_data['vrf'] = self.vrf.get_info_format()
 
         # Check if vlan_tag is inside the data related to interface
         if hasattr(self, 'vlan_tag') and self.vlan_tag is not None:
             # Set VLAN in the correct format for PUT
-            interface_data["vlan_tag"] = self.vlan_tag.get_info_format()
+            iface_data["vlan_tag"] = self.vlan_tag.get_info_format()
 
         # Set interfaces into correct form
         if hasattr(self, 'interfaces') and self.interfaces is not None:
@@ -628,10 +615,10 @@ class Interface(PyaoscxModule):
                         element.__add_member_to_lag(self)
 
             # Set values in correct form
-            interface_data["interfaces"] = formatted_interfaces
+            iface_data["interfaces"] = formatted_interfaces
 
         # Set VLANs into correct form
-        if "vlan_trunks" in interface_data:
+        if "vlan_trunks" in iface_data:
             formated_vlans = {}
             # Set VLANs into correct form
             for element in self.vlan_trunks:
@@ -644,52 +631,58 @@ class Interface(PyaoscxModule):
                 formated_vlans.update(formated_element)
 
             # Set values in correct form
-            interface_data["vlan_trunks"] = formated_vlans
+            iface_data["vlan_trunks"] = formated_vlans
 
         # Set all ACLs
-        if "aclmac_in_cfg" in interface_data and self.aclmac_in_cfg is not None:
+        if "aclmac_in_cfg" in iface_data and self.aclmac_in_cfg:
             # Set values in correct form
-            interface_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
+            iface_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
 
-        if "aclmac_out_cfg" in interface_data and self.aclmac_out_cfg is not None:
+        if "aclmac_out_cfg" in iface_data and self.aclmac_out_cfg:
             # Set values in correct form
-            interface_data["aclmac_out_cfg"] = self.aclmac_out_cfg.get_info_format()
+            iface_data[
+                "aclmac_out_cfg"
+            ] = self.aclmac_out_cfg.get_info_format()
 
-        if "aclv4_in_cfg" in interface_data and self.aclv4_in_cfg is not None:
+        if "aclv4_in_cfg" in iface_data and self.aclv4_in_cfg:
             # Set values in correct form
-            interface_data["aclv4_in_cfg"] = self.aclv4_in_cfg.get_info_format()
+            iface_data["aclv4_in_cfg"] = self.aclv4_in_cfg.get_info_format()
 
-        if "aclv4_out_cfg" in interface_data and self.aclv4_out_cfg is not None:
+        if "aclv4_out_cfg" in iface_data and self.aclv4_out_cfg:
             # Set values in correct form
-            interface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
+            iface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
 
-        if "aclv4_routed_in_cfg" in interface_data and self.aclv4_routed_in_cfg is not None:
+        if "aclv4_routed_in_cfg" in iface_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
-            interface_data["aclv4_routed_in_cfg"] = self.aclv4_routed_in_cfg.get_info_format(
-            )
+            iface_data[
+                "aclv4_routed_in_cfg"
+            ] = self.aclv4_routed_in_cfg.get_info_format()
 
-        if "aclv4_routed_out_cfg" in interface_data and self.aclv4_routed_out_cfg is not None:
+        if "aclv4_routed_out_cfg" in iface_data and self.aclv4_routed_out_cfg:
             # Set values in correct form
-            interface_data["aclv4_routed_out_cfg"] = self.aclv4_routed_out_cfg.get_info_format(
-            )
+            iface_data[
+                "aclv4_routed_out_cfg"
+            ] = self.aclv4_routed_out_cfg.get_info_format()
 
-        if "aclv6_in_cfg" in interface_data and self.aclv6_in_cfg is not None:
+        if "aclv6_in_cfg" in iface_data and self.aclv6_in_cfg:
             # Set values in correct form
-            interface_data["aclv6_in_cfg"] = self.aclv6_in_cfg.get_info_format()
+            iface_data["aclv6_in_cfg"] = self.aclv6_in_cfg.get_info_format()
 
-        if "aclv6_out_cfg" in interface_data and self.aclv6_out_cfg is not None:
+        if "aclv6_out_cfg" in iface_data and self.aclv6_out_cfg:
             # Set values in correct form
-            interface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
+            iface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
 
-        if "aclv6_routed_in_cfg" in interface_data and self.aclv6_routed_in_cfg is not None:
+        if "aclv6_routed_in_cfg" in iface_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
-            interface_data["aclv6_routed_in_cfg"] = self.aclv6_routed_in_cfg.get_info_format(
-            )
+            iface_data[
+                "aclv6_routed_in_cfg"
+            ] = self.aclv6_routed_in_cfg.get_info_format()
 
-        if "aclv6_routed_out_cfg" in interface_data and self.aclv6_routed_out_cfg is not None:
+        if "aclv6_routed_out_cfg" in iface_data and self.aclv6_routed_out_cfg:
             # Set values in correct form
-            interface_data["aclv6_routed_out_cfg"] = self.aclv6_routed_out_cfg.get_info_format(
-            )
+            iface_data[
+                "aclv6_routed_out_cfg"
+            ] = self.aclv6_routed_out_cfg.get_info_format()
 
         uri = "{base_url}{class_uri}/{name}".format(
             base_url=self.session.base_url,
@@ -698,16 +691,20 @@ class Interface(PyaoscxModule):
         )
 
         # Compare dictionaries
-        if interface_data == self.__original_attributes:
+        if iface_data == self.__original_attributes:
             # Object was not modified
             modified = False
         else:
 
-            put_data = json.dumps(interface_data)
+            put_data = json.dumps(iface_data)
 
             try:
                 response = self.session.s.put(
-                    uri, verify=False, data=put_data, proxies=self.session.proxy)
+                    uri,
+                    verify=False,
+                    data=put_data,
+                    proxies=self.session.proxy
+                )
 
             except Exception as e:
                 raise ResponseError('PUT', e)
@@ -715,13 +712,10 @@ class Interface(PyaoscxModule):
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
                     response.text, response.status_code)
+            logging.info("SUCCESS: Updating %s", self)
 
-            else:
-                logging.info(
-                    "SUCCESS: Updating Interface table and Port table '{}' succeeded".format(
-                        self.name))
             # Set new original attributes
-            self.__original_attributes = deepcopy(interface_data)
+            self.__original_attributes = deepcopy(iface_data)
             # Object was modified
             modified = True
         return modified
@@ -862,10 +856,7 @@ class Interface(PyaoscxModule):
         if not utils._response_ok(response, "PUT"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Set Interface to default settings '{}' \
-                    succeeded".format(self.name))
+        logging.info("SUCCESS: Setting %s default settings", self)
 
         # Update values with new ones
         self.get()
@@ -874,7 +865,8 @@ class Interface(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified, False
+            otherwise.
         """
 
         return self.__modified
@@ -1815,24 +1807,30 @@ class Interface(PyaoscxModule):
             Defaults to pointtopoint
         :return: True if object was changed
         """
-        if interface_type not in [
-                'broadcast', 'loopback', 'statistics',
-                'nbma', 'pointomultipoint',
-                'pointopoint', 'virtuallink', None]:
-
+        _valid_interface_types = [
+            'broadcast',
+            'loopback',
+            'statistics',
+            'nbma',
+            'pointomultipoint',
+            'pointopoint',
+            'virtuallink',
+            'none'
+        ]
+        if interface_type not in _valid_interface_types:
             raise Exception(
-                "ERROR: Incorrect value for interface type.\
-                The options are 'broadcast', 'loopback', 'nbma', "
-                "'none', 'pointomultipoint', 'pointopoint', and 'virtuallink'")
+                "ERROR: interface_type must be one of: {0}".format(
+                    _valid_interface_types
+                )
+            )
 
         # Configure Port/Interface
         self.configure_l3_ipv4_port(vrf=vrf)
 
-        self.ospf_if_type = "ospf_iftype_%s" % interface_type
+        self.ospf_if_type = "".join(("ospf_iftype_", interface_type))
         self.routing = True
         # Set vrf
-        vrf_obj = self.session.api.get_module(
-            self.session, 'Vrf', vrf)
+        vrf_obj = self.session.api.get_module(self.session, 'Vrf', vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
 
@@ -1846,8 +1844,8 @@ class Interface(PyaoscxModule):
         :param ip_address: IPv4 address to assign to the interface.
             Example:
                 '1.1.1.1'
-        :param gateway_mac: Active Gateway MAC address to assign to the interface.
-            Example:
+        :param gateway_mac: Active Gateway MAC address to assign to the
+            interface. Example:
                 '01:02:03:04:05:06'
         :return: True if object was changed
 
@@ -1999,18 +1997,24 @@ class Interface(PyaoscxModule):
 
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
-            if hasattr(self, 'aclv6_in_cfg_version') and \
-               self.aclv6_in_cfg_version is None:
+            if (
+                hasattr(self, 'aclv6_in_cfg_version')
+                and self.aclv6_in_cfg_version is None
+            ):
                 self.aclv6_in_cfg_version = acl_obj.cfg_version
         elif list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
-            if hasattr(self, 'aclv4_in_cfg_version') and \
-               self.aclv4_in_cfg_version is None:
+            if (
+                hasattr(self, 'aclv4_in_cfg_version')
+                and self.aclv4_in_cfg_version is None
+            ):
                 self.aclv4_in_cfg_version = acl_obj.cfg_version
         elif list_type == "mac":
             self.aclmac_in_cfg = acl_obj
-            if hasattr(self, 'aclmac_in_cfg_version') and \
-               self.aclmac_in_cfg_version is None:
+            if (
+                hasattr(self, 'aclmac_in_cfg_version')
+                and self.aclmac_in_cfg_version is None
+            ):
                 self.aclmac_in_cfg_version = acl_obj.cfg_version
 
         # Apply changes
@@ -2038,18 +2042,24 @@ class Interface(PyaoscxModule):
 
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
-            if hasattr(self, 'aclv6_out_cfg_version') and \
-               self.aclv6_out_cfg_version is None:
+            if (
+                hasattr(self, 'aclv6_out_cfg_version')
+                and self.aclv6_out_cfg_version is None
+            ):
                 self.aclv6_out_cfg_version = acl_obj.cfg_version
         elif list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
-            if hasattr(self, 'aclv4_out_cfg_version') and \
-               self.aclv4_out_cfg_version is None:
+            if (
+                hasattr(self, 'aclv4_out_cfg_version')
+                and self.aclv4_out_cfg_version is None
+            ):
                 self.aclv4_out_cfg_version = acl_obj.cfg_version
         elif list_type == "mac":
             self.aclmac_out_cfg = acl_obj
-            if hasattr(self, 'aclmac_out_cfg_version') and \
-               self.aclmac_out_cfg_version is None:
+            if (
+                hasattr(self, 'aclmac_out_cfg_version')
+                and self.aclmac_out_cfg_version is None
+            ):
                 self.aclmac_out_cfg_version = acl_obj.cfg_version
 
         # Routeing

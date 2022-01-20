@@ -15,7 +15,8 @@ import pyaoscx.utils.util as utils
 
 class StaticNexthop(PyaoscxModule):
     '''
-    Provide configuration management for Static Nexthop settings on AOS-CX devices.
+    Provide configuration management for Static Nexthop settings on AOS-CX
+        devices.
     '''
 
     indices = ['id']
@@ -44,7 +45,8 @@ class StaticNexthop(PyaoscxModule):
 
     def __set_static_route(self, parent_static_route):
         '''
-        Set parent StaticRoute object as an attribute for the StaticNexthop object
+        Set parent StaticRoute object as an attribute for the StaticNexthop
+            object.
         :param parent_static_route a Static_Route object
         '''
 
@@ -52,9 +54,10 @@ class StaticNexthop(PyaoscxModule):
         self.__parent_static_route = parent_static_route
 
         # Set URI
-        self.base_uri = '{base_static_route_uri}/{static_route_name}/static_nexthops'.format(
-            base_static_route_uri=self.__parent_static_route.base_uri,
-            static_route_name=self.__parent_static_route.reference_address)
+        self.base_uri = '{0}/{1}/static_nexhops'.format(
+            self.__parent_static_route.base_uri,
+            self.__parent_static_route.reference_address
+        )
 
         # Verify Static Nexthop data doesn't exist already for Static Route
         for static_nexthop in self.__parent_static_route.static_nexthops:
@@ -130,8 +133,7 @@ class StaticNexthop(PyaoscxModule):
             self.__original_attributes.pop('id')
 
         # If the Static Route has a port inside the switch
-        if 'port' in data and \
-                self.port is not None:
+        if 'port' in data and self.port:
             port_response = self.port
             interface_cls = self.session.api.get_module(
                 self.session, 'Interface', '')
@@ -150,8 +152,9 @@ class StaticNexthop(PyaoscxModule):
     @classmethod
     def get_all(cls, session, parent_static_route):
         '''
-        Perform a GET call to retrieve all system Static Nexthop related to a Static Route ,
-        and create a dictionary containing StaticNexthop objects.
+        Perform a GET call to retrieve all system Static Nexthop objects
+            related to a Static Route, and create a dictionary containing
+            StaticNexthop objects.
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -163,9 +166,10 @@ class StaticNexthop(PyaoscxModule):
 
         logging.info("Retrieving the switch static_nexthop")
 
-        base_uri = '{base_static_route_uri}/{static_route_name}/static_nexthops'.format(
-            base_static_route_uri=parent_static_route.base_uri,
-            static_route_name=parent_static_route.reference_address)
+        base_uri = '{0}/{1}/static_nexthops'.format(
+            parent_static_route.base_uri,
+            parent_static_route.reference_address
+        )
 
         uri = '{base_url}{class_uri}'.format(
             base_url=session.base_url,
@@ -226,9 +230,8 @@ class StaticNexthop(PyaoscxModule):
         '''
         Perform a PUT call to apply changes to an existing static_nexthop
 
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
         '''
         # Variable returned
         modified = False
@@ -236,10 +239,8 @@ class StaticNexthop(PyaoscxModule):
         static_nexthop_data = utils.get_attrs(self, self.config_attrs)
 
         # Get port uri
-        if hasattr(self, 'port') and \
-                self.port is not None:
-            static_nexthop_data["port"] = \
-                self.port.get_info_format()
+        if hasattr(self, 'port') and self.port:
+            static_nexthop_data["port"] = self.port.get_info_format()
 
         uri = "{base_url}{class_uri}/{id}".format(
             base_url=self.session.base_url,
@@ -267,10 +268,7 @@ class StaticNexthop(PyaoscxModule):
                 raise GenericOperationError(
                     response.text, response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update static_nexthop table entry {} succeeded".format(
-                        self.id))
+            logging.info("SUCCESS: Updating %s", self)
 
             # Set new original attributes
             self.__original_attributes = static_nexthop_data
@@ -291,10 +289,8 @@ class StaticNexthop(PyaoscxModule):
         static_nexthop_data['id'] = self.id
 
         # Get port uri
-        if hasattr(self, 'port') and \
-                self.port is not None:
-            static_nexthop_data["port"] = \
-                self.port.get_info_format()
+        if hasattr(self, 'port') and self.port:
+            static_nexthop_data["port"] = self.port.get_info_format()
 
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
@@ -313,10 +309,7 @@ class StaticNexthop(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Adding static_nexthop table entry {} succeeded".format(
-                    self.id))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -346,10 +339,7 @@ class StaticNexthop(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete static_nexthop table entry {} succeeded".format(
-                    self.id))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from VRF
         for static_nexthop in self.__parent_static_route.static_nexthops:
@@ -436,7 +426,8 @@ class StaticNexthop(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified, False
+            otherwise.
         """
 
         return self.__modified
@@ -457,9 +448,10 @@ class StaticNexthop(PyaoscxModule):
 
         logging.info("Retrieving the switch static_nexthop")
 
-        base_uri = '{base_static_route_uri}/{static_route_name}/static_nexthops'.format(
-            base_static_route_uri=parent_static_route.base_uri,
-            static_route_name=parent_static_route.reference_address)
+        base_uri = '{0}/{1}/static_nexthops'.format(
+            parent_static_route.base_uri,
+            parent_static_route.reference_address
+        )
 
         uri = '{base_url}{class_uri}'.format(
             base_url=session.base_url,

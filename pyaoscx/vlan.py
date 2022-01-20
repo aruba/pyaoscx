@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.response_error import ResponseError
@@ -198,16 +198,12 @@ class Vlan(PyaoscxModule):
         :return modified: True if Object was modified and a PUT request was
             made.
         '''
-        # Variable returned
-        modified = False
-
         vlan_data = utils.get_attrs(self, self.config_attrs)
 
         # Set all ACLs
         if "aclmac_in_cfg" in vlan_data and self.aclmac_in_cfg is not None:
             # Set values in correct form
-            vlan_data["aclmac_in_cfg"] = \
-                self.aclmac_in_cfg.get_info_format()
+            vlan_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
 
         if "aclv4_in_cfg" in vlan_data and self.aclv4_in_cfg is not None:
             # Set values in correct form
@@ -293,12 +289,12 @@ class Vlan(PyaoscxModule):
     def get_facts(cls, session):
         '''
         Modify this to Perform a GET call to retrieve all VLANs and their
-        respective data
+            respective data.
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-
-        :return facts: Dictionary containing VLAN IDs as keys and Vlan objects as values
+            connection to the device.
+        :return facts: Dictionary containing VLAN IDs as keys and Vlan objects
+            as values.
         '''
         # Log
         logging.info("Retrieving switch VLANs facts")
@@ -345,8 +341,9 @@ class Vlan(PyaoscxModule):
 
     def __str__(self):
         try:
-            return "Vlan, name: '{}' ID: '{}' and description: '{}'"\
-                .format(self.name, self.id, self.description)
+            return "Vlan, name: '{0}' ID: '{1}' and description: '{2}'".format(
+                self.name, self.id, self.description
+            )
         except Exception:
             return "Vlan, ID: '{}'".format(self.id)
 

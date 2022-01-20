@@ -1,16 +1,11 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-import json
-import logging
 import re
 from urllib.parse import quote_plus, unquote_plus
 
 from netaddr import EUI as MacAddress
 from netaddr import mac_eui48
-
-from pyaoscx.exceptions.response_error import ResponseError
-from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.mac import Mac
@@ -89,20 +84,10 @@ class StaticMac(Mac):
         # Transform the MAC object to string to be sent to the switch
         self.mac_addr = str(self.mac_address)
         # Create the address representation for the URI
-        reference_address = quote_plus(
-            self.mac_addr)
-        # Variable returned
-        modified = False
-
         static_mac_data = utils.get_attrs(self, self.config_attrs)
 
         if "port" in static_mac_data:
             static_mac_data["port"] = self.port.get_info_format()
-
-        path = "{0}/{1}".format(
-            self.base_uri,
-            reference_address
-        )
 
         return self._put_data(static_mac_data)
 
@@ -173,8 +158,6 @@ class StaticMac(Mac):
         static_mac_arr = session.api.get_keys(
             response_data, StaticMac.resource_uri_name)
         mac_addr = static_mac_arr[0]
-        mac_address =MacAddress(
-            unquote_plus(mac_addr), dialect=mac_format)
         return StaticMac(session, mac_addr, parent_vlan)
 
     @classmethod
@@ -215,7 +198,6 @@ class StaticMac(Mac):
         return: Object's URI
         """
         if self._uri is None:
-            self._uri = self.session.resource_prefix +\
-                        self._mac_path()
+            self._uri = self.session.resource_prefix + self._mac_path()
 
         return self._uri

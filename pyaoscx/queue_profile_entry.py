@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -99,8 +99,12 @@ class QueueProfileEntry(PyaoscxModule):
         """
         logging.info("Retrieving the switch Queue profiles")
 
-        uri = session.base_url + \
-            cls.collection_uri.format(name=queue_profile_name)
+        uri = ''.join(
+            (
+                session.base_url,
+                cls.collection_uri.format(name=queue_profile_name)
+            )
+        )
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)

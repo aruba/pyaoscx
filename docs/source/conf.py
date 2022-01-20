@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath('../..'))
 # -- Project information -----------------------------------------------------
 
 project = 'pyaoscx'
-copyright = '2019-2020, HPE Aruba'
+copyright = '2019-2022, HPE Aruba'
 author = 'HPE Aruba'
 
 # The full version, including alpha/beta/rc tags
@@ -26,14 +26,14 @@ release = '0.1.0'
 
 
 # -- General configuration ---------------------------------------------------
-autosummary_generate=True
+autosummary_generate = True
 
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-# Need the autodoc and autosummary packages to generate our docs.
-'sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.autosummary'
+    # Need the autodoc and autosummary packages to generate our docs.
+    'sphinx.ext.autodoc', 'sphinx.ext.coverage', 'sphinx.ext.autosummary'
 ]
 
 # Add any paths that contain templates here, relative to this directory.

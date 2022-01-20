@@ -13,7 +13,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.utils import util as utils
 
-from pyaoscx.session import Session
 from pyaoscx.pyaoscx_factory import PyaoscxFactory, Singleton
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -117,7 +116,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     @PyaoscxModule.connected
     def get_subsystems(self):
         '''
-         Perform GET call to retrieve subsystem attributes and create a dictionary containing them
+         Perform GET call to retrieve subsystem attributes and create a
+             dictionary containing them
         '''
         # Log
         logging.info(
@@ -153,7 +153,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
         # Load into json format
         data = json.loads(response.text)
-        data_subsystems = {'subsystems' : data}
+        data_subsystems = {'subsystems': data}
 
         # Create class attributes using util.create_attrs
         utils.create_attrs(self, data_subsystems)
@@ -247,8 +247,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         }
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
-            class_uri=Device.base_uri,
-            depth=self.session.api.default_depth
+            class_uri=Device.base_uri
         )
         try:
             response = self.session.s.get(
@@ -288,14 +287,18 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
             try:
                 response = self.session.s.put(
-                    put_uri, verify=False, data=put_data, proxies=self.session.proxy)
-
+                    put_uri,
+                    verify=False,
+                    data=put_data,
+                    proxies=self.session.proxy
+                )
             except Exception as e:
                 raise ResponseError('PUT', e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code, "UPDATE SYSTEM BANNER")
+                    response.text, response.status_code, "UPDATE SYSTEM BANNER"
+                )
 
             # Object was modified, returns True
             modified = True
@@ -321,8 +324,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         }
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
-            class_uri=Device.base_uri,
-            depth=self.session.api.default_depth
+            class_uri=Device.base_uri
         )
         try:
             response = self.session.s.get(
@@ -357,8 +359,11 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
             try:
                 response = self.session.s.put(
-                    uri, verify=False, data=put_data, proxies=self.session.proxy)
-
+                    uri,
+                    verify=False,
+                    data=put_data,
+                    proxies=self.session.proxy
+                )
             except Exception as e:
                 raise ResponseError('PUT', e)
 
@@ -375,10 +380,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         '''
         Perform a POST request to Boot the AOS-CX switch with image present
             to the specified partition
-        :param partition_name: String name of the partition for device to boot to.
-
+        :param partition_name: Name of the partition for device to boot to.
         :return bool: True if success
-
         '''
         # Lower case for partition name
         partition_name = partition_name.lower()
@@ -443,12 +446,12 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         http_path_encoded = quote_plus(http_path)
 
         # Build URI
-        uri = '{base_url}firmware?image={part}&from={path}&vrf={vrf}'\
-            .format(
-                base_url=self.session.base_url,
-                part=partition_name,
-                path=http_path_encoded,
-                vrf=vrf)
+        uri = "{base_url}firmware?image={part}&from={path}&vrf={vrf}".format(
+            base_url=self.session.base_url,
+            part=partition_name,
+            path=http_path_encoded,
+            vrf=vrf,
+        )
 
         # PUT for a HTTP Request
         try:

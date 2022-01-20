@@ -78,8 +78,10 @@ class AggregateAddress(PyaoscxModule):
                 bgp_router_apn=self.__parent_bgp_router.asn)
 
         for address in self.__parent_bgp_router.aggregate_addresses:
-            if address.address_family == self.address_family and\
-                    address.ip_prefix == self.ip_prefix:
+            if (
+                address.address_family == self.address_family
+                and address.ip_prefix == self.ip_prefix
+            ):
                 # Make list element point to current object
                 address = self
             else:
@@ -273,11 +275,7 @@ class AggregateAddress(PyaoscxModule):
                 raise GenericOperationError(
                     response.text, response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update Aggregate Address table entry {} succeeded\
-                        ".format(
-                        self.address_family))
+            logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
             self.__original_attributes = agg_address_data
 
@@ -314,10 +312,7 @@ class AggregateAddress(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Adding Aggregate Address table entry {} succeeded\
-                    ".format(self.address_family))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -349,15 +344,14 @@ class AggregateAddress(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete Aggregate Address table entry {} succeeded\
-                    ".format(self.address_family))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from BGP Router
         for address in self.__parent_bgp_router.aggregate_addresses:
-            if address.address_family == self.address_family and\
-                    address.ip_prefix == self.ip_prefix:
+            if (
+                address.address_family == self.address_family
+                and address.ip_prefix == self.ip_prefix
+            ):
                 self.__parent_bgp_router.aggregate_addresses.remove(address)
 
         # Delete object attributes
@@ -405,9 +399,9 @@ class AggregateAddress(PyaoscxModule):
             Address object and the Aggregate Address' ID
         """
         # Obtain ID from URI
-        index_pattern = \
-            re.compile(
-                r"(.*)aggregate_addresses/(?P<index1>.+)[,./-](?P<index2>.+)")
+        index_pattern = re.compile(
+            r"(.*)aggregate_addresses/(?P<index1>.+)[,./-](?P<index2>.+)"
+        )
         index1 = index_pattern.match(uri).group("index1")
         index2 = index_pattern.match(uri).group("index2")
 

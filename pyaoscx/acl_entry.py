@@ -349,10 +349,7 @@ class AclEntry(PyaoscxModule):
                 raise GenericOperationError(response.text,
                                             response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update ACL Entry table entry {} succeeded\
-                    ".format(self.sequence_number))
+            logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
             self.__original_attributes = acl_entry_data
 
@@ -407,9 +404,7 @@ class AclEntry(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info("SUCCESS: Adding ACL Entry table entry {} succeeded\
-                ".format(self.sequence_number))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -544,12 +539,12 @@ class AclEntry(PyaoscxModule):
         # on is missing members that the other one has. So it is necessary to
         # check that the missing members are set as None in the other.
         modified = False
-        for key,value in current.items():
+        for key, value in current.items():
             if key in original:
                 modified |= (value != original[key])
             else:
                 modified |= (value is not None)
-        for key,value in original.items():
+        for key, value in original.items():
             if key in current:
                 modified |= (value != current[key])
             else:

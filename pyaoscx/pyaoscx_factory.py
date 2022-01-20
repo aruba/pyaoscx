@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
@@ -6,11 +6,13 @@ from pyaoscx.dns import Dns
 from pyaoscx.configuration import Configuration
 from pyaoscx.utils import util as utils
 
+
 class Singleton(type):
     """
     Metaclass to turn classes into a Singleton.
     """
     __instance = None
+
     def __call__(cls, *args, **kwargs):
         if not cls.__instance:
             cls.__instance = super(Singleton, cls).__call__(*args, **kwargs)
@@ -81,9 +83,6 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         if vrf is None:
             vrf = 'default'
-
-        # Create Vrf object using Factory
-        vrf_obj = self.vrf(vrf)
 
         if domain_list is None:
             domain_list = {}
@@ -447,9 +446,13 @@ class PyaoscxFactory(metaclass=Singleton):
         if family_type is None:
             _family_type = "l2vpn-evpn"
 
-        if _family_type not in ['l2vpn-evpn', 'ipv4-unicast', 'ipv6-unicast']:
-            raise Exception("ERROR: family_type should be 'l2vpn-evpn',\
-                            'ipv4-unicast', or 'ipv6-unicast'")
+        _valid_family_types = ['l2vpn-evpn', 'ipv4-unicast', 'ipv6-unicast']
+        if _family_type not in _valid_family_types:
+            raise Exception(
+                "ERROR: family_type must be one of: {0}".format(
+                    _valid_family_types
+                )
+            )
 
         if isinstance(vrf, str):
             vrf = self.__get_vrf_from_switch(vrf)
@@ -536,8 +539,9 @@ class PyaoscxFactory(metaclass=Singleton):
             if send_community is not None:
                 bgp_neighbor_obj.send_community = send_community_data
             if reflector is not None:
-                bgp_neighbor_obj.route_reflector_client = \
+                bgp_neighbor_obj.route_reflector_client = (
                     route_reflector_client
+                )
             # Apply changes
             bgp_neighbor_obj.apply()
         except GenericOperationError:
@@ -970,12 +974,13 @@ class PyaoscxFactory(metaclass=Singleton):
         :param count: Optional boolean flag that when true, will make entry
             increment hit count for matched packets
         :param protocol: Optional integer IP protocol number
-        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are supported.
+        :param src_ip: Optional source IP address. Both IPv4 and IPv6 are
+            supported.
             Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
-        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are supported.
-            Example:
+        :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are
+            supported. Example:
                 10.10.12.11/255.255.255.255
                 2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
         :param dst_l4_port_min: Optional minimum L4 port number in range; used
@@ -1076,9 +1081,13 @@ class PyaoscxFactory(metaclass=Singleton):
         :return: AggregateAddress object
         """
 
-        if family_type not in ['ipv4-unicast', 'ipv6-unicast']:
-            raise Exception("ERROR: family_type should be\
-                            'ipv4-unicast', or 'ipv6-unicast'")
+        _valid_family_types = ['ipv4-unicast', 'ipv6-unicast']
+        if family_type not in _valid_family_types:
+            raise Exception(
+                "ERROR: family_type must be one of: {0}".format(
+                    _valid_family_types
+                )
+            )
 
         if isinstance(vrf, str):
             vrf = self.__get_vrf_from_switch(vrf)
@@ -1237,8 +1246,8 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a PoE Interface object with associated settings
 
-        :param Interface: Alphanumeric name of the Interface the PoE_Interface belongs to.
-            An Interface object is also accepted
+        :param Interface: Alphanumeric name of the Interface the PoE_Interface
+            belongs to. An Interface object is also accepted.
         :return: PoE Interface object
         """
         if isinstance(interface, str):
@@ -1486,7 +1495,7 @@ class PyaoscxFactory(metaclass=Singleton):
                 self.session,
                 "QueueProfile",
                 index_id=queue_profile
-        )
+            )
 
         entry = self.session.api.get_module(
             self.session,

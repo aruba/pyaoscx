@@ -78,8 +78,7 @@ class Qos(PyaoscxModule):
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
 
-        if selector is None and self.session.api.default_selector in \
-                self.session.api.configurable_selectors:
+        if selector in self.session.api.configurable_selectors:
             utils.set_config_attrs(self, data, 'config_attrs')
         # Set original attributes
         self._original_attributes = data

@@ -2,7 +2,7 @@ from setuptools import setup
 from setuptools import find_packages
 
 from os import path
-this_directory=path.abspath(path.dirname(__file__))
+this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
@@ -16,18 +16,18 @@ setup(name='pyaoscx',
       author_email='aruba-automation@hpe.com',
       license='Apache 2.0',
       python_requires='>=3.6',
-    classifiers=[
+      classifiers=[
 
-        'Development Status :: 5 - Production/Stable',
+          'Development Status :: 5 - Production/Stable',
 
-        'Intended Audience :: System Administrators',
-        'Topic :: System :: Networking',
+          'Intended Audience :: System Administrators',
+          'Topic :: System :: Networking',
 
-        'License :: OSI Approved :: Apache Software License',
+          'License :: OSI Approved :: Apache Software License',
 
-        'Programming Language :: Python :: 3 :: Only'
-    ],
-    keywords='networking aruba aos-cx switch rest api python',
-    packages=find_packages(exclude=['docs']),
-    install_requires=['requests', 'PyYAML', 'netaddr'],
+          'Programming Language :: Python :: 3 :: Only'
+      ],
+      keywords='networking aruba aos-cx switch rest api python',
+      packages=find_packages(exclude=['docs']),
+      install_requires=['requests', 'PyYAML', 'netaddr'],
       zip_safe=False)

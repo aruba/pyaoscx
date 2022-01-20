@@ -55,14 +55,15 @@ class BgpNeighbor(PyaoscxModule):
         self.__parent_bgp_router = parent_bgp_router
 
         # Set URI
-        self.base_uri = \
-            "{base_bgp_router_uri}/{bgp_router_asn}/bgp_neighbors".format(
-                base_bgp_router_uri=self.__parent_bgp_router.base_uri,
-                bgp_router_asn=self.__parent_bgp_router.asn)
+        self.base_uri = "{0}/{1}/bgp_neighbors".format(
+            self.__parent_bgp_router.base_uri, self.__parent_bgp_router.asn
+        )
 
         for bgp_ngh in self.__parent_bgp_router.bgp_neighbors:
-            if bgp_ngh.ip_or_ifname_or_group_name \
-                    == self.ip_or_ifname_or_group_name:
+            if (
+                bgp_ngh.ip_or_ifname_or_group_name
+                == self.ip_or_ifname_or_group_name
+            ):
                 # Make list element point to current object
                 bgp_ngh = self
             else:
@@ -132,8 +133,7 @@ class BgpNeighbor(PyaoscxModule):
             self.__original_attributes.pop("ip_or_ifname_or_group_name")
 
         # If the BGP Neighbor has a local_interface inside the switch
-        if hasattr(self, "local_interface") and \
-                self.local_interface is not None:
+        if hasattr(self, "local_interface") and self.local_interface:
             local_interface_response = self.local_interface
             interface_cls = self.session.api.get_module(
                 self.session, "Interface", "")
@@ -163,10 +163,9 @@ class BgpNeighbor(PyaoscxModule):
 
         logging.info("Retrieving the switch BGP Neighbors")
 
-        base_uri = \
-            "{base_bgp_router_uri}/{bgp_router_asn}/bgp_neighbors".format(
-                base_bgp_router_uri=parent_bgp_router.base_uri,
-                bgp_router_asn=parent_bgp_router.asn)
+        base_uri = "{0}/{1}/bgp_neighbors".format(
+            parent_bgp_router.base_uri, parent_bgp_router.asn
+        )
 
         uri = "{base_url}{class_uri}".format(base_url=session.base_url,
                                              class_uri=base_uri)
@@ -236,8 +235,9 @@ class BgpNeighbor(PyaoscxModule):
 
         # Get ISL port uri
         if self.local_interface is not None:
-            bgp_neighbor_data["local_interface"] = \
-                self.local_interface.get_info_format()
+            bgp_neighbor_data[
+                "local_interface"
+            ] = self.local_interface.get_info_format()
 
         uri = "{base_url}{class_uri}/{id}".format(
             base_url=self.session.base_url,
@@ -285,8 +285,9 @@ class BgpNeighbor(PyaoscxModule):
 
         """
         bgp_neighbor_data = utils.get_attrs(self, self.config_attrs)
-        bgp_neighbor_data["ip_or_ifname_or_group_name"] = \
-            self.ip_or_ifname_or_group_name
+        bgp_neighbor_data[
+            "ip_or_ifname_or_group_name"
+        ] = self.ip_or_ifname_or_group_name
 
         if hasattr(self, "local_interface"):
 
@@ -297,8 +298,9 @@ class BgpNeighbor(PyaoscxModule):
                                             "Object not materialized")
 
                 # Get ISL port uri
-                bgp_neighbor_data["local_interface"] = \
-                    self.local_interface.get_info_format()
+                bgp_neighbor_data[
+                    "local_interface"
+                ] = self.local_interface.get_info_format()
 
         uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
                                              class_uri=self.base_uri)
@@ -355,8 +357,10 @@ class BgpNeighbor(PyaoscxModule):
 
         # Delete back reference from BGP_Routers
         for neighbor in self.__parent_bgp_router.bgp_neighbors:
-            if neighbor.ip_or_ifname_or_group_name == \
-                    self.ip_or_ifname_or_group_name:
+            if (
+                neighbor.ip_or_ifname_or_group_name
+                == self.ip_or_ifname_or_group_name
+            ):
                 self.__parent_bgp_router.bgp_neighbors.remove(neighbor)
 
         # Delete object attributes
@@ -382,8 +386,9 @@ class BgpNeighbor(PyaoscxModule):
                 bgp_neighbors/id"
         :return: BgpNeighbor object
         """
-        bgp_arr = session.api.get_keys(response_data,
-                                               BgpNeighbor.resource_uri_name)
+        bgp_arr = session.api.get_keys(
+            response_data, BgpNeighbor.resource_uri_name
+        )
         bgp_neighbor_id = bgp_arr[0]
         return BgpNeighbor(session, bgp_neighbor_id, parent_bgp_router)
 

@@ -198,8 +198,7 @@ class Configuration():
             it was not.
         """
         success = False
-        uri = "{base_url}fullconfigs/"\
-              "{cfg}?from={dest}&vrf={vrf}".format(
+        uri = "{base_url}fullconfigs/{cfg}?from={dest}&vrf={vrf}".format(
                   base_url=self.session.base_url,
                   cfg=config_name,
                   dest=config_file_location,
@@ -236,14 +235,9 @@ class Configuration():
         :return True if completed
         """
 
-        uri = "{base_url}fullconfigs/"\
-              "{cfg}?to={dest}&type={type}"\
-              "&vrf={vrf}".format(
-                  base_url=self.session.base_url,
-                  cfg=config_name,
-                  dest=destination,
-                  type=config_type,
-                  vrf=vrf)
+        uri = "{0}fullconfigs/{1}?to={2}&type={3}&vrf={4}".format(
+            self.session.base_url, config_name, destination, config_type, vrf
+        )
         try:
             response = self.session.s.get(
                 uri, verify=False,
@@ -291,12 +285,12 @@ class Configuration():
 
             tftp_path_encoded = quote_plus(tftp_path)
 
-            if config_name != "running-config" and \
-                    config_name != "startup-config":
+            if config_name not in ("running-config", "startup-config"):
                 raise VerificationError(
                     "Backup Config",
-                    "Only running-config or " +
-                    "startup-config can be backed-up using TFTP")
+                    "Only running-config or "
+                    "startup-config can be backed-up using TFTP"
+                )
             success = self.copy_switch_config_to_remote_location(
                 config_name, config_type, tftp_path_encoded, vrf)
         else:
@@ -439,12 +433,12 @@ class Configuration():
             tftp_path_encoded = quote_plus(
                 remote_file_tftp_path)
 
-            if config_name != "running-config" and\
-               config_name != "startup-config":
+            if config_name not in ("running-config", "startup-config"):
                 raise VerificationError(
                     "Upload Config",
                     "Only running-config or startup-config "
-                    "can be uploaded using TFTP")
+                    "can be uploaded using TFTP"
+                )
 
             success = self.tftp_switch_config_from_remote_location(
                 tftp_path_encoded, config_name, vrf)

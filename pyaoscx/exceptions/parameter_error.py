@@ -1,7 +1,8 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.verification_error import VerificationError
+
 
 class ParameterError(VerificationError):
     """

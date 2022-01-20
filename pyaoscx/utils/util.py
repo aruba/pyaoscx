@@ -1,7 +1,9 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from netaddr import IPNetwork
+
+import requests
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
@@ -81,12 +83,11 @@ def delete_attrs(obj, attr_list):
 def get_attrs(obj, config_attrs):
     '''
     Given an object obtains the attributes different to None
-
     :param obj: object containing the attributes
     :param config_attrs: a list of all the configurable attributes within the
-        object
-    :return attr_data_dict: A dictionary containing all the attributes of the given
-        object that have a value different to None
+        object.
+    :return attr_data_dict: A dictionary containing all the attributes of the
+        given object that have a value different to None.
     '''
     attr_data_dict = {}
     for attr_name in config_attrs:
@@ -109,22 +110,21 @@ def set_creation_attrs(obj, **kwargs):
         obj.__dict__.update(kwargs)
         set_config_attrs(obj, kwargs)
     else:
-        raise Exception("ERROR: Trying to create already existing attributes\
-            inside the object")
+        raise Exception(
+            "ERROR: Trying to create existing attributes inside the object"
+        )
 
 
 def set_config_attrs(obj, config_dict, config_attrs='config_attrs',
                      unwanted_attrs=[]):
     '''
     Add a list of strings inside the object to represent each attribute for
-        config
-    purposes.
-
+        config purposes.
     :param config_dict: Dictionary where each key represents an attribute
     :param config_attrs: String containing the name of the attribute referring
-        to a list
-    :param unwanted_attrs: Attributes that should be deleted, since they can't be
-        modified
+        to a list.
+    :param unwanted_attrs: Attributes that should be deleted, since they can't
+        be modified.
     '''
     # Set new configuration attributes list
     new_config_attrs = get_dict_keys(config_dict)
@@ -164,7 +164,8 @@ def _response_ok(response, call_type):
 
 def file_upload(session, file_path, complete_uri):
     """
-    Upload any file given a URI and the path to a file located on the local machine.
+    Upload any file given a URI and the path to a file located on the local
+        machine.
     :param session: pyaoscx.Session object used to represent a logical
             connection to the device
     :param file_path: File name and path for local file uploading
@@ -175,14 +176,6 @@ def file_upload(session, file_path, complete_uri):
 
     :return True if successful
     """
-
-    try:
-        import requests
-        HAS_REQUESTS_LIB = True
-    except ImportError:
-        HAS_REQUESTS_LIB = False
-
-    # Open File
     with open(file_path, 'rb') as file:
         file_param = {'fileupload': file}
         try:
@@ -221,6 +214,7 @@ def file_upload(session, file_path, complete_uri):
 
     # Return true if successful
     return True
+
 
 def get_ip_version(ip):
     """

@@ -7,7 +7,6 @@ import logging
 from urllib.parse import quote_plus, unquote_plus
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.utils import util as utils

@@ -11,10 +11,6 @@ from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.utils import util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
 
-from pyaoscx.pyaoscx_module import PyaoscxModule
-from pyaoscx.static_route import StaticRoute
-from pyaoscx.vrf_address_family import VrfAddressFamily
-
 from pyaoscx.device import Device
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -198,7 +194,7 @@ class Vrf(PyaoscxModule):
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.ospfv3_router import Ospfv3Router
             # Add all ospfv3_routers (if any) to parent Vrf object
-            routers = Ospfv3Router.get_all(self.session, self)
+            Ospfv3Router.get_all(self.session, self)
 
         # Clean Static Routess settings
         if self.static_routes == []:
@@ -212,7 +208,8 @@ class Vrf(PyaoscxModule):
     @classmethod
     def get_all(cls, session):
         '''
-        Perform a GET call to retrieve all system VRFs and create a dictionary containing them
+        Perform a GET call to retrieve all system VRFs and create a dictionary
+            containing them
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -251,7 +248,8 @@ class Vrf(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         '''
-        Main method used to either create or update an existing VRF table entry.
+        Main method used to either create or update an existing VRF table
+            entry.
         Checks whether the VRF exists in the switch
         Calls self.update() if VRF is being updated
         Calls self.create() if a new VRF is being created
@@ -273,9 +271,8 @@ class Vrf(PyaoscxModule):
         '''
         Perform a PUT call to apply changes to an existing VRF table entry
 
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
         '''
         vrf_data = utils.get_attrs(self, self.config_attrs)
 
@@ -287,10 +284,10 @@ class Vrf(PyaoscxModule):
 
         # Compare dictionaries
         # if vrf_data == self.__original_attributes:
-        if json.dumps(
-            vrf_data, sort_keys=True, indent=4) == \
-                json.dumps(
-                    self.__original_attributes, sort_keys=True, indent=4):
+        if (
+            json.dumps(vrf_data, sort_keys=True, indent=4)
+            == json.dumps(self.__original_attributes, sort_keys=True, indent=4)
+        ):
             # Object was not modified
             modified = False
 
@@ -444,13 +441,14 @@ class Vrf(PyaoscxModule):
     @classmethod
     def get_facts(cls, session):
         '''
-        Modify this to Perform a GET call to retrieve all VRFs and their respective data
+        Modify this to Perform a GET call to retrieve all VRFs and their
+            respective data.
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
 
-        :return facts: Dictionary containing VRF IDs as keys and VRF objects as values
-
+        :return facts: Dictionary containing VRF IDs as keys and VRF objects as
+            values.
         '''
         # Log
         logging.info("Retrieving switch VRF facts")
@@ -511,7 +509,8 @@ class Vrf(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified, False
+            otherwise.
         """
 
         return self.__modified

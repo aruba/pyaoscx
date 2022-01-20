@@ -373,8 +373,9 @@ class BgpRouter(PyaoscxModule):
             string: "/rest/v10.04/system/vrfs/bgp_routers/asn"
         :return: BgpRouter object
         """
-        bgp_arr = session.api.get_keys(response_data,
-                                               BgpRouter.resource_uri_name)
+        bgp_arr = session.api.get_keys(
+            response_data, BgpRouter.resource_uri_name
+        )
         asn = bgp_arr[0]
         return BgpRouter(session, asn, parent_vrf)
 

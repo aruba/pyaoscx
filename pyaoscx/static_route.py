@@ -231,11 +231,10 @@ class StaticRoute(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         '''
-        Perform a PUT call to apply changes to an existing Static Route table entry
-
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+        Perform a PUT call to apply changes to an existing Static Route table
+            entry.
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
         '''
         # Variable returned
         modified = False
@@ -268,10 +267,7 @@ class StaticRoute(PyaoscxModule):
                 raise GenericOperationError(
                     response.text, response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update static_route table entry {} succeeded".format(
-                        self.prefix))
+            logging.info("SUCCESS: Updating %s", self)
 
             # Set new original attributes
             self.__original_attributes = static_route_data
@@ -390,9 +386,8 @@ class StaticRoute(PyaoscxModule):
             connection to the device
         :param parent_vrf: parent Vrf object where Static Route is stored
         :param uri: a String with a URI
-
-        :return index, static_route: tuple containing both the static_route object
-            and the static_route's prefix
+        :return index, static_route: tuple containing both the static_route
+            object and the static_route's prefix.
         '''
         # Obtain ID from URI
         index_pattern = re.compile(r'(.*)static_routes/(?P<index>.+)')
@@ -432,7 +427,8 @@ class StaticRoute(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified, False
+            otherwise.
         """
 
         return self.__modified

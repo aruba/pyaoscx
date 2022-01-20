@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -11,6 +11,7 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.device import Device
+
 
 class QueueProfile(PyaoscxModule):
     """

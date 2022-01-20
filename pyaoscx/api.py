@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from abc import ABC, abstractclassmethod
@@ -56,7 +56,6 @@ class API(ABC):
 
         return depth in self.valid_depths
 
-
     def get_index(self, obj):
         """
         Method used to obtain the correct format of the objects information
@@ -92,7 +91,7 @@ class API(ABC):
         Get keys should be used for only one element in the dictionary.
         :param response_data: a dictionary object in the form of
             {
-                "index_1,index_2": "/rest/v10.0X/system/<module>/<index_1>,<index_2>",
+                "idx_1,idx_2": "/rest/v10.0X/system/<module>/<idx_1>,<idx_2>",
             }
         :return indices: List of indices
         """
@@ -128,7 +127,6 @@ class API(ABC):
             uri_list.append(v)
 
         return uri_list
-
 
     def get_module(self, session, module, index_id=None, **kwargs):
         """
@@ -176,12 +174,18 @@ class API(ABC):
         }
 
         try:
-            module_class = getattr(import_module("pyaoscx." + module_names[module]), module)
+            module_class = getattr(
+                import_module("pyaoscx." + module_names[module]), module
+            )
         except KeyError:
-            raise ParameterError("Wrong module name. {} doesn't exist".format(module))
+            raise ParameterError(
+                "Wrong module name. {} doesn't exist".format(module)
+            )
 
         if module == "OspfArea":
-            return self._create_ospf_area(module_class, session, index_id, **kwargs)
+            return self._create_ospf_area(
+                module_class, session, index_id, **kwargs
+            )
         elif module == "Vsx":
             return self._create_vsx(module_class, session, **kwargs)
         else:

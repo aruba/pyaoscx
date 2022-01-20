@@ -64,7 +64,6 @@ class Mac(PyaoscxModule):
 
         self.path = self._mac_path()
 
-
     def _set_vlan(self, parent_vlan):
         """
         Set parent Vlan object as an attribute for the MAC class. It is
@@ -78,8 +77,7 @@ class Mac(PyaoscxModule):
         self._parent_vlan = parent_vlan
 
         # Set URI
-        self.base_uri = \
-            "{0}/{1}/{2}".format(
+        self.base_uri = "{0}/{1}/{2}".format(
                 self._parent_vlan.base_uri,
                 self._parent_vlan.id,
                 self.resource_uri_name)
@@ -285,8 +283,7 @@ class Mac(PyaoscxModule):
         mac_format.word_sep = ":"
         # Get ID from URI. Note that using a uri object here is of no
         # benefit because we are dealing with the path
-        index_pattern = \
-            re.compile(
+        index_pattern = re.compile(
                 r"(.*)macs/(?P<index1>.+)[,./-](?P<index2>.+)")
         from_id = index_pattern.match(uri).group("index1")
         reference_mac_addr = index_pattern.match(uri).group("index2")

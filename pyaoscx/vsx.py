@@ -1,10 +1,8 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-import functools
 import logging
 
-from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule

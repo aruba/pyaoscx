@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
@@ -85,11 +85,13 @@ class Dns(PyaoscxModule):
         if self.dns_name_servers is None:
             self.dns_name_servers = self.__internal_vrf.dns_name_servers
         if self.dns_host_v4_address_mapping is None:
-            self.dns_host_v4_address_mapping = \
+            self.dns_host_v4_address_mapping = (
                 self.__internal_vrf.dns_host_v4_address_mapping
+            )
         if self.dns_host_v6_address_mapping is None:
-            self.dns_host_v6_address_mapping = \
+            self.dns_host_v6_address_mapping = (
                 self.__internal_vrf.dns_host_v6_address_mapping
+            )
 
         # Sets object as materialized
         # Information is loaded from the Device
@@ -138,10 +140,12 @@ class Dns(PyaoscxModule):
         self.__internal_vrf.dns_domain_name = self.dns_domain_name
         self.__internal_vrf.dns_domain_list = self.dns_domain_list
         self.__internal_vrf.dns_name_servers = self.dns_name_servers
-        self.__internal_vrf.dns_host_v4_address_mapping = \
+        self.__internal_vrf.dns_host_v4_address_mapping = (
             self.dns_host_v4_address_mapping
-        self.__internal_vrf.dns_host_v6_address_mapping = \
+        )
+        self.__internal_vrf.dns_host_v6_address_mapping = (
             self.dns_host_v6_address_mapping
+        )
 
         # Applies changes inside VRF
         modified = self.__internal_vrf.apply()

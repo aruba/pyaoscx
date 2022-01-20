@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -69,13 +69,13 @@ class PyaoscxModule(ABC):
     @abstractmethod
     def get_all(cls, session):
         '''
-        Perform a GET call to retrieve all system <pyaoscx_module_type> and create a dictionary
-        of each object
+        Perform a GET call to retrieve all system <pyaoscx_module_type> and
+            create a dictionary of each object.
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :return: Dictionary containing object IDs as keys their respective objects as
-            values
+        :return: Dictionary containing object IDs as keys their respective
+            objects as values.
         '''
         pass
 
@@ -99,11 +99,9 @@ class PyaoscxModule(ABC):
     def update(self):
         '''
         Perform a PUT call to apply changes to an existing
-        <pyaoscx_module_type> table entry
-
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+            <pyaoscx_module_type> table entry.
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
         '''
         pass
 
@@ -137,8 +135,8 @@ class PyaoscxModule(ABC):
             connection to the device
         :param uri: a String with a URI
 
-        :return index, <pyaoscx_module_type>: tuple containing both the <pyaoscx_module_type> object and the
-            <pyaoscx_module_type>'s ID
+        :return index, <pyaoscx_module_type>: tuple containing both the
+            <pyaoscx_module_type> object its ID
         '''
         pass
 
@@ -259,12 +257,11 @@ class PyaoscxModule(ABC):
             raise GenericOperationError(
                 response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: {0} {1} table entry succeeded\
-                ".format(
-                    display_verb,
-                    type(self).__name__))
+        logging.info(
+            "SUCCESS: %s %s table entry succeeded",
+            display_verb,
+            type(self).__name__
+        )
 
     @staticmethod
     def _is_replace_required(current, replacement, immutable_parameter_names):
@@ -283,8 +280,10 @@ class PyaoscxModule(ABC):
         :return: True if a replacement is required
         """
         for param_name in immutable_parameter_names:
-            if hasattr(current, param_name) and\
-               hasattr(replacement, param_name):
+            if (
+                hasattr(current, param_name)
+                and hasattr(replacement, param_name)
+            ):
                 # In this case, a common parameter has a different value in the
                 # potential replacement config, so a replacement is required
                 old = getattr(current, param_name)

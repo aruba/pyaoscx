@@ -3,7 +3,6 @@
 
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -16,7 +15,8 @@ import pyaoscx.utils.util as utils
 
 class VrfAddressFamily(PyaoscxModule):
     '''
-    Provide configuration management for Address Family settings on AOS-CX devices.
+    Provide configuration management for Address Family settings on AOS-CX
+        devices.
     '''
 
     indices = ['address_family']
@@ -53,10 +53,9 @@ class VrfAddressFamily(PyaoscxModule):
         self.__parent_vrf = parent_vrf
 
         # Set URI
-        self.base_uri = \
-            '{base_vrf_uri}/{vrf_name}/vrf_address_families'.format(
-                base_vrf_uri=self.__parent_vrf.base_uri,
-                vrf_name=self.__parent_vrf.name)
+        self.base_uri = '{0}/{1}/vrf_address_families'.format(
+            self.__parent_vrf.base_uri, self.__parent_vrf.name
+        )
 
         # Verify VRF Address Family  doesn't exist already inside VRF
         for vrf_address_family in self.__parent_vrf.address_families:
@@ -213,11 +212,10 @@ class VrfAddressFamily(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         '''
-        Perform a PUT call to apply changes to an existing VRF Address Family table entry
-
-        :return modified: True if Object was modified and a PUT request was made.
-            False otherwise
-
+        Perform a PUT call to apply changes to an existing VRF Address Family
+            table entry.
+        :return modified: True if Object was modified and a PUT request was
+            made. False otherwise.
         '''
         vrf_address_family_data = utils.get_attrs(self, self.config_attrs)
 
@@ -237,7 +235,11 @@ class VrfAddressFamily(PyaoscxModule):
 
             try:
                 response = self.session.s.put(
-                    uri, verify=False, data=post_data, proxies=self.session.proxy)
+                    uri,
+                    verify=False,
+                    data=post_data,
+                    proxies=self.session.proxy
+                )
 
             except Exception as e:
                 raise ResponseError('PUT', e)
@@ -246,11 +248,8 @@ class VrfAddressFamily(PyaoscxModule):
                 raise GenericOperationError(
                     response.text, response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update VRF Address Family table entry {} succeeded\
-                        ".format(
-                        self.address_family))
+            logging.info("SUCCESS: Updating %s", self)
+
             # Set new original attributes
             self.__original_attributes = vrf_address_family_data
             # Object was modified
@@ -283,10 +282,7 @@ class VrfAddressFamily(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info
-            ("SUCCESS: Adding VRF Address Family table entry {} succeeded\
-                ".format(self.address_family))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -316,10 +312,7 @@ class VrfAddressFamily(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete VRF Address Family table entry {} succeeded\
-                    ".format(self.address_family))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from VRF
         for vrf_address_family in self.__parent_vrf.address_families:
@@ -337,14 +330,14 @@ class VrfAddressFamily(PyaoscxModule):
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a
             logical connection to the device
-        :param parent_vrf: parent Vrf object where VrfAddressFamlily object is stored
-        :param response_data: The response can be either a
-            dictionary: {
-                    address_family: "/rest/v10.04/system/vrfs/vrf_address_families/
-                    address_family"
-                }
-            or a
-            string: "/rest/v10.04/system/vrfs/vrf_address_families/address_family"
+        :param parent_vrf: parent Vrf object where VrfAddressFamlily object is
+            stored.
+        :param response_data: The response can be either a dictionary:
+            {
+                addr_fam: <URL>
+            }
+            with URL: "/rest/v10.04/system/vrfs/vrf_address_families/addr_fam"
+            or a string with just the URL
         :return: VrfAddressFamily object
         '''
         vrf_address_family_arr = session.api.get_keys(
@@ -403,7 +396,8 @@ class VrfAddressFamily(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False otherwise.
+        :return: Boolean True if the object was recently modified, False
+            otherwise.
         """
 
         return self.__modified

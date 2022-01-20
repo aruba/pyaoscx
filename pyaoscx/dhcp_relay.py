@@ -261,10 +261,7 @@ class DhcpRelay(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Adding DHCP Relay table entry {} succeeded\
-                    ".format(self.vrf))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -345,9 +342,9 @@ class DhcpRelay(PyaoscxModule):
             DhcpRelay object
         """
         # Obtain ID from URI
-        index_pattern = \
-            re.compile(
-                r"(.*)dhcp_relays/(?P<index1>.+)/(?P<index2>.+)")
+        index_pattern = re.compile(
+            r"(.*)dhcp_relays/(?P<index1>.+)/(?P<index2>.+)"
+        )
         vrf = index_pattern.match(uri).group("index1")
         port = index_pattern.match(uri).group("index2")
 
@@ -373,15 +370,13 @@ class DhcpRelay(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = \
-                "{resource_prefix}{class_uri}/{id1}{separator}{id2}".format(
-                    resource_prefix=self.session.resource_prefix,
-                    class_uri=DhcpRelay.base_uri,
-                    id1=self.vrf.name,
-                    separator=(
-                        self.session.api.compound_index_separator),
-                    id2=self.port.percents_name
-                )
+            self._uri = "{0}{1}/{2}{3}{4}".format(
+                self.session.resource_prefix,
+                DhcpRelay.base_uri,
+                self.vrf.name,
+                self.session.api.compound_index_separator,
+                self.port.percents_name
+            )
 
         return self._uri
 

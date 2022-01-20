@@ -269,9 +269,7 @@ class ACL(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info("SUCCESS: Adding ACL table entry {} succeeded\
-                    ".format(self.name))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -304,9 +302,7 @@ class ACL(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info("SUCCESS: Delete ACL table entry {} succeeded\
-                    ".format(self.name))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
@@ -327,8 +323,7 @@ class ACL(PyaoscxModule):
             string: "/rest/v10.04/system/acls/{name},{list_type}"
         :return: Acl object
         """
-        acl_arr = session.api.get_keys(response_data,
-                                               ACL.resource_uri_name)
+        acl_arr = session.api.get_keys(response_data, ACL.resource_uri_name)
         list_type = acl_arr[1]
         name = acl_arr[0]
 
@@ -347,9 +342,9 @@ class ACL(PyaoscxModule):
             Acl object
         """
         # Obtain ID from URI
-        index_pattern = \
-            re.compile(
-                r"(.*)acls/(?P<index1>.+)[,./-](?P<index2>.+)")
+        index_pattern = re.compile(
+            r"(.*)acls/(?P<index1>.+)[,./-](?P<index2>.+)"
+        )
         name = index_pattern.match(uri).group("index1")
         list_type = index_pattern.match(uri).group("index2")
 
@@ -369,15 +364,13 @@ class ACL(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = \
-                "{resource_prefix}{class_uri}/{id1}{separator}{id2}".format(
-                    resource_prefix=self.session.resource_prefix,
-                    class_uri=ACL.base_uri,
-                    id1=self.name,
-                    separator=(
-                        self.session.api.compound_index_separator),
-                    id2=self.list_type
-                )
+            self._uri = "{0}{1}/{2}{3}{4}".format(
+                self.session.resource_prefix,
+                ACL.base_uri,
+                self.name,
+                self.session.api.compound_index_separator,
+                self.list_type
+            )
 
         return self._uri
 
@@ -546,10 +539,9 @@ class ACL(PyaoscxModule):
         """
 
         # Create ACL Entry
-        acl_entry_obj = self.session.api.get_module(self.session,
-                                                            "AclEntry",
-                                                            sequence_num,
-                                                            parent_acl=self)
+        acl_entry_obj = self.session.api.get_module(
+            self.session, "AclEntry", sequence_num, parent_acl=self
+        )
         # Get AclEntry object data
         acl_entry_obj.get()
 
