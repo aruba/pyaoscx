@@ -4,27 +4,28 @@
 import json
 import logging
 import re
-from urllib.parse import quote_plus, unquote_plus
 
+from copy import deepcopy
+from urllib.parse import quote_plus, unquote_plus
 from warnings import warn
+
 from netaddr import mac_eui48
 from netaddr import EUI as MacAddress
-from copy import deepcopy
+
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.verification_error import VerificationError
+
+from pyaoscx.utils import util as utils
+from pyaoscx.utils.list_attributes import ListDescriptor
 
 import pyaoscx.vrf as vrf_mod
-import pyaoscx.utils.util as utils
-
-from pyaoscx.exceptions.response_error import ResponseError
-from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.exceptions.verification_error import VerificationError
-from pyaoscx.exceptions.parameter_error import ParameterError
 
 from pyaoscx.ipv6 import Ipv6
-from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.vlan import Vlan
 
-
-from pyaoscx.utils.list_attributes import ListDescriptor
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Interface(PyaoscxModule):

@@ -2,9 +2,11 @@
 # Apache License 2.0
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.dns import Dns
-from pyaoscx.configuration import Configuration
+
 from pyaoscx.utils import util as utils
+
+from pyaoscx.configuration import Configuration
+from pyaoscx.dns import Dns
 
 
 class Singleton(type):

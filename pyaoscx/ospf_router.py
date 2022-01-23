@@ -4,9 +4,10 @@
 import json
 import logging
 
-from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
+
 from pyaoscx.utils import util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
 

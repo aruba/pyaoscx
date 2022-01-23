@@ -1,8 +1,9 @@
-# (C) Copyright 2020 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2020-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-import pyaoscx.utils.util as utils
 import logging
+
+from pyaoscx.utils import util as utils
 
 
 def get_firmware_version(**kwargs):

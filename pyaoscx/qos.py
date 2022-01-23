@@ -7,10 +7,12 @@ import logging
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
+
 from pyaoscx.utils import util as utils
 
-from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.device import Device
+
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Qos(PyaoscxModule):

@@ -1,8 +1,9 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.configuration import Configuration
+
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Dns(PyaoscxModule):

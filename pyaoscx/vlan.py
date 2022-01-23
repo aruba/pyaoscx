@@ -1,18 +1,21 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.exceptions.response_error import ResponseError
-from pyaoscx.exceptions.generic_op_error import GenericOperationError
+import json
+import logging
+import random
+import re
 
-from pyaoscx.pyaoscx_module import PyaoscxModule
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.response_error import ResponseError
+
+from pyaoscx.utils import util as utils
+from pyaoscx.utils.list_attributes import ListDescriptor
+
 from pyaoscx.mac import Mac
 from pyaoscx.static_mac import StaticMac
 
-import json
-import logging
-import re
-import pyaoscx.utils.util as utils
-from pyaoscx.utils.list_attributes import ListDescriptor
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Vlan(PyaoscxModule):
@@ -428,8 +431,6 @@ class Vlan(PyaoscxModule):
         :return: True if object was changed, False otherwise
 
         """
-        import random
-
         # Create Acl object
         acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)
@@ -463,8 +464,6 @@ class Vlan(PyaoscxModule):
         :return: True if object was changed, False otherwise
 
         """
-        import random
-
         # Create Acl object
         acl_obj = self.session.api.get_module(
             self.session, 'ACL', index_id=acl_name, list_type=list_type)

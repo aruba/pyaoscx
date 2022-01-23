@@ -1,16 +1,19 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.api import API
-from pyaoscx.exceptions.login_error import LoginError
-from pyaoscx.exceptions.verification_error import VerificationError
-import pyaoscx.utils.util as utils
-
-import json
 import getpass
+import json
 import logging
 import re
+
 import requests
+
+from pyaoscx.exceptions.login_error import LoginError
+from pyaoscx.exceptions.verification_error import VerificationError
+
+from pyaoscx.utils import util as utils
+
+from pyaoscx.api import API
 
 # Global Variables
 ZEROIZED = 268

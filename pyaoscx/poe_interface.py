@@ -1,19 +1,21 @@
 # (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import json
+import logging
+
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.unsupported_capability_error import (
     UnsupportedCapabilityError
 )
 
+from pyaoscx.utils import util as utils
+
 from pyaoscx.device import Device
-from pyaoscx.interface import Interface
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-import json
-import logging
-import pyaoscx.utils.util as utils
+from pyaoscx.interface import Interface
 
 
 class PoEInterface(Interface):

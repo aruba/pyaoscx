@@ -7,11 +7,13 @@ import re
 
 from random import randint
 
-from pyaoscx.utils import util as utils
-from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.pyaoscx_module import PyaoscxModule
+from pyaoscx.exceptions.response_error import ResponseError
+
+from pyaoscx.utils import util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
+
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class ACL(PyaoscxModule):

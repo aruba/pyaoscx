@@ -1,16 +1,16 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from pyaoscx.exceptions.response_error import ResponseError
-from pyaoscx.exceptions.generic_op_error import GenericOperationError
-
-from pyaoscx.pyaoscx_module import PyaoscxModule
-
-
 import json
 import logging
 import re
-import pyaoscx.utils.util as utils
+
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.response_error import ResponseError
+
+from pyaoscx.utils import util as utils
+
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class StaticNexthop(PyaoscxModule):

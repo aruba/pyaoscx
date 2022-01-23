@@ -1,8 +1,9 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from datetime import date
 import re
+
+from datetime import date
 
 from pyaoscx.api import API
 

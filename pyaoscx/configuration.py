@@ -1,15 +1,18 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import json
+import logging
+
+from urllib.parse import quote_plus
+
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
-from pyaoscx.pyaoscx_module import PyaoscxModule
-import pyaoscx.utils.util as utils
 
-import logging
-import json
-from urllib.parse import quote_plus
+from pyaoscx.utils import util as utils
+
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Configuration():

@@ -4,11 +4,14 @@
 import json
 import logging
 
-from pyaoscx.utils import util as utils
-from pyaoscx.pyaoscx_module import PyaoscxModule
-from pyaoscx.queue_profile import QueueProfile
-from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.response_error import ResponseError
+
+from pyaoscx.utils import util as utils
+
+from pyaoscx.queue_profile import QueueProfile
+
+from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class QueueProfileEntry(PyaoscxModule):

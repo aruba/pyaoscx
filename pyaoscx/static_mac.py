@@ -2,15 +2,17 @@
 # Apache License 2.0
 
 import re
+
 from urllib.parse import quote_plus, unquote_plus
 
 from netaddr import EUI as MacAddress
 from netaddr import mac_eui48
 
-from pyaoscx.pyaoscx_module import PyaoscxModule
-from pyaoscx.mac import Mac
+from pyaoscx.utils import util as utils
 
-import pyaoscx.utils.util as utils
+from pyaoscx.pyaoscx_module import PyaoscxModule
+
+from pyaoscx.mac import Mac
 
 
 class StaticMac(Mac):

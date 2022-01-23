@@ -4,17 +4,18 @@
 import json
 import logging
 import re
+
 from urllib.parse import quote_plus, unquote_plus
 
 from netaddr import EUI as MacAddress
 from netaddr import mac_eui48
 
-from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.response_error import ResponseError
+
+from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
-
-import pyaoscx.utils.util as utils
 
 
 class Mac(PyaoscxModule):
