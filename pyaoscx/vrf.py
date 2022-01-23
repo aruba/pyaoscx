@@ -18,19 +18,19 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Vrf(PyaoscxModule):
-    '''
+    """
     Provide configuration management for VRF on AOS-CX devices.
-    '''
+    """
 
-    base_uri = 'system/vrfs'
-    indices = ['name']
-    resource_uri_name = 'vrfs'
+    base_uri = "system/vrfs"
+    indices = ["name"]
+    resource_uri_name = "vrfs"
 
-    bgp_routers = ListDescriptor('bgp_routers')
-    address_families = ListDescriptor('address_families')
-    ospf_routers = ListDescriptor('ospf_routers')
-    ospfv3_routers = ListDescriptor('ospfv3_routers')
-    static_routes = ListDescriptor('static_routes')
+    bgp_routers = ListDescriptor("bgp_routers")
+    address_families = ListDescriptor("address_families")
+    ospf_routers = ListDescriptor("ospf_routers")
+    ospfv3_routers = ListDescriptor("ospfv3_routers")
+    static_routes = ListDescriptor("static_routes")
 
     def __init__(self, session, name, uri=None, **kwargs):
 
@@ -61,7 +61,7 @@ class Vrf(PyaoscxModule):
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a VRF table entry and fill the
         class with the incoming attributes
 
@@ -70,7 +70,7 @@ class Vrf(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information
             to return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch VRF")
 
         depth = depth or self.session.api.default_depth
@@ -81,7 +81,7 @@ class Vrf(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -101,7 +101,7 @@ class Vrf(PyaoscxModule):
                 uri, verify=False, params=payload, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -141,23 +141,23 @@ class Vrf(PyaoscxModule):
         # Set original attributes
         self.__original_attributes = data
         # Remove ID
-        if 'name' in self.__original_attributes:
-            self.__original_attributes.pop('name')
+        if "name" in self.__original_attributes:
+            self.__original_attributes.pop("name")
         # Remove type
-        if 'type' in self.__original_attributes:
-            self.__original_attributes.pop('type')
+        if "type" in self.__original_attributes:
+            self.__original_attributes.pop("type")
         # Remove bgp_routers
-        if 'bgp_routers' in self.__original_attributes:
-            self.__original_attributes.pop('bgp_routers')
+        if "bgp_routers" in self.__original_attributes:
+            self.__original_attributes.pop("bgp_routers")
         # Remove ospf_routers
-        if 'ospf_routers' in self.__original_attributes:
-            self.__original_attributes.pop('ospf_routers')
+        if "ospf_routers" in self.__original_attributes:
+            self.__original_attributes.pop("ospf_routers")
         # Remove static_routes
-        if 'static_routes' in self.__original_attributes:
-            self.__original_attributes.pop('static_routes')
+        if "static_routes" in self.__original_attributes:
+            self.__original_attributes.pop("static_routes")
         # Remove vrf_address_families
-        if 'vrf_address_families' in self.__original_attributes:
-            self.__original_attributes.pop('vrf_address_families')
+        if "vrf_address_families" in self.__original_attributes:
+            self.__original_attributes.pop("vrf_address_families")
 
         # Sets object as materialized
         # Information is loaded from the Device
@@ -209,7 +209,7 @@ class Vrf(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session):
-        '''
+        """
         Perform a GET call to retrieve all system VRFs and create a dictionary
             containing them
         :param cls: Object's class
@@ -217,10 +217,10 @@ class Vrf(PyaoscxModule):
             connection to the device
         :return: Dictionary containing VRF names as keys and a Vrf objects as
             values
-        '''
+        """
         logging.info("Retrieving the VRFs inside the switch")
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=Vrf.base_uri
         )
@@ -228,7 +228,7 @@ class Vrf(PyaoscxModule):
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -249,7 +249,7 @@ class Vrf(PyaoscxModule):
 
     @PyaoscxModule.connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update an existing VRF table
             entry.
         Checks whether the VRF exists in the switch
@@ -258,7 +258,7 @@ class Vrf(PyaoscxModule):
 
         :return modified: Boolean, True if object was created or modified
             False otherwise
-        '''
+        """
         modified = False
         if self.materialized:
             modified = self.update()
@@ -270,12 +270,12 @@ class Vrf(PyaoscxModule):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing VRF table entry
 
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise.
-        '''
+        """
         vrf_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}/{name}".format(
@@ -302,7 +302,7 @@ class Vrf(PyaoscxModule):
                     proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -319,16 +319,16 @@ class Vrf(PyaoscxModule):
 
     @PyaoscxModule.connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new VRF using the object's attributes
         as POST body
         Only returns if an exception is not raise
 
         :return modified: Boolean, True if entry was created
-        '''
+        """
         vrf_data = utils.get_attrs(self, self.config_attrs)
 
-        vrf_data['name'] = self.name
+        vrf_data["name"] = self.name
 
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
@@ -341,7 +341,7 @@ class Vrf(PyaoscxModule):
                 uri, verify=False, data=post_data, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -358,10 +358,10 @@ class Vrf(PyaoscxModule):
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete VRF table entry.
 
-        '''
+        """
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
@@ -377,7 +377,7 @@ class Vrf(PyaoscxModule):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -407,7 +407,7 @@ class Vrf(PyaoscxModule):
         # subsequent GET request to fail, because the constructed URI is
         # not correct, this may be due to these models supporting a single
         # VRF. This behavior occurs with the default VRF, so it's safe to
-        # use "default" when the value gotten in the response is the empty
+        # use 'default' when the value gotten in the response is the empty
         # string
         # TODO: determine if this is correct/intended behavior to take into
         # account for a possible refactor/rework to check for this earlier
@@ -423,7 +423,7 @@ class Vrf(PyaoscxModule):
 
     @classmethod
     def from_uri(cls, session, uri):
-        '''
+        """
         Create a Vrf object given a VRF URI
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -431,10 +431,10 @@ class Vrf(PyaoscxModule):
 
         :return name, vrf_obj: tuple containing both the VRF's name and a Vrf
             object
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)vrfs/(?P<index>.+)')
-        name = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)vrfs/(?P<index>.+)")
+        name = index_pattern.match(uri).group("index")
         # Create vlan object
         vrf_obj = Vrf(session, name, uri=uri)
 
@@ -442,7 +442,7 @@ class Vrf(PyaoscxModule):
 
     @classmethod
     def get_facts(cls, session):
-        '''
+        """
         Modify this to Perform a GET call to retrieve all VRFs and their
             respective data.
         :param cls: Class reference.
@@ -451,7 +451,7 @@ class Vrf(PyaoscxModule):
 
         :return facts: Dictionary containing VRF IDs as keys and VRF objects as
             values.
-        '''
+        """
         # Log
         logging.info("Retrieving switch VRF facts")
 
@@ -474,7 +474,7 @@ class Vrf(PyaoscxModule):
             )
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
 
@@ -485,12 +485,12 @@ class Vrf(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific VRF URI
         return: Object's URI
-        '''
+        """
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{name}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{name}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=Vrf.base_uri,
                 name=self.name
@@ -500,11 +500,11 @@ class Vrf(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     def __str__(self):
@@ -546,15 +546,15 @@ class Vrf(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                'VRF {}'.format(self.name),
-                'Object not materialized')
+                "VRF {}".format(self.name),
+                "Object not materialized")
 
         # Verify if incoming address is a string
         if isinstance(family_type, str):
             # Create Vrf_Family_Address object -- add it to it's internal
             # address_families
             vrf_address_family = self.session.api.get_module(
-                self.session, 'VrfAddressFamily', family_type,
+                self.session, "VrfAddressFamily", family_type,
                 parent_vrf=self,
                 export_route_targets=export_target,
                 import_route_targets=import_targets,
@@ -584,8 +584,8 @@ class Vrf(PyaoscxModule):
         """
         if not self.materialized:
             raise VerificationError(
-                'VRF {}'.format(self.name),
-                'Object not materialized')
+                "VRF {}".format(self.name),
+                "Object not materialized")
         # gotta use deferred import to avoid cyclical import error
         from pyaoscx.vrf_address_family import VrfAddressFamily
         # Verify if incoming address is a object

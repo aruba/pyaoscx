@@ -22,12 +22,12 @@ class Singleton(type):
 
 
 class PyaoscxFactory(metaclass=Singleton):
-    '''
+    """
     Provide a Factory class to instantiate all pyaoscx Modules
         through specific methods. This class is superseded by the Device class,
         use the Device class instead of this one.
     Using the API Version given by the Session
-    '''
+    """
 
     def __init__(self, session):
         self.session = session
@@ -84,7 +84,7 @@ class PyaoscxFactory(metaclass=Singleton):
         : return DNS object
         """
         if vrf is None:
-            vrf = 'default'
+            vrf = "default"
 
         if domain_list is None:
             domain_list = {}
@@ -159,12 +159,12 @@ class PyaoscxFactory(metaclass=Singleton):
         if isinstance(interface_name, str):
             # Make Interface into an object
             interface = self.session.api.get_module(
-                self.session, 'Interface', interface_name)
+                self.session, "Interface", interface_name)
             # Materialize interface to ensure its existence
             interface.get()
 
         ipv6_obj = self.session.api.get_module(
-            self.session, 'Ipv6', address,
+            self.session, "Ipv6", address,
             parent_int=interface, type=_type,
             preferred_lifetime=604800,
             valid_lifetime=2592000,
@@ -211,12 +211,12 @@ class PyaoscxFactory(metaclass=Singleton):
         if pvlan_type == "static":
             # admin-configured state can only be set on static VLANs
             vlan_obj = self.session.api.get_module(
-                self.session, 'Vlan', vlan_id,
+                self.session, "Vlan", vlan_id,
                 name=name, description=description,
                 admin=admin_conf_state)
         else:
             vlan_obj = self.session.api.get_module(
-                self.session, 'Vlan', vlan_id, name=name,
+                self.session, "Vlan", vlan_id, name=name,
                 description=description)
 
         # Try to obtain data; if not, create
@@ -265,13 +265,13 @@ class PyaoscxFactory(metaclass=Singleton):
         else:
             _type = vrf_type
 
-        if route_distinguisher is not None and _type != 'default':
+        if route_distinguisher is not None and _type != "default":
             vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', name,
+                self.session, "Vrf", name,
                 rd=route_distinguisher, type=_type)
         else:
             vrf_obj = self.session.api.get_module(
-                self.session, 'Vrf', name, type=_type)
+                self.session, "Vrf", name, type=_type)
 
         # Try to obtain data; if not, create
         try:
@@ -353,7 +353,7 @@ class PyaoscxFactory(metaclass=Singleton):
             vrf = self.__get_vrf_from_switch(vrf)
 
         bgp_router_obj = self.session.api.get_module(
-            self.session, 'BgpRouter', asn, parent_vrf=vrf,
+            self.session, "BgpRouter", asn, parent_vrf=vrf,
             router_id=router_id)
 
         # Try to obtain data; if not, create
@@ -390,17 +390,17 @@ class PyaoscxFactory(metaclass=Singleton):
 
         redistribute_data = {}
 
-        if redistribute == 'ipv4-unicast':
+        if redistribute == "ipv4-unicast":
             redistribute_data = {
                 "ipv4-unicast": ["connected"]
             }
-        elif redistribute == 'ipv6-unicast':
+        elif redistribute == "ipv6-unicast":
             redistribute_data = {
                 "ipv6-unicast": ["connected"]
             }
 
         bgp_router_obj = self.session.api.get_module(
-            self.session, 'BgpRouter', asn, parent_vrf=vrf,
+            self.session, "BgpRouter", asn, parent_vrf=vrf,
             redistribute=redistribute_data)
 
         # Try to obtain data; if not, create
@@ -448,7 +448,7 @@ class PyaoscxFactory(metaclass=Singleton):
         if family_type is None:
             _family_type = "l2vpn-evpn"
 
-        _valid_family_types = ['l2vpn-evpn', 'ipv4-unicast', 'ipv6-unicast']
+        _valid_family_types = ["l2vpn-evpn", "ipv4-unicast", "ipv6-unicast"]
         if _family_type not in _valid_family_types:
             raise Exception(
                 "ERROR: family_type must be one of: {0}".format(
@@ -462,7 +462,7 @@ class PyaoscxFactory(metaclass=Singleton):
         if isinstance(bgp_router_asn, int):
             # Make BGP Router into an object
             bgp_router_obj = self.session.api.get_module(
-                self.session, 'BgpRouter', bgp_router_asn, parent_vrf=vrf)
+                self.session, "BgpRouter", bgp_router_asn, parent_vrf=vrf)
 
             # Materialize BGP Router to ensure its existence
             bgp_router_obj.get()
@@ -476,7 +476,7 @@ class PyaoscxFactory(metaclass=Singleton):
         if local_interface != "":
             if isinstance(local_interface, str):
                 local_interface = self.session.api.get_module(
-                    self.session, 'Interface', local_interface)
+                    self.session, "Interface", local_interface)
                 local_interface.get()
 
         # Set values needed
@@ -521,7 +521,7 @@ class PyaoscxFactory(metaclass=Singleton):
             route_reflector_client[_family_type] = reflector
 
         bgp_neighbor_obj = self.session.api.get_module(
-            self.session, 'BgpNeighbor', group_ip,
+            self.session, "BgpNeighbor", group_ip,
             parent_bgp_router=bgp_router_asn,
             remote_as=asn, shutdown=False,
             local_interface=local_interface,
@@ -922,13 +922,13 @@ class PyaoscxFactory(metaclass=Singleton):
         :return: DhcpRelay object
         """
         port_obj = self.session.api.get_module(
-            self.session, 'Interface',
+            self.session, "Interface",
             port)
         vrf_obj = self.session.api.get_module(
-            self.session, 'Vrf', vrf)
+            self.session, "Vrf", vrf)
 
         dhcp_relay = self.session.api.get_module(
-            self.session, 'DhcpRelay', index_id=vrf_obj, port=port_obj)
+            self.session, "DhcpRelay", index_id=vrf_obj, port=port_obj)
 
         # Try to obtain data; if not, create
         try:
@@ -951,7 +951,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
 
         acl = self.session.api.get_module(
-            self.session, 'ACL', index_id=list_name, list_type=list_type)
+            self.session, "ACL", index_id=list_name, list_type=list_type)
 
         # Try to obtain data; if not, create
         try:
@@ -962,7 +962,7 @@ class PyaoscxFactory(metaclass=Singleton):
 
         return acl
 
-    def acl_entry(self, list_name, list_type, sequence_num, action='permit',
+    def acl_entry(self, list_name, list_type, sequence_num, action="permit",
                   count=None, protocol=None, src_ip=None, dst_ip=None,
                   dst_l4_port_min=None, dst_l4_port_max=None, src_mac=None,
                   dst_mac=None, ethertype=None, **kwargs):
@@ -1004,14 +1004,14 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         # Create Acl object
         acl = self.session.api.get_module(
-            self.session, 'ACL', index_id=list_name, list_type=list_type)
+            self.session, "ACL", index_id=list_name, list_type=list_type)
 
         # Get ACL data
         acl.get()
 
         # Create ACL Entry
         acl_entry_obj = self.session.api.get_module(
-            self.session, 'AclEntry', index_id=sequence_num, parent_acl=acl,
+            self.session, "AclEntry", index_id=sequence_num, parent_acl=acl,
             action=action, count=count, protocol=protocol, src_ip=src_ip,
             dst_ip=dst_ip, dst_l4_port_min=dst_l4_port_min,
             dst_l4_port_max=dst_l4_port_max, src_mac=src_mac,
@@ -1039,7 +1039,7 @@ class PyaoscxFactory(metaclass=Singleton):
 
         return acl_entry_obj
 
-    def vrf_address_family(self, vrf, address_family='ipv4_unicast'):
+    def vrf_address_family(self, vrf, address_family="ipv4_unicast"):
         """
         Create a VrfAddressFamily object with a VRF
 
@@ -1054,7 +1054,7 @@ class PyaoscxFactory(metaclass=Singleton):
             vrf = self.__get_vrf_from_switch(vrf)
 
         vrf_address_fam_obj = self.session.api.get_module(
-            self.session, 'VrfAddressFamily', address_family,
+            self.session, "VrfAddressFamily", address_family,
             parent_vrf=vrf)
 
         # Try to obtain data; if not, create
@@ -1083,7 +1083,7 @@ class PyaoscxFactory(metaclass=Singleton):
         :return: AggregateAddress object
         """
 
-        _valid_family_types = ['ipv4-unicast', 'ipv6-unicast']
+        _valid_family_types = ["ipv4-unicast", "ipv6-unicast"]
         if family_type not in _valid_family_types:
             raise Exception(
                 "ERROR: family_type must be one of: {0}".format(
@@ -1097,7 +1097,7 @@ class PyaoscxFactory(metaclass=Singleton):
         if isinstance(bgp_router_asn, int):
             # Make BGP Router into an object
             bgp_router_obj = self.session.api.get_module(
-                self.session, 'BgpRouter', bgp_router_asn, parent_vrf=vrf)
+                self.session, "BgpRouter", bgp_router_asn, parent_vrf=vrf)
 
             # Materialize interface to ensure its existence
             bgp_router_obj.get()
@@ -1105,7 +1105,7 @@ class PyaoscxFactory(metaclass=Singleton):
             bgp_router_asn = bgp_router_obj
 
         aggregate_add_obj = self.session.api.get_module(
-            self.session, 'AggregateAddress',
+            self.session, "AggregateAddress",
             family_type,
             ip_prefix=ip_prefix,
             parent_bgp_router=bgp_router_asn
@@ -1140,7 +1140,7 @@ class PyaoscxFactory(metaclass=Singleton):
             vrf = self.__get_vrf_from_switch(vrf)
 
         static_route_obj = self.session.api.get_module(
-            self.session, 'StaticRoute', destination_address_prefix,
+            self.session, "StaticRoute", destination_address_prefix,
             parent_vrf=vrf)
 
         # Try to obtain data; if not, create
@@ -1194,7 +1194,7 @@ class PyaoscxFactory(metaclass=Singleton):
         if isinstance(destination_address_prefix, str):
             # Make a Static Route Object
             static_route_obj = self.session.api.get_module(
-                self.session, 'StaticRoute', destination_address_prefix,
+                self.session, "StaticRoute", destination_address_prefix,
                 parent_vrf=vrf)
             # Materialize Object to ensure its existence
             static_route_obj.get()
@@ -1206,16 +1206,16 @@ class PyaoscxFactory(metaclass=Singleton):
         next_hop_interface_obj = None
         if next_hop_interface is not None:
             next_hop_interface_obj = self.session.api.get_module(
-                self.session, 'Interface',
+                self.session, "Interface",
                 next_hop_interface)
         if nexthop_type is None:
-            nexthop_type = 'forward'
+            nexthop_type = "forward"
 
-        if nexthop_type == 'forward':
+        if nexthop_type == "forward":
             bfd_enable = False
 
         static_nexthop_obj = self.session.api.get_module(
-            self.session, 'StaticNexthop', 0,
+            self.session, "StaticNexthop", 0,
             parent_static_route=static_route,
         )
 
@@ -1230,7 +1230,7 @@ class PyaoscxFactory(metaclass=Singleton):
 
         finally:
             static_nexthop_obj = self.session.api.get_module(
-                self.session, 'StaticNexthop',
+                self.session, "StaticNexthop",
                 0,
                 parent_static_route=static_route_obj,
                 ip_address=next_hop_ip_address,
@@ -1255,13 +1255,13 @@ class PyaoscxFactory(metaclass=Singleton):
         if isinstance(interface, str):
             # Make Interface into an object
             interface_obj = self.session.api.get_module(
-                self.session, 'Interface', interface)
+                self.session, "Interface", interface)
             # Materialize Interface to ensure its existence
             interface_obj.get()
             interface = interface_obj
 
         poe_interface_obj = self.session.api.get_module(
-            self.session, 'PoEInterface', interface)
+            self.session, "PoEInterface", interface)
 
         poe_interface_obj.get()
 
@@ -1282,10 +1282,10 @@ class PyaoscxFactory(metaclass=Singleton):
         """
 
         if isinstance(vlan, int):
-            vlan = self.vlan(vlan, 'Vlan{}'.format(vlan))
+            vlan = self.vlan(vlan, "Vlan{}".format(vlan))
 
         mac_obj = self.session.api.get_module(
-            self.session, 'Mac',
+            self.session, "Mac",
             from_id,
             mac_addr=mac_address,
             parent_vlan=vlan
@@ -1311,13 +1311,13 @@ class PyaoscxFactory(metaclass=Singleton):
         """
 
         if isinstance(vlan, int):
-            vlan = self.vlan(vlan, 'Vlan{}'.format(vlan))
+            vlan = self.vlan(vlan, "Vlan{}".format(vlan))
 
         if isinstance(port, str):
             port = self.interface(port)
 
         static_mac_obj = self.session.api.get_module(
-            self.session, 'StaticMac',
+            self.session, "StaticMac",
             mac_address,
             parent_vlan=vlan,
             port=port

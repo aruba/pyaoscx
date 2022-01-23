@@ -311,7 +311,7 @@ class Mac(PyaoscxModule):
         return: Object's URI
         """
         # TODO: remove this method in favor of uri_path once all
-        # modules have been translated to the "properties" style
+        # modules have been translated to the 'properties' style
         return self.uri_path
 
     @property
@@ -341,7 +341,7 @@ class Mac(PyaoscxModule):
         return: Object format depending on the API Version
         """
         # TODO: remove in favor of info_format when all modules are translated
-        # to "properties" style
+        # to 'properties' style
         return self.info_format
 
     @property

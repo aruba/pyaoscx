@@ -18,7 +18,7 @@ class ResponseError(PyaoscxError):
 
     def __str__(self):
         if self.message:
-            return 'RESPONSE ERROR in {0}: {1}'.format(
+            return "RESPONSE ERROR in {0}: {1}".format(
                 self.message, self.response)
         else:
-            return 'RESPONSE ERROR'
+            return "RESPONSE ERROR"

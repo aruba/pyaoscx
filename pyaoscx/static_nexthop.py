@@ -14,13 +14,13 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class StaticNexthop(PyaoscxModule):
-    '''
+    """
     Provide configuration management for Static Nexthop settings on AOS-CX
         devices.
-    '''
+    """
 
-    indices = ['id']
-    resource_uri_name = 'static_nexthops'
+    indices = ["id"]
+    resource_uri_name = "static_nexthops"
 
     def __init__(self, session, _id, parent_static_route, uri=None, **kwargs):
 
@@ -44,17 +44,17 @@ class StaticNexthop(PyaoscxModule):
         self.__modified = False
 
     def __set_static_route(self, parent_static_route):
-        '''
+        """
         Set parent StaticRoute object as an attribute for the StaticNexthop
             object.
         :param parent_static_route a Static_Route object
-        '''
+        """
 
         # Set parent Static Route
         self.__parent_static_route = parent_static_route
 
         # Set URI
-        self.base_uri = '{0}/{1}/static_nexhops'.format(
+        self.base_uri = "{0}/{1}/static_nexhops".format(
             self.__parent_static_route.base_uri,
             self.__parent_static_route.reference_address
         )
@@ -70,7 +70,7 @@ class StaticNexthop(PyaoscxModule):
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a Static Nexthop table
             entry and fill the object with the incoming attributes
 
@@ -79,7 +79,7 @@ class StaticNexthop(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch static_nexthop routers")
 
         depth = depth or self.session.api.default_depth
@@ -90,7 +90,7 @@ class StaticNexthop(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -109,7 +109,7 @@ class StaticNexthop(PyaoscxModule):
                 uri, verify=False, params=payload, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -123,20 +123,20 @@ class StaticNexthop(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, 'config_attrs',
-                ['id'])
+                self, data, "config_attrs",
+                ["id"])
 
         # Set original attributes
         self.__original_attributes = data
         # Remove ID
-        if 'id' in self.__original_attributes:
-            self.__original_attributes.pop('id')
+        if "id" in self.__original_attributes:
+            self.__original_attributes.pop("id")
 
         # If the Static Route has a port inside the switch
-        if 'port' in data and self.port:
+        if "port" in data and self.port:
             port_response = self.port
             interface_cls = self.session.api.get_module(
-                self.session, 'Interface', '')
+                self.session, "Interface", "")
             # Set port as a Interface Object
             self.port = interface_cls.from_response(
                 self.session, port_response)
@@ -151,7 +151,7 @@ class StaticNexthop(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session, parent_static_route):
-        '''
+        """
         Perform a GET call to retrieve all system Static Nexthop objects
             related to a Static Route, and create a dictionary containing
             StaticNexthop objects.
@@ -162,23 +162,23 @@ class StaticNexthop(PyaoscxModule):
             Nexthops
         :return: Dictionary containing Static Nexthop IDs as keys and a Static
             NexthopThis objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch static_nexthop")
 
-        base_uri = '{0}/{1}/static_nexthops'.format(
+        base_uri = "{0}/{1}/static_nexthops".format(
             parent_static_route.base_uri,
             parent_static_route.reference_address
         )
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -202,7 +202,7 @@ class StaticNexthop(PyaoscxModule):
 
     @PyaoscxModule.connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update an
         existing Static Nexthop table entry.
         Checks whether the static_nexthop exists in the switch
@@ -212,7 +212,7 @@ class StaticNexthop(PyaoscxModule):
         :return modified: Boolean, True if object was created or modified
             False otherwise
 
-        '''
+        """
         if not self.__parent_static_route.materialized:
             self.__parent_static_route.apply()
 
@@ -227,19 +227,19 @@ class StaticNexthop(PyaoscxModule):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing static_nexthop
 
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise.
-        '''
+        """
         # Variable returned
         modified = False
 
         static_nexthop_data = utils.get_attrs(self, self.config_attrs)
 
         # Get port uri
-        if hasattr(self, 'port') and self.port:
+        if hasattr(self, "port") and self.port:
             static_nexthop_data["port"] = self.port.get_info_format()
 
         uri = "{base_url}{class_uri}/{id}".format(
@@ -262,7 +262,7 @@ class StaticNexthop(PyaoscxModule):
                     data=post_data, proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -279,17 +279,17 @@ class StaticNexthop(PyaoscxModule):
 
     @PyaoscxModule.connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new static_nexthop
         Only returns if an exception is not raise
 
         :return modified: Boolean, True if entry was created
-        '''
+        """
         static_nexthop_data = utils.get_attrs(self, self.config_attrs)
-        static_nexthop_data['id'] = self.id
+        static_nexthop_data["id"] = self.id
 
         # Get port uri
-        if hasattr(self, 'port') and self.port:
+        if hasattr(self, "port") and self.port:
             static_nexthop_data["port"] = self.port.get_info_format()
 
         uri = "{base_url}{class_uri}".format(
@@ -304,7 +304,7 @@ class StaticNexthop(PyaoscxModule):
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -318,10 +318,10 @@ class StaticNexthop(PyaoscxModule):
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete StaticNexthop table entry.
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{id}".format(
             base_url=self.session.base_url,
@@ -334,7 +334,7 @@ class StaticNexthop(PyaoscxModule):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -352,7 +352,7 @@ class StaticNexthop(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, parent_static_route, response_data):
-        '''
+        """
         Create a StaticNexthop object given a response_data related to the
             Static Nexthop ID object
         :param cls: Object's class
@@ -367,7 +367,7 @@ class StaticNexthop(PyaoscxModule):
             or a
             string: "/rest/v10.04/system/static_routes/static_nexthops/id"
         :return: StaticNexthop object
-        '''
+        """
         static_nexthop_arr = session.api.get_keys(
             response_data, StaticNexthop.resource_uri_name)
         _id = static_nexthop_arr[0]
@@ -375,7 +375,7 @@ class StaticNexthop(PyaoscxModule):
 
     @classmethod
     def from_uri(cls, session, parent_static_route, uri):
-        '''
+        """
         Create a StaticNexthop object given a URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -386,10 +386,10 @@ class StaticNexthop(PyaoscxModule):
 
         :return index, static_nexthop: tuple containing both the Static Nexthop
             object and the Static Nexthop's ID
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)static_nexthops/(?P<index>.+)')
-        index = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)static_nexthops/(?P<index>.+)")
+        index = index_pattern.match(uri).group("index")
 
         # Create static_nexthop object
         static_nexthop_obj = StaticNexthop(
@@ -402,13 +402,13 @@ class StaticNexthop(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific Static Nexthop URI
         return: Object's URI
-        '''
+        """
 
         if self._uri is None:
-            self._uri = '{resource_id}{class_uri}/{id}'.format(
+            self._uri = "{resource_id}{class_uri}/{id}".format(
                 resource_id=self.session.resource_id,
                 class_uri=self.base_uri,
                 id=self.id
@@ -418,11 +418,11 @@ class StaticNexthop(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     @property
@@ -443,7 +443,7 @@ class StaticNexthop(PyaoscxModule):
 
     @classmethod
     def get_next_id(cls, session, parent_static_route):
-        '''
+        """
         Method used to obtain the ID for the next Static Nexthop. Thus
         Perform a GET call to retrieve all system Static Nexthop inside a
         Static Route, and with it determine the next ID
@@ -453,23 +453,23 @@ class StaticNexthop(PyaoscxModule):
         :param parent_static_route: StaticRoute object, parent for the Static
             Nexthops
         :return new_id: Integer with the new Id for the next Static Nexthop
-        '''
+        """
 
         logging.info("Retrieving the switch static_nexthop")
 
-        base_uri = '{0}/{1}/static_nexthops'.format(
+        base_uri = "{0}/{1}/static_nexthops".format(
             parent_static_route.base_uri,
             parent_static_route.reference_address
         )
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)

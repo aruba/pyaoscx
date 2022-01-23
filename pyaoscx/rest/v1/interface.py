@@ -23,18 +23,18 @@ from pyaoscx.interface import Interface as AbstractInterface
 
 
 class Interface(AbstractInterface):
-    '''
+    """
     Provide configuration management for Interface and Ports for REST API
         Version 1. Uses methods inside AbstractInterface and any ones different
         are overridden by this class.
-    '''
+    """
     base_uri = "system/ports"
     base_uri_ports = "system/ports"
     base_uri_interface = "system/interfaces"
 
-    indices = ['name']
+    indices = ["name"]
 
-    ip6_addresses = ListDescriptor('ip6_addresses')
+    ip6_addresses = ListDescriptor("ip6_addresses")
 
     def __init__(self, session, name, uri=None, **kwargs):
         self.session = session
@@ -75,7 +75,7 @@ class Interface(AbstractInterface):
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a Port table entry, a Interface
         table entry and fill the object with the incoming attributes
 
@@ -84,7 +84,7 @@ class Interface(AbstractInterface):
         :param selector: Alphanumeric option to select specific information to
             return.  The options are 'configuration', 'status', or 'statistics.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving Port")
 
         depth = depth or self.session.api.default_depth
@@ -95,7 +95,7 @@ class Interface(AbstractInterface):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}" .format(selectors))
 
@@ -117,7 +117,7 @@ class Interface(AbstractInterface):
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response_ports, "GET"):
             raise GenericOperationError(
@@ -128,16 +128,16 @@ class Interface(AbstractInterface):
         # Adding ACL attributes to data_port
         # to then be added as attributes to the object
         acl_names = [
-            'aclv6_in_cfg',
-            'aclv4_in_cfg',
-            'aclmac_in_cfg',
-            'aclv4_out_cfg']
+            "aclv6_in_cfg",
+            "aclv4_in_cfg",
+            "aclmac_in_cfg",
+            "aclv4_out_cfg"]
 
         for acl_attr in acl_names:
             data_port[acl_attr] = None
 
         # Delete ip6 addresses from incoming data
-        data_port.pop('ip6_addresses')
+        data_port.pop("ip6_addresses")
         # Add Port dictionary as attributes for the object
         utils.create_attrs(self, data_port)
 
@@ -145,23 +145,23 @@ class Interface(AbstractInterface):
         if selector in self.session.api.configurable_selectors:
             # Get list of keys and create a list with the given keys
             utils.set_config_attrs(
-                self, data_port, 'config_attrs',
-                ['name', 'origin', 'other_config', 'ip6_addresses'])
+                self, data_port, "config_attrs",
+                ["name", "origin", "other_config", "ip6_addresses"])
         # Set original attributes
         self.__original_attributes_port = data_port
         # Delete unwanted attributes
-        if 'name' in self.__original_attributes_port:
-            self.__original_attributes_port.pop('name')
-        if 'ip6_addresses' in self.__original_attributes_port:
-            self.__original_attributes_port.pop('ip6_addresses')
-        if 'origin' in self.__original_attributes_port:
-            self.__original_attributes_port.pop('origin')
-        if 'other_config' in self.__original_attributes_port:
-            self.__original_attributes_port.pop('other_config')
+        if "name" in self.__original_attributes_port:
+            self.__original_attributes_port.pop("name")
+        if "ip6_addresses" in self.__original_attributes_port:
+            self.__original_attributes_port.pop("ip6_addresses")
+        if "origin" in self.__original_attributes_port:
+            self.__original_attributes_port.pop("origin")
+        if "other_config" in self.__original_attributes_port:
+            self.__original_attributes_port.pop("other_config")
 
         # Check if port is a LAG
         # If not, makes get request to system/interfaces
-        if self.type != 'lag':
+        if self.type != "lag":
             uri_interfaces = "{base_url}{class_uri}/{name}".format(
                 base_url=self.session.base_url,
                 class_uri=Interface.base_uri_interface,
@@ -174,7 +174,7 @@ class Interface(AbstractInterface):
                     params=payload, proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('GET', e)
+                raise ResponseError("GET", e)
 
             if not utils._response_ok(response_ints, "GET"):
                 raise GenericOperationError(response_ints.text,
@@ -188,17 +188,17 @@ class Interface(AbstractInterface):
             if selector in self.session.api.configurable_selectors:
                 # Get list of keys and create a list with the given keys
                 utils.set_config_attrs(
-                    self, data_int, 'config_attrs_int', ['name', 'origin'])
+                    self, data_int, "config_attrs_int", ["name", "origin"])
             # Set original attributes
             self.__original_attributes_int = data_int
             # Delete unwanted attributes
-            if 'name' in self.__original_attributes_int:
-                self.__original_attributes_int.pop('name')
-            if 'origin' in self.__original_attributes_int:
-                self.__original_attributes_int.pop('origin')
+            if "name" in self.__original_attributes_int:
+                self.__original_attributes_int.pop("name")
+            if "origin" in self.__original_attributes_int:
+                self.__original_attributes_int.pop("origin")
 
         # Set a list of interfaces as an attribute
-        if hasattr(self, 'interfaces') and self.interfaces is not None:
+        if hasattr(self, "interfaces") and self.interfaces is not None:
             interfaces_list = []
             # Get all URI elements in the form of a list
             uri_list = self.session.api.get_uri_from_data(
@@ -225,7 +225,7 @@ class Interface(AbstractInterface):
             self.__prev_interfaces = list(self.interfaces)
 
         # Set VRF
-        if hasattr(self, 'vrf') and self.vrf is not None:
+        if hasattr(self, "vrf") and self.vrf is not None:
             # Set keepalive VRF as a Vrf object
             vrf_obj = Vrf.from_response(self.session, self.vrf)
             self.vrf = vrf_obj
@@ -233,7 +233,7 @@ class Interface(AbstractInterface):
             self.vrf.get()
 
         # Set VLAN
-        if hasattr(self, 'vlan_tag') and self.vlan_tag is not None:
+        if hasattr(self, "vlan_tag") and self.vlan_tag is not None:
             # Set VLAN as a Vlan Object
             vlan_obj = Vlan.from_response(self.session, self.vlan_tag)
             self.vlan_tag = vlan_obj
@@ -242,7 +242,7 @@ class Interface(AbstractInterface):
 
         # vlan_trunks
         # Set a list of vlans as an attribute
-        if hasattr(self, 'vlan_trunks') and self.vlan_trunks is not None:
+        if hasattr(self, "vlan_trunks") and self.vlan_trunks is not None:
             vlan_trunks = []
             # Get all URI elements in the form of a list
             uri_list = self.session.api.get_uri_from_data(
@@ -260,70 +260,70 @@ class Interface(AbstractInterface):
 
         # Set all ACLs
         from pyaoscx.acl import ACL
-        if hasattr(self, 'aclmac_in_cfg') and self.aclmac_in_cfg is not None:
+        if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclmac_in_cfg = acl
 
-        if hasattr(self, 'aclmac_out_cfg') and self.aclmac_out_cfg is not None:
+        if hasattr(self, "aclmac_out_cfg") and self.aclmac_out_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclmac_out_cfg = acl
 
-        if hasattr(self, 'aclv4_in_cfg') and self.aclv4_in_cfg is not None:
+        if hasattr(self, "aclv4_in_cfg") and self.aclv4_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_in_cfg = acl
 
-        if hasattr(self, 'aclv4_out_cfg') and self.aclv4_out_cfg is not None:
+        if hasattr(self, "aclv4_out_cfg") and self.aclv4_out_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_out_cfg = acl
 
-        if hasattr(self, 'aclv4_routed_in_cfg') and self.aclv4_routed_in_cfg:
+        if hasattr(self, "aclv4_routed_in_cfg") and self.aclv4_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_routed_in_cfg = acl
 
-        if hasattr(self, 'aclv4_routed_out_cfg') and self.aclv4_routed_out_cfg:
+        if hasattr(self, "aclv4_routed_out_cfg") and self.aclv4_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_routed_out_cfg = acl
 
-        if hasattr(self, 'aclv6_in_cfg') and self.aclv6_in_cfg:
+        if hasattr(self, "aclv6_in_cfg") and self.aclv6_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_in_cfg = acl
 
-        if hasattr(self, 'aclv6_out_cfg') and self.aclv6_out_cfg:
+        if hasattr(self, "aclv6_out_cfg") and self.aclv6_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_out_cfg = acl
 
-        if hasattr(self, 'aclv6_routed_in_cfg') and self.aclv6_routed_in_cfg:
+        if hasattr(self, "aclv6_routed_in_cfg") and self.aclv6_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_routed_in_cfg = acl
 
-        if hasattr(self, 'aclv6_routed_out_cfg') and self.aclv6_routed_out_cfg:
+        if hasattr(self, "aclv6_routed_out_cfg") and self.aclv6_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_out_cfg)
             # Materialize Acl object
@@ -344,7 +344,7 @@ class Interface(AbstractInterface):
 
     @classmethod
     def get_all(cls, session):
-        '''
+        """
         Perform a GET call to retrieve all system Ports and return a list
         of them
         :param cls: Object's class
@@ -352,17 +352,17 @@ class Interface(AbstractInterface):
             connection to the device
         :return: Dictionary containing ports IDs as keys and a port objects
             as values
-        '''
+        """
         logging.info("Retrieving the switch Interfaces and Ports")
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=Interface.base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -383,7 +383,7 @@ class Interface(AbstractInterface):
 
     @classmethod
     def from_uri(cls, session, uri):
-        '''
+        """
         Create an Interface object given a interface URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -392,10 +392,10 @@ class Interface(AbstractInterface):
 
         :return name, Interface: tuple containing both the interface's name
             and an Interface object
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)/(?P<index>.+)')
-        name_percents = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)/(?P<index>.+)")
+        name_percents = index_pattern.match(uri).group("index")
         name = unquote_plus(name_percents)
         # Create Interface object
         interface_obj = Interface(session, name, uri=uri)
@@ -404,14 +404,14 @@ class Interface(AbstractInterface):
 
     @classmethod
     def get_facts(cls, session):
-        '''
+        """
         Perform a GET call to retrieve all Interfaces and their respective data
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :return facts: Dictionary containing Interface IDs as keys and
             Interface objects as values.
-        '''
+        """
         # Log
         logging.info("Retrieving the switch interfaces facts")
 
@@ -434,7 +434,7 @@ class Interface(AbstractInterface):
                 proxies=session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response_ports, "GET"):
             raise GenericOperationError(
@@ -456,7 +456,7 @@ class Interface(AbstractInterface):
                 proxies=session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response_interface, "GET"):
             raise GenericOperationError(
@@ -469,20 +469,20 @@ class Interface(AbstractInterface):
 
         # Merge Ports and Interfaces by key name
         for port in ports_data:
-            if 'name' in port:
-                facts_dict[port['name']] = port
+            if "name" in port:
+                facts_dict[port["name"]] = port
         for interface in interfaces_data:
-            if 'name' in interface:
-                if interface['name'] in facts_dict:
-                    facts_dict[interface['name']].update(interface)
+            if "name" in interface:
+                if interface["name"] in facts_dict:
+                    facts_dict[interface["name"]].update(interface)
                 else:
-                    facts_dict[interface['name']] = interface
+                    facts_dict[interface["name"]] = interface
 
         return facts_dict
 
     @classmethod
     def from_response(cls, session, response_data):
-        '''
+        """
         Create an Interface object given a response_data related to the
             Interface object
         :param cls: Object's class
@@ -492,28 +492,28 @@ class Interface(AbstractInterface):
             string: "/rest/v1/system/interfaces/1"
         :return: Interface object
 
-        '''
+        """
         try:
             # Try using interfaces
             interfaces_id_arr = session.api.get_keys(
-                response_data, 'interfaces')
+                response_data, "interfaces")
         except AttributeError:
             # If AttributeError for Nonetype, try with ports
             interfaces_id_arr = session.api.get_keys(
-                response_data, 'ports')
+                response_data, "ports")
         interface_name = interfaces_id_arr[0]
         return session.api.get_module(
-            session, 'Interface',
+            session, "Interface",
             interface_name)
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete Interface.
 
-        '''
+        """
         if not self.__is_special_type:
-            raise VerificationError('Interface', "Can't be deleted")
+            raise VerificationError("Interface", "Can't be deleted")
 
         # Delete Interface via a DELETE request to Ports Table
         uri = "{base_url}{class_uri}/{id}".format(
@@ -527,7 +527,7 @@ class Interface(AbstractInterface):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -535,7 +535,7 @@ class Interface(AbstractInterface):
         # DELETE Interface via DELETE request to Interface Table
         # Check if port is a LAG
         # If not, DELETE request to Interface Table
-        if self.type != 'lag':
+        if self.type != "lag":
             uri_interfaces = "{base_url}{class_uri}".format(
                 base_url=self.session.base_url,
                 class_uri=Interface.base_uri_interface
@@ -546,7 +546,7 @@ class Interface(AbstractInterface):
                     uri_interfaces, verify=False, proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('DELETE', e)
+                raise ResponseError("DELETE", e)
 
             if not utils._response_ok(response_ints, "DELETE"):
                 raise GenericOperationError(
@@ -557,7 +557,7 @@ class Interface(AbstractInterface):
         # Delete interface references
         for interface in self.__prev_interfaces:
             # If interface name is not the same as the current one
-            if interface.name != self.name and self.type == 'lag':
+            if interface.name != self.name and self.type == "lag":
                 interface.__delete_lag(self)
 
         # Delete object attributes
@@ -565,16 +565,16 @@ class Interface(AbstractInterface):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to update data for a Port and Interface table entry
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise.
-        '''
+        """
         # Flag used to determine if Object was modified
         modified_port = True
         modified_int = True
         # Check if Object is a LAG
-        if self.type != 'lag':
+        if self.type != "lag":
             uri_interfaces = "{base_url}{class_uri}/{name}".format(
                 base_url=self.session.base_url,
                 class_uri=Interface.base_uri_interface,
@@ -583,10 +583,10 @@ class Interface(AbstractInterface):
             # get Interface data related to configuration
             int_data = utils.get_attrs(self, self.config_attrs_int)
             # Remove type
-            if 'type' in int_data:
-                int_data.pop('type')
-            if 'type' in self.__original_attributes_int:
-                self.__original_attributes_int.pop('type')
+            if "type" in int_data:
+                int_data.pop("type")
+            if "type" in self.__original_attributes_int:
+                self.__original_attributes_int.pop("type")
             # Set put_int_data
             put_int_data = json.dumps(int_data)
             # Compare dictionaries
@@ -601,7 +601,7 @@ class Interface(AbstractInterface):
                         data=put_int_data, proxies=self.session.proxy)
 
                 except Exception as e:
-                    raise ResponseError('PUT', e)
+                    raise ResponseError("PUT", e)
 
                 if not utils._response_ok(response_ints, "PUT"):
                     raise GenericOperationError(
@@ -623,13 +623,13 @@ class Interface(AbstractInterface):
         # Check for Ipv4
         try:
             if self.ip4_address is not None:
-                port_data['ip4_address'] = self.ip4_address
+                port_data["ip4_address"] = self.ip4_address
         except AttributeError:
             pass
         # Check if vrf is inside the data related to Port
         if "vrf" in port_data:
             # Set VRF in the correct format for PUT
-            port_data['vrf'] = self.vrf.get_info_format()
+            port_data["vrf"] = self.vrf.get_info_format()
 
         # Check if vlan_tag is inside the data related to Port
         if "vlan_tag" in port_data:
@@ -639,7 +639,7 @@ class Interface(AbstractInterface):
         # Set interfaces into correct form
         if "interfaces" in port_data:
             # Check for interfaces no longer in LAG
-            if self.__is_special_type and self.type == 'lag':
+            if self.__is_special_type and self.type == "lag":
                 for element in self.__prev_interfaces:
                     # If element was deleted from interfaces
                     if element not in self.interfaces:
@@ -654,21 +654,21 @@ class Interface(AbstractInterface):
             # Set interfaces into correct form
             for element in self.interfaces:
                 # If element is the same as current, ignore
-                if element.name == self.name and self.type == 'lag':
+                if element.name == self.name and self.type == "lag":
                     pass
                 else:
                     # Verify object is materialized
                     if not element.materialized:
                         raise VerificationError(
-                            'Interface {}'.format(element.name),
-                            'Object inside interfaces not materialized')
+                            "Interface {}".format(element.name),
+                            "Object inside interfaces not materialized")
                     # Only in V1 get_uri() is used,
                     # In any other version, element.get_info_format()
                     # is used
                     formated_element = element.get_uri(True)
                     formated_interfaces.append(formated_element)
 
-                    if self.type == 'lag':
+                    if self.type == "lag":
                         # New element being added to LAG
                         element.__add_member_to_lag(self)
 
@@ -683,8 +683,8 @@ class Interface(AbstractInterface):
                 # Verify object is materialized
                 if not element.materialized:
                     raise VerificationError(
-                        'Vlan {}'.format(element),
-                        'Object inside vlan trunks not materialized')
+                        "Vlan {}".format(element),
+                        "Object inside vlan trunks not materialized")
                 formated_element = element.get_info_format()
                 formated_vlans.append(formated_element)
 
@@ -751,11 +751,11 @@ class Interface(AbstractInterface):
             port_data["ip6_addresses"] = ip6_addresses_dict
 
         # Delete type from Port data
-        if 'type' in port_data:
-            port_data.pop('type')
+        if "type" in port_data:
+            port_data.pop("type")
 
-        if 'type' in self.__original_attributes_port:
-            self.__original_attributes_port.pop('type')
+        if "type" in self.__original_attributes_port:
+            self.__original_attributes_port.pop("type")
         # Special case, if dictionary is empty
         if port_data["ip6_addresses"] == {}:
             self.__original_attributes_port["ip6_addresses"] = {}
@@ -777,7 +777,7 @@ class Interface(AbstractInterface):
                     data=put_port_data, proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response_ports, "PUT"):
                 raise GenericOperationError(
@@ -797,7 +797,7 @@ class Interface(AbstractInterface):
         :return True if entry was created inside Device
         """
         port_data = utils.get_attrs(self, self.config_attrs)
-        port_data['name'] = self.name
+        port_data["name"] = self.name
 
         # Creating in the Ports Table
         uri_ports = "{base_url}{class_uri}".format(
@@ -812,7 +812,7 @@ class Interface(AbstractInterface):
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -824,7 +824,7 @@ class Interface(AbstractInterface):
 
         # Check if port is a LAG
         # If not, POST Request to Interface Table
-        if self.type != 'lag':
+        if self.type != "lag":
             uri_interfaces = "{base_url}{class_uri}".format(
                 base_url=self.session.base_url,
                 class_uri=Interface.base_uri_interface
@@ -832,9 +832,9 @@ class Interface(AbstractInterface):
 
             # Set data for Interface Table
             interface_data = utils.get_attrs(self, self.config_attrs_int)
-            interface_data['name'] = self.name
-            interface_data['type'] = self.type
-            interface_data['referenced_by'] = self.get_uri()
+            interface_data["name"] = self.name
+            interface_data["type"] = self.type
+            interface_data["referenced_by"] = self.get_uri()
 
             # Set post_int_data
             post_int_data = json.dumps(interface_data)
@@ -846,7 +846,7 @@ class Interface(AbstractInterface):
                     data=post_int_data, proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('POST', e)
+                raise ResponseError("POST", e)
 
             if not utils._response_ok(response_ints, "POST"):
                 raise GenericOperationError(
@@ -860,21 +860,21 @@ class Interface(AbstractInterface):
 
     @PyaoscxModule.deprecated
     def get_uri(self, interface=False):
-        '''
+        """
         Method used to obtain the specific Interface URI
         :param interface: Boolean, if true URI would contain
             a /interfaces/interface_name instead of
             /ports/interface_name
-        '''
-        uri = ''
+        """
+        uri = ""
         if not interface:
-            uri = '{resource_prefix}{class_uri}/{name}'.format(
+            uri = "{resource_prefix}{class_uri}/{name}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=Interface.base_uri_ports,
                 name=self.percents_name
             )
         else:
-            uri = '{resource_prefix}{class_uri}/{name}'.format(
+            uri = "{resource_prefix}{class_uri}/{name}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=Interface.base_uri_interface,
                 name=self.percents_name
@@ -884,21 +884,21 @@ class Interface(AbstractInterface):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing
         inside other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     def __str__(self):
         return "Port name: '{}'".format(self.name)
 
     def __set_to_default(self):
-        '''
+        """
         Perform a PUT call to set Interface to default settings
         :return: True if object was changed
-        '''
+        """
 
         uri_ports = "{base_url}{class_uri}/{name}".format(
             base_url=self.session.base_url,
@@ -911,7 +911,7 @@ class Interface(AbstractInterface):
 
         # Set interfaces into correct form
         if "interfaces" in port_data:
-            if self.__is_special_type and self.name == 'lag':
+            if self.__is_special_type and self.name == "lag":
                 self.interfaces = []
                 for element in self.__prev_interfaces:
                     # If element was deleted from interfaces
@@ -935,7 +935,7 @@ class Interface(AbstractInterface):
                 data=put_port_data, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('PUT', e)
+            raise ResponseError("PUT", e)
 
         if not utils._response_ok(response_ports, "PUT"):
             raise GenericOperationError(response_ports.text,

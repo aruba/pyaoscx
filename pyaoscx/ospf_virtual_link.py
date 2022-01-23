@@ -205,7 +205,7 @@ class OspfVlink(PyaoscxModule):
             raise ParameterError(
                 "{0} requires parent_ospf_area instance".format(cls.__name__)
             )
-        # Obtain ID from URI of the form ".../ospf_vlinks/{peer_router_id}"
+        # Obtain ID from URI of the form '.../ospf_vlinks/{peer_router_id}'
         peer_router_id = uri.split("/")[-1]
         vlink = cls(session, peer_router_id, parent_ospf_area)
         return peer_router_id, vlink

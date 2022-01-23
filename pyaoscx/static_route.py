@@ -19,13 +19,13 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class StaticRoute(PyaoscxModule):
-    '''
+    """
     Provide configuration management for Static Route on AOS-CX devices.
-    '''
+    """
 
-    indices = ['prefix']
-    static_nexthops = ListDescriptor('static_nexthops')
-    resource_uri_name = 'static_routes'
+    indices = ["prefix"]
+    static_nexthops = ListDescriptor("static_nexthops")
+    resource_uri_name = "static_routes"
 
     def __init__(self, session, prefix, parent_vrf, uri=None, **kwargs):
 
@@ -53,16 +53,16 @@ class StaticRoute(PyaoscxModule):
         self.__modified = False
 
     def __set_vrf(self, parent_vrf):
-        '''
+        """
         Set parent Vrf object as an attribute for the StaticRoute object
         :param parent_vrf: a Vrf object
-        '''
+        """
 
         # Set parent Vrf object
         self.__parent_vrf = parent_vrf
 
         # Set URI
-        self.base_uri = '{base_vrf_uri}/{vrf_name}/static_routes'.format(
+        self.base_uri = "{base_vrf_uri}/{vrf_name}/static_routes".format(
             base_vrf_uri=self.__parent_vrf.base_uri,
             vrf_name=self.__parent_vrf.name)
 
@@ -77,7 +77,7 @@ class StaticRoute(PyaoscxModule):
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a Static Route table
             entry and fill the object with the incoming attributes
 
@@ -86,7 +86,7 @@ class StaticRoute(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch Static Routes")
 
         depth = depth or self.session.api.default_depth
@@ -97,7 +97,7 @@ class StaticRoute(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -116,15 +116,15 @@ class StaticRoute(PyaoscxModule):
                 uri, verify=False, params=payload, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
 
         data = json.loads(response.text)
         # Delete unwanted data
-        if 'static_nexthops' in data:
-            data.pop('static_nexthops')
+        if "static_nexthops" in data:
+            data.pop("static_nexthops")
 
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
@@ -133,17 +133,17 @@ class StaticRoute(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, 'config_attrs',
-                ['prefix', 'static_nexthops'])
+                self, data, "config_attrs",
+                ["prefix", "static_nexthops"])
 
         # Set original attributes
         self.__original_attributes = data
         # Remove ID
-        if 'prefix' in self.__original_attributes:
-            self.__original_attributes.pop('prefix')
+        if "prefix" in self.__original_attributes:
+            self.__original_attributes.pop("prefix")
         # Remove Static Nexthops
-        if 'static_nexthops' in self.__original_attributes:
-            self.__original_attributes.pop('static_nexthops')
+        if "static_nexthops" in self.__original_attributes:
+            self.__original_attributes.pop("static_nexthops")
 
         # Clean Static Nexthops settings
         if self.static_nexthops == []:
@@ -159,7 +159,7 @@ class StaticRoute(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session, parent_vrf):
-        '''
+        """
         Perform a GET call to retrieve all system Static Routes inside a VRF,
         and create a dictionary containing them
         :param cls: Object's class
@@ -168,22 +168,22 @@ class StaticRoute(PyaoscxModule):
         :param parent_vrf: parent Vrf object where vrf is stored
         :return: Dictionary containing Static Route IDs as keys and a Static
             Route objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch Static Routes")
 
-        base_uri = '{base_vrf_uri}/{vrf_name}/static_routes'.format(
+        base_uri = "{base_vrf_uri}/{vrf_name}/static_routes".format(
             base_vrf_uri=parent_vrf.base_uri,
             vrf_name=parent_vrf.name)
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -206,7 +206,7 @@ class StaticRoute(PyaoscxModule):
 
     @PyaoscxModule.connected
     def apply(self):
-        '''
+        """
         Main method used to either create a new or update an
         existing Static Route table entry.
         Checks whether the Static Route exists in the switch
@@ -216,7 +216,7 @@ class StaticRoute(PyaoscxModule):
         :return modified: Boolean, True if object was created or modified
             False otherwise
 
-        '''
+        """
         if not self.__parent_vrf.materialized:
             self.__parent_vrf.apply()
 
@@ -231,12 +231,12 @@ class StaticRoute(PyaoscxModule):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing Static Route table
             entry.
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise.
-        '''
+        """
         # Variable returned
         modified = False
 
@@ -262,7 +262,7 @@ class StaticRoute(PyaoscxModule):
                     data=post_data, proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -279,19 +279,19 @@ class StaticRoute(PyaoscxModule):
 
     @PyaoscxModule.connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new Static Route table entry
         Only returns if an exception is not raise
 
         :return: Boolean, True if entry was created
-        '''
+        """
         # Add 'address_family' as a config attribute and remove duplicates
         self.config_attrs.append("address_family")
         self.config_attrs = list(set(self.config_attrs))
 
         static_route_data = utils.get_attrs(self, self.config_attrs)
-        static_route_data['prefix'] = self.prefix
-        static_route_data['vrf'] = self.__parent_vrf.get_uri()
+        static_route_data["prefix"] = self.prefix
+        static_route_data["vrf"] = self.__parent_vrf.get_uri()
 
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
@@ -305,7 +305,7 @@ class StaticRoute(PyaoscxModule):
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -322,10 +322,10 @@ class StaticRoute(PyaoscxModule):
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete specified Static Route table entry.
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{prefix}".format(
             base_url=self.session.base_url,
@@ -338,7 +338,7 @@ class StaticRoute(PyaoscxModule):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -358,7 +358,7 @@ class StaticRoute(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, parent_vrf, response_data):
-        '''
+        """
         Create a StaticRoute object given a response_data related to the
             Static Route prefix object
         :param cls: Object's class
@@ -372,7 +372,7 @@ class StaticRoute(PyaoscxModule):
             or a
             string: "/rest/v10.04/system/vrfs/static_routes/prefix"
         :return: Static Route Object
-        '''
+        """
         static_route_arr = session.api.get_keys(
             response_data, StaticRoute.resource_uri_name)
         prefix = static_route_arr[0]
@@ -380,7 +380,7 @@ class StaticRoute(PyaoscxModule):
 
     @classmethod
     def from_uri(cls, session, parent_vrf, uri):
-        '''
+        """
         Create a StaticRoute object given a URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -389,10 +389,10 @@ class StaticRoute(PyaoscxModule):
         :param uri: a String with a URI
         :return index, static_route: tuple containing both the static_route
             object and the static_route's prefix.
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)static_routes/(?P<index>.+)')
-        index = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)static_routes/(?P<index>.+)")
+        index = index_pattern.match(uri).group("index")
 
         # Create StaticRoute object
         static_route_obj = StaticRoute(session, index, parent_vrf, uri=uri)
@@ -404,13 +404,13 @@ class StaticRoute(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific static route URI
         return: Object's URI
-        '''
+        """
 
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{prefix}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{prefix}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=self.base_uri,
                 prefix=self.reference_address
@@ -420,11 +420,11 @@ class StaticRoute(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     @property
@@ -453,7 +453,7 @@ class StaticRoute(PyaoscxModule):
                            distance=None,
                            nexthop_type=None,
                            bfd_enable=None):
-        '''
+        """
         Create a Static Nexthop, with a VRF and a Destination Address
         related to a Static Route.
 
@@ -471,7 +471,7 @@ class StaticRoute(PyaoscxModule):
             blackhole or reject route.
         :param bfd_enable: Boolean to enable BFD
         :return: StaticNexthop object
-        '''
+        """
 
         if distance is None:
             distance = 1
@@ -479,17 +479,17 @@ class StaticRoute(PyaoscxModule):
         next_hop_interface_obj = None
         if next_hop_interface is not None:
             next_hop_interface_obj = self.session.api.get_module(
-                self.session, 'Interface',
+                self.session, "Interface",
                 next_hop_interface)
 
         if nexthop_type is None:
-            nexthop_type = 'forward'
+            nexthop_type = "forward"
 
-        if nexthop_type == 'forward':
+        if nexthop_type == "forward":
             bfd_enable = False
 
         static_nexthop_obj = self.session.api.get_module(
-            self.session, 'StaticNexthop', 0,
+            self.session, "StaticNexthop", 0,
             parent_static_route=self,
         )
 
@@ -504,7 +504,7 @@ class StaticRoute(PyaoscxModule):
 
         finally:
             static_nexthop_obj = self.session.api.get_module(
-                self.session, 'StaticNexthop',
+                self.session, "StaticNexthop",
                 0,
                 parent_static_route=self,
                 ip_address=next_hop_ip_address,

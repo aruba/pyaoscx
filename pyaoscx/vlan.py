@@ -19,16 +19,16 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Vlan(PyaoscxModule):
-    '''
+    """
     Provide configuration management for VLANs on AOS-CX devices.
-    '''
+    """
 
-    base_uri = 'system/vlans'
-    resource_uri_name = 'vlans'
-    indices = ['id']
+    base_uri = "system/vlans"
+    resource_uri_name = "vlans"
+    indices = ["id"]
 
-    macs = ListDescriptor('macs')
-    static_macs = ListDescriptor('static_macs')
+    macs = ListDescriptor("macs")
+    static_macs = ListDescriptor("static_macs")
 
     def __init__(self, session, vlan_id, uri=None, **kwargs):
 
@@ -57,7 +57,7 @@ class Vlan(PyaoscxModule):
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a VLAN table entry and fill
         the object with the incoming attributes
 
@@ -66,7 +66,7 @@ class Vlan(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch VLANs")
 
         selector = selector or self.session.api.default_selector
@@ -74,8 +74,8 @@ class Vlan(PyaoscxModule):
         data = self._get_data(depth, selector)
 
         # Delete unwanted data
-        if 'macs' in data:
-            data.pop('macs')
+        if "macs" in data:
+            data.pop("macs")
 
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
@@ -83,34 +83,34 @@ class Vlan(PyaoscxModule):
         # Determines if the VLAN is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, 'config_attrs', ['id', 'macs'])
+            utils.set_config_attrs(self, data, "config_attrs", ["id", "macs"])
 
         # Set original attributes
         self._original_attributes = data
         # Remove ID
-        if 'id' in self._original_attributes:
-            self._original_attributes.pop('id')
+        if "id" in self._original_attributes:
+            self._original_attributes.pop("id")
         # Remove macs
-        if 'macs' in self._original_attributes:
-            self._original_attributes.pop('macs')
+        if "macs" in self._original_attributes:
+            self._original_attributes.pop("macs")
 
         # Set all ACLs
         from pyaoscx.acl import ACL
-        if hasattr(self, 'aclmac_in_cfg') and self.aclmac_in_cfg is not None:
+        if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclmac_in_cfg = acl
 
-        if hasattr(self, 'aclv4_in_cfg') and self.aclv4_in_cfg is not None:
+        if hasattr(self, "aclv4_in_cfg") and self.aclv4_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_in_cfg = acl
 
-        if hasattr(self, 'aclv6_in_cfg') and self.aclv6_in_cfg is not None:
+        if hasattr(self, "aclv6_in_cfg") and self.aclv6_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_in_cfg)
             # Materialize Acl object
@@ -134,7 +134,7 @@ class Vlan(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session):
-        '''
+        """
         Perform a GET call to retrieve all system VLAN and create a dictionary
         containing each respective VLAN
         :param cls: Object's class
@@ -142,18 +142,18 @@ class Vlan(PyaoscxModule):
             connection to the device
         :return: Dictionary containing VLAN IDs as keys and a Vlan object as
             value
-        '''
+        """
 
         logging.info("Retrieving the switch VLANs")
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=Vlan.base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -174,7 +174,7 @@ class Vlan(PyaoscxModule):
 
     @PyaoscxModule.connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update an existing
         VLAN table entry.
         Checks whether the VLAN exists in the switch
@@ -183,7 +183,7 @@ class Vlan(PyaoscxModule):
 
         :return modified: Boolean, True if object was created or modified
             False otherwise
-        '''
+        """
         modified = False
         if self.materialized:
             modified = self.update()
@@ -195,12 +195,12 @@ class Vlan(PyaoscxModule):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing VLAN table entry
 
         :return modified: True if Object was modified and a PUT request was
             made.
-        '''
+        """
         vlan_data = utils.get_attrs(self, self.config_attrs)
 
         # Set all ACLs
@@ -220,12 +220,12 @@ class Vlan(PyaoscxModule):
 
     @PyaoscxModule.connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new VLAN using the object's attributes
         as POST body. Exception is raised if object is unable to be created
 
         :return modified: Boolean, True if entry was created
-        '''
+        """
 
         vlan_data = {}
 
@@ -233,16 +233,16 @@ class Vlan(PyaoscxModule):
         vlan_data = utils.get_attrs(self, self.config_attrs)
         if isinstance(self.id, str):
             self.id = int(self.id)
-        vlan_data['id'] = self.id
+        vlan_data["id"] = self.id
 
         return self._post_data(vlan_data)
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete VLAN table entry.
 
-        '''
+        """
 
         self._send_data(self.path, None, "DELETE", "Delete")
         # Delete object attributes
@@ -250,7 +250,7 @@ class Vlan(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, response_data):
-        '''
+        """
         Create a Vlan object given a response_data related to the Vlan object
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -262,7 +262,7 @@ class Vlan(PyaoscxModule):
             or a
             string: "/rest/v1/system/vlans/1"
         :return: Vlan Object
-        '''
+        """
         vlan_id_arr = session.api.get_keys(
             response_data, Vlan.resource_uri_name)
         vlan_id = vlan_id_arr[0]
@@ -270,7 +270,7 @@ class Vlan(PyaoscxModule):
 
     @classmethod
     def from_uri(cls, session, uri):
-        '''
+        """
         Create a Vlan object given a VLAN URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -278,10 +278,10 @@ class Vlan(PyaoscxModule):
         :param uri: a String with a URI
 
         :return vlan_id, vlan: tuple with the Vlan object its ID
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)vlans/(?P<index>.+)')
-        index_str = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)vlans/(?P<index>.+)")
+        index_str = index_pattern.match(uri).group("index")
         vlan_id = int(index_str)
         # Create Vlan object
         vlan_obj = Vlan(session, vlan_id, uri=uri)
@@ -290,7 +290,7 @@ class Vlan(PyaoscxModule):
 
     @classmethod
     def get_facts(cls, session):
-        '''
+        """
         Modify this to Perform a GET call to retrieve all VLANs and their
             respective data.
         :param cls: Class reference.
@@ -298,7 +298,7 @@ class Vlan(PyaoscxModule):
             connection to the device.
         :return facts: Dictionary containing VLAN IDs as keys and Vlan objects
             as values.
-        '''
+        """
         # Log
         logging.info("Retrieving switch VLANs facts")
 
@@ -306,7 +306,7 @@ class Vlan(PyaoscxModule):
         vlan_depth = session.api.default_facts_depth
 
         # Build URI
-        uri = '{base_url}{class_uri}?depth={depth}'.format(
+        uri = "{base_url}{class_uri}?depth={depth}".format(
             base_url=session.base_url,
             class_uri=Vlan.base_uri,
             depth=vlan_depth
@@ -321,7 +321,7 @@ class Vlan(PyaoscxModule):
             )
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(
                 response.text,
@@ -333,8 +333,8 @@ class Vlan(PyaoscxModule):
         # Delete internal VLANs
         internal_vlan_list = []
         for vlan in facts.keys():
-            if 'type' in facts[vlan].keys():
-                if facts[vlan]['type'] == 'internal':
+            if "type" in facts[vlan].keys():
+                if facts[vlan]["type"] == "internal":
                     internal_vlan_list.append(vlan)
 
         for vlan in internal_vlan_list:
@@ -352,13 +352,13 @@ class Vlan(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific VLAN URI
         return: Object's URI
-        '''
+        """
 
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{id}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{id}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=Vlan.base_uri,
                 id=self.id
@@ -368,11 +368,11 @@ class Vlan(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     @property
@@ -433,7 +433,7 @@ class Vlan(PyaoscxModule):
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, 'ACL', index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type)
 
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
@@ -466,7 +466,7 @@ class Vlan(PyaoscxModule):
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, 'ACL', index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type)
 
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
@@ -548,7 +548,7 @@ class Vlan(PyaoscxModule):
         """
 
         mac_obj = self.session.api.get_module(
-            self.session, 'Mac',
+            self.session, "Mac",
             from_id,
             mac_addr=mac_address,
             parent_vlan=self
@@ -573,12 +573,12 @@ class Vlan(PyaoscxModule):
         if isinstance(port, str):
             # Make Interface into an object
             port = self.session.api.get_module(
-                self.session, 'Interface', port)
+                self.session, "Interface", port)
             # Materialize interface to ensure its existence
             port.get()
 
         static_mac_obj = self.session.api.get_module(
-            self.session, 'StaticMac',
+            self.session, "StaticMac",
             mac_address,
             parent_vlan=self,
             port=port

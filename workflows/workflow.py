@@ -4,10 +4,10 @@ from pyaoscx.vlan import Vlan
 from pyaoscx.interface import Interface
 
 # There are two approaches to workflows, both using the session.
-version = '10.04'
-switch_ip = '172.25.0.2'
+version = "10.04"
+switch_ip = "172.25.0.2"
 s = Session(switch_ip, version)
-s.open('admin', 'admin')
+s.open("admin", "admin")
 
 # Try block is used so that session closes even on error.
 try:
@@ -62,7 +62,7 @@ try:
     # More complex example using the OPEN GRANULATED APPROACH
     # Create an Interface object
 
-    lag = Interface(s, 'lag1')
+    lag = Interface(s, "lag1")
     lag.apply()
 
     # Create a Vlan object
@@ -73,10 +73,10 @@ try:
     # The information is then added to the object as attributes.
     vlan_1.get()
     # Interfaces/Ports added to LAG
-    port_1_1_11 = Interface(s, '1/1/11')
+    port_1_1_11 = Interface(s, "1/1/11")
     port_1_1_11.get()
     # Make changes to configure LAG as L2
-    lag.admin = 'down'
+    lag.admin = "down"
     lag.routing = False
     lag.vlan_trunks = [vlan_1]
     lag.lacp = "passive"
@@ -98,10 +98,10 @@ try:
     # PLUS USING IMPERATIVE METHODS
 
     # Create the Interface object
-    lag2 = factory.interface('lag2')
+    lag2 = factory.interface("lag2")
     modified = lag2.configure_l2(
         description="Created using imperative method",
-        admin='up',
+        admin="up",
         vlan_mode="native-untagged",
         vlan_tag=1,
         trunk_allowed_all=True,
@@ -109,7 +109,7 @@ try:
     # If modified is True, a PUT request was done and object was modified
 
 except Exception as error:
-    print('Ran into exception: {}. Closing session.'.format(error))
+    print("Ran into exception: {}. Closing session.".format(error))
 
 finally:
     # At the end, the session MUST be closed

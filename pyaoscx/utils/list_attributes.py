@@ -5,11 +5,11 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 
 
 class ListDescriptor(list):
-    '''
+    """
     Attribute descriptor class to keep track of a list that contains
         pyaoscx_module objects simulating a Reference to a resource.
     If the list changes, then every pyaoscx_module object has to be changed.
-    '''
+    """
 
     def __init__(self, name,):
         self.name = name

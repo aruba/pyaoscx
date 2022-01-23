@@ -23,8 +23,8 @@ class PoEInterface(Interface):
     Provide configuration management for PoE Interface on AOS-CX devices.
     """
 
-    resource_uri_name = 'poe_interface'
-    indices = ['name']
+    resource_uri_name = "poe_interface"
+    indices = ["name"]
 
     def __init__(self, session, parent_interface, uri=None, **kwargs):
         """
@@ -80,7 +80,7 @@ class PoEInterface(Interface):
             raise ValueError("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise ValueError(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -118,7 +118,7 @@ class PoEInterface(Interface):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs
             utils.set_config_attrs(
-                self, data, 'config_attrs')
+                self, data, "config_attrs")
 
         # Set original attributes
         self.__original_attributes = data
@@ -267,14 +267,14 @@ class PoEInterface(Interface):
         :return: Returns True if there is not an exception raised
         """
 
-        valid_criticalities = ['low', 'high', 'critical']
+        valid_criticalities = ["low", "high", "critical"]
         if level not in valid_criticalities:
             raise ValueError(
                 "ERROR: Criticality level must be one of {}".format(
                     valid_criticalities))
 
         # Set power level
-        self.config['priority'] = level
+        self.config["priority"] = level
 
         # Update changes
         return self.apply()
@@ -291,7 +291,7 @@ class PoEInterface(Interface):
         """
 
         # Switches the state to a coherent value for the API documentation
-        self.config['admin_disable'] = not state
+        self.config["admin_disable"] = not state
 
         # Update changes
         return self.apply()

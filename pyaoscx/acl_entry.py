@@ -14,12 +14,12 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class AclEntry(PyaoscxModule):
-    '''
+    """
     Provide configuration management for ACL Entry on AOS-CX devices.
-    '''
+    """
 
-    indices = ['sequence_number']
-    resource_uri_name = 'cfg_aces'
+    indices = ["sequence_number"]
+    resource_uri_name = "cfg_aces"
 
     protocol_dict = {
         "ah": 51,
@@ -110,16 +110,16 @@ class AclEntry(PyaoscxModule):
         self.__modified = False
 
     def __set_acl(self, parent_acl):
-        '''
+        """
         Set parent Acl object as an attribute for the AclEntry object
         :param parent_acl: a Acl object
-        '''
+        """
 
         # Set parent acl
         self.__parent_acl = parent_acl
 
         # Set URI
-        self.base_uri = '{base_acl_uri}/{id1}{separator}{id2}/cfg_aces'.format(
+        self.base_uri = "{base_acl_uri}/{id1}{separator}{id2}/cfg_aces".format(
             base_acl_uri=self.__parent_acl.base_uri,
             id1=self.__parent_acl.name,
             separator=self.session.api.compound_index_separator,
@@ -136,7 +136,7 @@ class AclEntry(PyaoscxModule):
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for an ACL Entry table entry and
         fill the object with the incoming attributes
 
@@ -145,7 +145,7 @@ class AclEntry(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch ACL Entries")
 
         depth = depth or self.session.api.default_depth
@@ -156,7 +156,7 @@ class AclEntry(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -174,7 +174,7 @@ class AclEntry(PyaoscxModule):
                                           proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -187,14 +187,14 @@ class AclEntry(PyaoscxModule):
         # Determines if the ACL Entry is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, 'config_attrs',
-                                   ['sequence_number'])
+            utils.set_config_attrs(self, data, "config_attrs",
+                                   ["sequence_number"])
 
         # Set original attributes
         self.__original_attributes = data
         # Remove ID
-        if 'sequence_number' in self.__original_attributes:
-            self.__original_attributes.pop('sequence_number')
+        if "sequence_number" in self.__original_attributes:
+            self.__original_attributes.pop("sequence_number")
 
         # Sets object as materialized
         # Information is loaded from the Device
@@ -203,7 +203,7 @@ class AclEntry(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session, parent_acl):
-        '''
+        """
         Perform a GET call to retrieve all system ACL Entries inside an ACL,
         and create a dictionary containing them
         :param cls: Object's class
@@ -212,23 +212,23 @@ class AclEntry(PyaoscxModule):
         :param parent_acl: parent Acl object where ACL Entry is stored
         :return acl_entry_dict: Dictionary containing ACL Entry IDs as keys
             and an ACL Entry objects as values
-        '''
+        """
 
         logging.info("Retrieving all ACL entries within switch for ACL")
         # Set URI
-        base_uri = '{base_acl_uri}/{id1}{separator}{id2}/cfg_aces'.format(
+        base_uri = "{base_acl_uri}/{id1}{separator}{id2}/cfg_aces".format(
             base_acl_uri=parent_acl.base_uri,
             id1=parent_acl.name,
             separator=session.api.compound_index_separator,
             id2=parent_acl.list_type)
 
-        uri = '{base_url}{class_uri}'.format(base_url=session.base_url,
+        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
                                              class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -303,12 +303,12 @@ class AclEntry(PyaoscxModule):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing ACL Entry
 
         :return modified: True if Object was modified and a PUT request
             was made. False otherwise
-        '''
+        """
         # Variable returned
         modified = False
 
@@ -366,15 +366,14 @@ class AclEntry(PyaoscxModule):
 
     @PyaoscxModule.connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new ACL Entry.
         Only returns if an exception is not raise
 
         :return modified: Boolean, True if entry was created
-
-        '''
+        """
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
-        acl_entry_data['sequence_number'] = self.sequence_number
+        acl_entry_data["sequence_number"] = self.sequence_number
 
         uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
                                              class_uri=self.base_uri)
@@ -382,13 +381,13 @@ class AclEntry(PyaoscxModule):
         # Try to get protocol number
         try:
             if isinstance(self.protocol, str):
-                if self.protocol == 'any' or self.protocol == '':
-                    acl_entry_data.pop('protocol')
+                if self.protocol == "any" or self.protocol == "":
+                    acl_entry_data.pop("protocol")
                 else:
                     protocol_num = self.protocol_dict[self.protocol]
-                    acl_entry_data['protocol'] = protocol_num
+                    acl_entry_data["protocol"] = protocol_num
             elif isinstance(self.protocol, int):
-                acl_entry_data['protocol'] = self.protocol
+                acl_entry_data["protocol"] = self.protocol
         except Exception:
             pass
         post_data = json.dumps(acl_entry_data)
@@ -400,7 +399,7 @@ class AclEntry(PyaoscxModule):
                                            proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -419,10 +418,10 @@ class AclEntry(PyaoscxModule):
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete ACL Entry from parent ACL on the switch.
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{sequence_number}".format(
             base_url=self.session.base_url,
@@ -435,7 +434,7 @@ class AclEntry(PyaoscxModule):
                                              proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -455,7 +454,7 @@ class AclEntry(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, parent_acl, response_data):
-        '''
+        """
         Create a AclEntry object given a response_data related to the ACL Entry
             sequence_number object
         :param cls: Class calling the method
@@ -470,7 +469,7 @@ class AclEntry(PyaoscxModule):
             or a
             string: "/rest/v10.04/system/acls/cfg_aces/sequence_number"
         :return: AclEntry object
-        '''
+        """
         acl_entry_arr = session.api.get_keys(
             response_data, AclEntry.resource_uri_name)
         sequence_number = acl_entry_arr[0]
@@ -478,7 +477,7 @@ class AclEntry(PyaoscxModule):
 
     @classmethod
     def from_uri(cls, session, parent_acl, uri):
-        '''
+        """
         Create a AclEntry object given a URI
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -487,10 +486,10 @@ class AclEntry(PyaoscxModule):
 
         :return index, acl_entry_obj: tuple containing both the AclEntry
             object and the acl_entry's sequence_number
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)cfg_aces/(?P<index>.+)')
-        index = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)cfg_aces/(?P<index>.+)")
+        index = index_pattern.match(uri).group("index")
 
         # Create AclEntry object
         acl_entry_obj = AclEntry(session, index, parent_acl, uri=uri)
@@ -502,14 +501,14 @@ class AclEntry(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific ACL Entry URI
         return: AclEntry object's URI
-        '''
+        """
 
         if self._uri is None:
             self._uri = (
-                '{resource_prefix}{class_uri}/{sequence_number}'.format(
+                "{resource_prefix}{class_uri}/{sequence_number}".format(
                     resource_prefix=self.session.resource_prefix,
                     class_uri=self.base_uri,
                     sequence_number=self.sequence_number))
@@ -518,11 +517,11 @@ class AclEntry(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: AclEntry object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     @property

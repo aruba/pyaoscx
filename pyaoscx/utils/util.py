@@ -11,7 +11,7 @@ from pyaoscx.exceptions.parameter_error import ParameterError
 
 
 def create_attrs(obj, data_dictionary):
-    '''
+    """
     Given a dictionary object creates class attributes.
     The methods implements setattr() which sets the value of the specified
     attribute of the specified object.
@@ -21,7 +21,7 @@ def create_attrs(obj, data_dictionary):
 
     :param data_dictionary: dictionary containing the keys being used as
         attributes
-    '''
+    """
     import copy
     # Used to create a deep copy of the dictionary
     dictionary_var = copy.deepcopy(data_dictionary)
@@ -29,17 +29,17 @@ def create_attrs(obj, data_dictionary):
     # K is the argument and V is the value of the given argument
     for k, v in dictionary_var.items():
         # In case a key has '-' inside it's name.
-        k = k.replace('-', '_')
+        k = k.replace("-", "_")
         obj.__dict__[k] = v
 
 
 def get_dict_keys(dict):
-    '''
+    """
     Function used to get a list of all the keys of the respective dictionary
 
     :param dict: Dictionary object used to obtain the keys
     :return: List containing the keys of the given dictionary
-    '''
+    """
 
     list = []
     for key in dict.keys():
@@ -49,7 +49,7 @@ def get_dict_keys(dict):
 
 
 def check_args(obj, **kwargs):
-    '''
+    """
     Given a object determines if the coming arguments are not already inside
         the object
     If attribute is inside the config_attrs, it is ignored
@@ -58,7 +58,7 @@ def check_args(obj, **kwargs):
     :param **kwargs list of arguments used to create the attributes
 
     :return correct: True if all arguments are correct, False otherwise
-    '''
+    """
 
     arguments = get_dict_keys(kwargs)
     correct = True
@@ -69,11 +69,11 @@ def check_args(obj, **kwargs):
 
 
 def delete_attrs(obj, attr_list):
-    '''
+    """
     Given an object and a list of strings, delete attributes with the same name
         as the one inside the list
     :param attr_list: List of attribute names that will be deleted from object
-    '''
+    """
 
     for attr in attr_list:
         if hasattr(obj, attr):
@@ -81,14 +81,14 @@ def delete_attrs(obj, attr_list):
 
 
 def get_attrs(obj, config_attrs):
-    '''
+    """
     Given an object obtains the attributes different to None
     :param obj: object containing the attributes
     :param config_attrs: a list of all the configurable attributes within the
         object.
     :return attr_data_dict: A dictionary containing all the attributes of the
         given object that have a value different to None.
-    '''
+    """
     attr_data_dict = {}
     for attr_name in config_attrs:
         attr_data_dict[attr_name] = getattr(obj, attr_name)
@@ -96,7 +96,7 @@ def get_attrs(obj, config_attrs):
 
 
 def set_creation_attrs(obj, **kwargs):
-    '''
+    """
     Used when instantiating the class with new attributes.
     Sets the configuration attributes list, for proper management of
     attributes related to configuration.
@@ -104,7 +104,7 @@ def set_creation_attrs(obj, **kwargs):
     :param obj: Python object in which attributes are being set
     :param **kwargs: a dictionary containing the possible future arguments for
         the object
-    '''
+    """
 
     if check_args(obj, **kwargs):
         obj.__dict__.update(kwargs)
@@ -115,9 +115,9 @@ def set_creation_attrs(obj, **kwargs):
         )
 
 
-def set_config_attrs(obj, config_dict, config_attrs='config_attrs',
+def set_config_attrs(obj, config_dict, config_attrs="config_attrs",
                      unwanted_attrs=[]):
-    '''
+    """
     Add a list of strings inside the object to represent each attribute for
         config purposes.
     :param config_dict: Dictionary where each key represents an attribute
@@ -125,7 +125,7 @@ def set_config_attrs(obj, config_dict, config_attrs='config_attrs',
         to a list.
     :param unwanted_attrs: Attributes that should be deleted, since they can't
         be modified.
-    '''
+    """
     # Set new configuration attributes list
     new_config_attrs = get_dict_keys(config_dict)
 
@@ -176,8 +176,8 @@ def file_upload(session, file_path, complete_uri):
 
     :return True if successful
     """
-    with open(file_path, 'rb') as file:
-        file_param = {'fileupload': file}
+    with open(file_path, "rb") as file:
+        file_param = {"fileupload": file}
         try:
             # User session login
             # Perform Login
@@ -205,7 +205,7 @@ def file_upload(session, file_path, complete_uri):
                 cookies=response_login.cookies)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if response_file_upload.status_code != 200:
             raise GenericOperationError(
@@ -225,7 +225,7 @@ def get_ip_version(ip):
     """
     try:
         ip_net = IPNetwork(ip)
-        return 'ipv{}'.format(ip_net.version)
+        return "ipv{}".format(ip_net.version)
     except ValueError:
         msg = "Invalid IP Address: {}".format(ip)
         raise ParameterError(msg)

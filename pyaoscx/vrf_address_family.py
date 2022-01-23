@@ -14,13 +14,13 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class VrfAddressFamily(PyaoscxModule):
-    '''
+    """
     Provide configuration management for Address Family settings on AOS-CX
         devices.
-    '''
+    """
 
-    indices = ['address_family']
-    resource_uri_name = 'vrf_address_families'
+    indices = ["address_family"]
+    resource_uri_name = "vrf_address_families"
 
     def __init__(self, session, address_family, parent_vrf, uri=None,
                  **kwargs):
@@ -44,16 +44,16 @@ class VrfAddressFamily(PyaoscxModule):
         self.__modified = False
 
     def __set_vrf(self, parent_vrf):
-        '''
+        """
         Set parent VRF as an attribute for the VrfAddressFamily object
         :param parent_vrf: a Vrf object
-        '''
+        """
 
         # Set parent_vrf
         self.__parent_vrf = parent_vrf
 
         # Set URI
-        self.base_uri = '{0}/{1}/vrf_address_families'.format(
+        self.base_uri = "{0}/{1}/vrf_address_families".format(
             self.__parent_vrf.base_uri, self.__parent_vrf.name
         )
 
@@ -68,7 +68,7 @@ class VrfAddressFamily(PyaoscxModule):
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a VRF Address Family table
         entry and fill the object with the incoming attributes
 
@@ -77,7 +77,7 @@ class VrfAddressFamily(PyaoscxModule):
         :param selector: Alphanumeric option to select specific information to
             return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving the switch VRF Address families")
 
         depth = depth or self.session.api.default_depth
@@ -88,7 +88,7 @@ class VrfAddressFamily(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -108,7 +108,7 @@ class VrfAddressFamily(PyaoscxModule):
                 uri, verify=False, params=payload, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -122,14 +122,14 @@ class VrfAddressFamily(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, 'config_attrs', ['address_family'])
+                self, data, "config_attrs", ["address_family"])
 
         # Set original attributes
         self.__original_attributes = data
 
         # Remove ID
-        if 'address_family' in self.__original_attributes:
-            self.__original_attributes.pop('address_family')
+        if "address_family" in self.__original_attributes:
+            self.__original_attributes.pop("address_family")
 
         # Sets object as materialized
         # Information is loaded from the Device
@@ -138,7 +138,7 @@ class VrfAddressFamily(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session, parent_vrf):
-        '''
+        """
         Perform a GET call to retrieve all system VRF Address Families inside a
         VRF, and create a dictionary containing them
         :param cls: Object's class
@@ -147,22 +147,22 @@ class VrfAddressFamily(PyaoscxModule):
         :param parent_vrf: parent Vrf object where VRF Address Family is stored
         :return: Dictionary containing VRF Address Family IDs as keys and a
             VrfAddressFamily objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch VRF Address Family")
 
-        base_uri = '{base_vrf_uri}/{vrf_name}/vrf_address_families'.format(
+        base_uri = "{base_vrf_uri}/{vrf_name}/vrf_address_families".format(
             base_vrf_uri=parent_vrf.base_uri,
             vrf_name=parent_vrf.name)
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -186,7 +186,7 @@ class VrfAddressFamily(PyaoscxModule):
 
     @PyaoscxModule.connected
     def apply(self):
-        '''
+        """
         Main method used to either create or update
         an existing VrfAddressFamily object
         Checks whether the VRF Address Family exists in the switch
@@ -195,7 +195,7 @@ class VrfAddressFamily(PyaoscxModule):
 
         :return modified: Boolean, True if object was created or modified
             False otherwise
-        '''
+        """
         if not self.__parent_vrf.materialized:
             self.__parent_vrf.apply()
 
@@ -211,12 +211,12 @@ class VrfAddressFamily(PyaoscxModule):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing VRF Address Family
             table entry.
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise.
-        '''
+        """
         vrf_address_family_data = utils.get_attrs(self, self.config_attrs)
 
         uri = "{base_url}{class_uri}/{address_family}".format(
@@ -242,7 +242,7 @@ class VrfAddressFamily(PyaoscxModule):
                 )
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -258,13 +258,13 @@ class VrfAddressFamily(PyaoscxModule):
 
     @PyaoscxModule.connected
     def create(self):
-        '''
+        """
         Perform a POST call to create a new VRF Address Family table entry
         Only returns if an exception is not raise
         return: True if entry was created
-        '''
+        """
         vrf_address_family_data = utils.get_attrs(self, self.config_attrs)
-        vrf_address_family_data['address_family'] = self.address_family
+        vrf_address_family_data["address_family"] = self.address_family
 
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
@@ -277,7 +277,7 @@ class VrfAddressFamily(PyaoscxModule):
                 uri, verify=False, data=post_data, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -291,10 +291,10 @@ class VrfAddressFamily(PyaoscxModule):
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete VRF Address Family table entry
 
-        '''
+        """
 
         uri = "{base_url}{class_uri}/{address_family}".format(
             base_url=self.session.base_url,
@@ -307,7 +307,7 @@ class VrfAddressFamily(PyaoscxModule):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('DELETE', e)
+            raise ResponseError("DELETE", e)
 
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
@@ -324,7 +324,7 @@ class VrfAddressFamily(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, parent_vrf, response_data):
-        '''
+        """
         Create a VrfAddressFamily object given a response_data related to
             the VRF Address Family's address_family
         :param cls: Object's class
@@ -339,7 +339,7 @@ class VrfAddressFamily(PyaoscxModule):
             with URL: "/rest/v10.04/system/vrfs/vrf_address_families/addr_fam"
             or a string with just the URL
         :return: VrfAddressFamily object
-        '''
+        """
         vrf_address_family_arr = session.api.get_keys(
             response_data, VrfAddressFamily.resource_uri_name)
         address_family = vrf_address_family_arr[0]
@@ -347,7 +347,7 @@ class VrfAddressFamily(PyaoscxModule):
 
     @classmethod
     def from_uri(cls, session, parent_vrf, uri):
-        '''
+        """
         Create a VrfAddressFamily object given a URI and a specified parent VRF
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -357,10 +357,10 @@ class VrfAddressFamily(PyaoscxModule):
 
         :return index, vrf_address_family_obj: tuple containing both the VRF
             Address Family object and the VRF Address Family's address_family
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)vrf_address_families/(?P<index>.+)')
-        index = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)vrf_address_families/(?P<index>.+)")
+        index = index_pattern.match(uri).group("index")
         # Create VrfAddressFamily object
         vrf_address_family_obj = VrfAddressFamily(
             session, index, parent_vrf, uri=uri)
@@ -372,13 +372,13 @@ class VrfAddressFamily(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific VRF Address Family URI
         return: Object's URI
-        '''
+        """
 
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{address_family}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{address_family}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=self.base_uri,
                 address_family=self.address_family
@@ -388,11 +388,11 @@ class VrfAddressFamily(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
         other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     @property

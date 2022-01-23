@@ -81,7 +81,7 @@ class Qos(PyaoscxModule):
         utils.create_attrs(self, data)
 
         if selector in self.session.api.configurable_selectors:
-            utils.set_config_attrs(self, data, 'config_attrs')
+            utils.set_config_attrs(self, data, "config_attrs")
         # Set original attributes
         self._original_attributes = data
 

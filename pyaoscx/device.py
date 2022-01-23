@@ -18,10 +18,10 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Device(PyaoscxFactory, metaclass=Singleton):
-    '''
+    """
     Represents a Device and all of its attributes. Keeping all the important
     information inside one class.
-    '''
+    """
 
     base_uri = "system"
 
@@ -37,12 +37,12 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
     @PyaoscxModule.connected
     def get(self):
-        '''
+        """
         Perform a GET call to retrieve device attributes
         After data from response, Device class attributes
         are generated using create_attrs()
 
-        '''
+        """
         logging.info("Retrieving the switch attributes and capabilities")
 
         non_configurable_attrs = [
@@ -71,7 +71,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         # Concatenate both config and non-config attrs without duplicates
         all_attributes = list(set(non_configurable_attrs + configurable_attrs))
 
-        attributes_list = ','.join(all_attributes)
+        attributes_list = ",".join(all_attributes)
         uri = "system?attributes={}&depth={}".format(
             attributes_list,
             self.session.api.default_depth
@@ -115,25 +115,25 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
     @PyaoscxModule.connected
     def get_subsystems(self):
-        '''
+        """
          Perform GET call to retrieve subsystem attributes and create a
              dictionary containing them
-        '''
+        """
         # Log
         logging.info(
             "Retrieving the switch subsystem attributes and capabilities")
 
         # Attribute list
         attributes = [
-            'product_info',
-            'power_supplies',
-            'interfaces',
-            'fans',
-            'resource_utilization'
+            "product_info",
+            "power_supplies",
+            "interfaces",
+            "fans",
+            "resource_utilization"
         ]
 
         # Format attribute list by joining every element with a comma
-        attributes_list = ','.join(attributes)
+        attributes_list = ",".join(attributes)
 
         # Build URI
         uri = "{}system/subsystems?attributes={}&depth={}".format(
@@ -146,24 +146,24 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
 
         # Load into json format
         data = json.loads(response.text)
-        data_subsystems = {'subsystems': data}
+        data_subsystems = {"subsystems": data}
 
         # Create class attributes using util.create_attrs
         utils.create_attrs(self, data_subsystems)
 
     @PyaoscxModule.connected
     def get_firmware_version(self):
-        '''
+        """
         Perform a GET call to retrieve device firmware version
         :return: firmware_version: The firmware version
-        '''
+        """
 
         uri = "{}firmware".format(self.session.base_url)
 
@@ -172,7 +172,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 uri, verify=False, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -225,15 +225,15 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     # IMPERATIVE FUNCTIONS
     ####################################################################
 
-    def update_banner(self, banner_info, banner_type='banner'):
-        '''
+    def update_banner(self, banner_info, banner_type="banner"):
+        """
         Perform a PUT request to modify a Device's Banner
         :param banner_info: String to be configured as the banner.
         :param banner_type: Type of banner being configured on the switch.
             Either banner or banner_exec
         :return modified: Returns True if Banner was modified.
             False otherwise
-        '''
+        """
         modified = False
 
         logging.info("Setting Banner")
@@ -256,7 +256,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 params=payload)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -265,17 +265,17 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         config_data = json.loads(response.text)
 
         # If Banner type does not exist
-        if banner_type not in config_data['other_config']:
+        if banner_type not in config_data["other_config"]:
             # Create Banner type
-            config_data['other_config'][banner_type] = ""
+            config_data["other_config"][banner_type] = ""
 
         # Verify data is different
-        if config_data['other_config'][banner_type] == banner_info:
+        if config_data["other_config"][banner_type] == banner_info:
             modified = False
 
         else:
             # Modify Banner
-            config_data['other_config'][banner_type] = banner_info
+            config_data["other_config"][banner_type] = banner_info
 
             # UPDATE Banner
             put_uri = "{base_url}{class_uri}".format(
@@ -293,7 +293,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                     proxies=self.session.proxy
                 )
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -305,14 +305,14 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
         return modified
 
-    def delete_banner(self, banner_type='banner'):
-        '''
+    def delete_banner(self, banner_type="banner"):
+        """
         Perform a DELETE request to delete a device's Banner
         :param banner_type: Type of banner being removed on the switch.
             Either banner or banner_exec
         :return modified: Returns True if Banner was modified.
             False otherwise
-        '''
+        """
         logging.info("Removing Banner")
         depth = self.session.api.default_depth
 
@@ -333,7 +333,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 params=payload)
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -342,12 +342,12 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         config_data = json.loads(response.text)
 
         # If Banner type does not exist
-        if banner_type not in config_data['other_config']:
+        if banner_type not in config_data["other_config"]:
             modified = False
 
         else:
             # Delete Banner
-            config_data['other_config'].pop(banner_type)
+            config_data["other_config"].pop(banner_type)
 
             # UPDATE Banner
             uri = "{base_url}{class_uri}".format(
@@ -365,7 +365,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                     proxies=self.session.proxy
                 )
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -376,20 +376,20 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
         return modified
 
-    def boot_firmware(self, partition_name='primary'):
-        '''
+    def boot_firmware(self, partition_name="primary"):
+        """
         Perform a POST request to Boot the AOS-CX switch with image present
             to the specified partition
         :param partition_name: Name of the partition for device to boot to.
         :return bool: True if success
-        '''
+        """
         # Lower case for partition name
         partition_name = partition_name.lower()
-        if partition_name not in ['primary', 'secondary']:
-            raise VerificationError('Boot Firmware', 'Bad partition name')
+        if partition_name not in ["primary", "secondary"]:
+            raise VerificationError("Boot Firmware", "Bad partition name")
 
         success = False
-        uri = '{base_url}boot?image={part}'.format(
+        uri = "{base_url}boot?image={part}".format(
             base_url=self.session.base_url,
             part=partition_name)
 
@@ -399,7 +399,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         success = True
 
@@ -408,8 +408,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
     def upload_firmware_http(self, remote_firmware_file_path,
                              vrf,
-                             partition_name='primary'):
-        '''
+                             partition_name="primary"):
+        """
         Perform a PUT request to upload a firmware image given
         a http_request
 
@@ -421,7 +421,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         :param partition_name: Name of the partition for the
             image to be uploaded to.
         :return bool: True if success
-        '''
+        """
         http_path = remote_firmware_file_path
         unsupported_versions = [
             "10.00",
@@ -433,14 +433,14 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         for version in unsupported_versions:
             if version in self.firmware_version:
                 raise VerificationError(
-                    'Upload Firmware through HTTPs',
+                    "Upload Firmware through HTTPs",
                     "Minimum supported firmware version is 10.04 for" +
                     " remote firmware upload, your version is {firmware}"
                     .format(firmware=self.firmware_version))
         # Verify VRF
         if vrf is None:
             raise VerificationError(
-                'VRF',
+                "VRF",
                 "VRF needs to be provided in order" +
                 " to upload firmware from HTTP server")
         http_path_encoded = quote_plus(http_path)
@@ -460,7 +460,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                 proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('PUT', e)
+            raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
             raise GenericOperationError(
@@ -469,9 +469,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         # True if successful
         return True
 
-    def upload_firmware_local(self, partition_name='primary',
+    def upload_firmware_local(self, partition_name="primary",
                               firmware_file_path=None):
-        '''
+        """
         Perform a POST request to upload a firmware image from a local file
 
         :param partition_name: Name of the partition for the
@@ -479,9 +479,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         :param firmware_file_path: File name and path for local file uploading
             firmware image
         :return success: True if success
-        '''
+        """
 
-        uri = '{base_url}firmware?image={part}'.format(
+        uri = "{base_url}firmware?image={part}".format(
             base_url=self.session.base_url,
             part=partition_name)
 
@@ -494,7 +494,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                         firmware_file_path=None,
                         remote_firmware_file_path=None,
                         vrf=None):
-        '''
+        """
         Upload a firmware image from a local file OR from a remote location
 
         :param partition_name: Name of the partition for the
@@ -509,10 +509,10 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         :param vrf: VRF to be used to contact HTTP server, required if
             remote_firmware_file_path is provided
         :return bool: True if success
-        '''
+        """
         result = None
         if partition_name is None:
-            partition_name = 'primary'
+            partition_name = "primary"
 
         # Use HTTP Server
         if remote_firmware_file_path is not None:

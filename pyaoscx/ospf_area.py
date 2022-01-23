@@ -181,7 +181,7 @@ class OspfArea(PyaoscxModule):
         # IMPORTANT: OSPF Area's ipsec_ah, ipsec_esp, and other_config MUST be
         # configured together, so if any of them needs to be updated, existing
         # values MUST be sent for all other attributes that have not changed
-        # NOTE: "other_config" is mistakenly not getting added to
+        # NOTE: 'other_config' is mistakenly not getting added to
         # self.config_attrs, so this is fixed here
         if "other_config" not in self.config_attrs:
             self.config_attrs.append("other_config")

@@ -191,7 +191,7 @@ class StaticMac(Mac):
     @PyaoscxModule.deprecated
     def get_uri(self):
         # TODO: remove this method in favor of uri_path once all
-        # modules have been translated to the "properties" style
+        # modules have been translated to the 'properties' style
         return self.uri_path
 
     @property

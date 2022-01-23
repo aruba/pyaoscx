@@ -101,7 +101,7 @@ class QueueProfileEntry(PyaoscxModule):
         """
         logging.info("Retrieving the switch Queue profiles")
 
-        uri = ''.join(
+        uri = "".join(
             (
                 session.base_url,
                 cls.collection_uri.format(name=queue_profile_name)

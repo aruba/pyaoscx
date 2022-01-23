@@ -29,15 +29,15 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class Interface(PyaoscxModule):
-    '''
+    """
     Provide configuration management for Interface on AOS-CX devices.
-    '''
+    """
 
     base_uri = "system/interfaces"
-    indices = ['name']
-    resource_uri_name = 'interfaces'
+    indices = ["name"]
+    resource_uri_name = "interfaces"
 
-    ip6_addresses = ListDescriptor('ip6_addresses')
+    ip6_addresses = ListDescriptor("ip6_addresses")
 
     def __init__(self, session, name, uri=None, ip6_addresses=[], **kwargs):
         self.session = session
@@ -78,18 +78,18 @@ class Interface(PyaoscxModule):
         return self.__modified
 
     def __set_name(self, name):
-        '''
+        """
         Set name attribute in the proper form for Interface object
         Also sets the "percents name"-the name with any special characters
         replaced with percent-encodings
         :param name: Interface name
-        '''
+        """
 
         # Add attributes to class
         self.name = None
         self.percents_name = None
 
-        if r'%2F' in name or r'%2C' in name or r'%3A' in name:
+        if r"%2F" in name or r"%2C" in name or r"%3A" in name:
             self.name = unquote_plus(name)
             self.percents_name = name
         else:
@@ -97,35 +97,35 @@ class Interface(PyaoscxModule):
             self.percents_name = quote_plus(self.name)
 
     def __set_type(self):
-        '''
+        """
         Set Interface type when creating an Interface Object
-        '''
+        """
         # Define all patterns
-        lag_pattern = re.compile(r'lag[0-9]+$')
-        loopback_pattern = re.compile(r'loopback[0-9]+$')
-        tunnel_pattern = re.compile(r'tunnel(.*)')
-        vlan_pattern = re.compile(r'vlan[0-9]+$')
-        vxlan_pattern = re.compile(r'vxlan(.*)')
+        lag_pattern = re.compile(r"lag[0-9]+$")
+        loopback_pattern = re.compile(r"loopback[0-9]+$")
+        tunnel_pattern = re.compile(r"tunnel(.*)")
+        vlan_pattern = re.compile(r"vlan[0-9]+$")
+        vxlan_pattern = re.compile(r"vxlan(.*)")
 
         # Sets interface as a special type
         self.__is_special_type = True
 
         if lag_pattern.match(self.name):
-            self.type = 'lag'
+            self.type = "lag"
         elif loopback_pattern.match(self.name):
-            self.type = 'loopback'
+            self.type = "loopback"
         elif tunnel_pattern.match(self.name):
-            self.type = 'tunnel'
+            self.type = "tunnel"
         elif vlan_pattern.match(self.name):
-            self.type = 'vlan'
+            self.type = "vlan"
         elif vxlan_pattern.match(self.name):
-            self.type = 'vxlan'
+            self.type = "vxlan"
         else:
             self.__is_special_type = False
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
-        '''
+        """
         Perform a GET call to retrieve data for a Interface table entry
 
         :param depth: Integer deciding how many levels into the API JSON
@@ -133,7 +133,7 @@ class Interface(PyaoscxModule):
         :param selector: Alphanumeric option to select specific
             information to return.
         :return: Returns True if there is not an exception raised
-        '''
+        """
         logging.info("Retrieving Interface")
 
         depth = depth or self.session.api.default_depth
@@ -144,7 +144,7 @@ class Interface(PyaoscxModule):
             raise Exception("ERROR: Depth should be {}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
-            selectors = ' '.join(self.session.api.valid_selectors)
+            selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
                 "ERROR: Selector should be one of {}".format(selectors))
 
@@ -165,7 +165,7 @@ class Interface(PyaoscxModule):
             )
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -179,14 +179,14 @@ class Interface(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, 'config_attrs', ['name', 'type']
+                self, data, "config_attrs", ["name", "type"]
             )
 
         # Set original attributes
         self.__original_attributes = deepcopy(data)
 
         # Set a list of interfaces as an attribute
-        if hasattr(self, 'interfaces') and self.interfaces is not None:
+        if hasattr(self, "interfaces") and self.interfaces is not None:
             interfaces_list = []
             # Get all URI elements in the form of a list
             uri_list = self.session.api.get_uri_from_data(
@@ -214,7 +214,7 @@ class Interface(PyaoscxModule):
             self.__prev_interfaces = list(self.interfaces)
 
         # Set VRF
-        if hasattr(self, 'vrf') and self.vrf is not None:
+        if hasattr(self, "vrf") and self.vrf is not None:
             # Set VRF as a Vrf object
             vrf_obj = vrf_mod.Vrf.from_response(self.session, self.vrf)
             self.vrf = vrf_obj
@@ -222,7 +222,7 @@ class Interface(PyaoscxModule):
             self.vrf.get()
 
         # Set VLAN
-        if hasattr(self, 'vlan_tag') and self.vlan_tag is not None:
+        if hasattr(self, "vlan_tag") and self.vlan_tag is not None:
             # Set vlan_tag as a Vlan object
             vlan_obj = Vlan.from_response(self.session, self.vlan_tag)
             self.vlan_tag = vlan_obj
@@ -231,7 +231,7 @@ class Interface(PyaoscxModule):
 
         # vlan_trunks
         # Set a list of VLANs as an attribute
-        if hasattr(self, 'vlan_trunks') and self.vlan_trunks is not None:
+        if hasattr(self, "vlan_trunks") and self.vlan_trunks is not None:
             vlan_trunks = []
             # Get all URI elements in the form of a list
             uri_list = self.session.api.get_uri_from_data(
@@ -249,70 +249,70 @@ class Interface(PyaoscxModule):
 
         # Set all ACLs
         from pyaoscx.acl import ACL
-        if hasattr(self, 'aclmac_in_cfg') and self.aclmac_in_cfg is not None:
+        if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclmac_in_cfg = acl
 
-        if hasattr(self, 'aclmac_out_cfg') and self.aclmac_out_cfg is not None:
+        if hasattr(self, "aclmac_out_cfg") and self.aclmac_out_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclmac_out_cfg = acl
 
-        if hasattr(self, 'aclv4_in_cfg') and self.aclv4_in_cfg is not None:
+        if hasattr(self, "aclv4_in_cfg") and self.aclv4_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_in_cfg = acl
 
-        if hasattr(self, 'aclv4_out_cfg') and self.aclv4_out_cfg is not None:
+        if hasattr(self, "aclv4_out_cfg") and self.aclv4_out_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_out_cfg = acl
 
-        if hasattr(self, 'aclv4_routed_in_cfg') and self.aclv4_routed_in_cfg:
+        if hasattr(self, "aclv4_routed_in_cfg") and self.aclv4_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_routed_in_cfg = acl
 
-        if hasattr(self, 'aclv4_routed_out_cfg') and self.aclv4_routed_out_cfg:
+        if hasattr(self, "aclv4_routed_out_cfg") and self.aclv4_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_routed_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv4_routed_out_cfg = acl
 
-        if hasattr(self, 'aclv6_in_cfg') and self.aclv6_in_cfg is not None:
+        if hasattr(self, "aclv6_in_cfg") and self.aclv6_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_in_cfg = acl
 
-        if hasattr(self, 'aclv6_out_cfg') and self.aclv6_out_cfg is not None:
+        if hasattr(self, "aclv6_out_cfg") and self.aclv6_out_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_out_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_out_cfg = acl
 
-        if hasattr(self, 'aclv6_routed_in_cfg') and self.aclv6_routed_in_cfg:
+        if hasattr(self, "aclv6_routed_in_cfg") and self.aclv6_routed_in_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_routed_in_cfg = acl
 
-        if hasattr(self, 'aclv6_routed_out_cfg') and self.aclv6_routed_out_cfg:
+        if hasattr(self, "aclv6_routed_out_cfg") and self.aclv6_routed_out_cfg:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_routed_out_cfg)
             # Materialize Acl object
@@ -331,7 +331,7 @@ class Interface(PyaoscxModule):
 
     @classmethod
     def get_all(cls, session):
-        '''
+        """
         Perform a GET call to retrieve all system Interfaces and create
         a dictionary containing each Interface as a Interface Object
         :param cls: Object's class
@@ -339,18 +339,18 @@ class Interface(PyaoscxModule):
             connection to the device
         :return: Dictionary containing Interface's name as key and a Interface
             objects as values
-        '''
+        """
 
         logging.info("Retrieving the switch Interfaces")
 
-        uri = '{base_url}{class_uri}'.format(
+        uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
             class_uri=Interface.base_uri)
 
         try:
             response = session.s.get(uri, verify=False, proxies=session.proxy)
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -371,7 +371,7 @@ class Interface(PyaoscxModule):
 
     @classmethod
     def from_response(cls, session, response_data):
-        '''
+        """
         Create an Interface object given a response_data related to the
             Interface object
         :param cls: Object's class
@@ -385,17 +385,17 @@ class Interface(PyaoscxModule):
             string: "/rest/v1/system/interfaces/1"
         :return: Interface object
 
-        '''
+        """
         interfaces_id_arr = session.api.get_keys(
             response_data, Interface.resource_uri_name)
         interface_name = interfaces_id_arr[0]
         return session.api.get_module(
-            session, 'Interface',
+            session, "Interface",
             interface_name)
 
     @classmethod
     def from_uri(cls, session, uri):
-        '''
+        """
         Create an Interface object given a interface URI
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
@@ -404,28 +404,28 @@ class Interface(PyaoscxModule):
 
         :return name, interface_obj: tuple containing both the Interface's name
             and an Interface object
-        '''
+        """
         # Obtain ID from URI
-        index_pattern = re.compile(r'(.*)/(?P<index>.+)')
-        name_percents = index_pattern.match(uri).group('index')
+        index_pattern = re.compile(r"(.*)/(?P<index>.+)")
+        name_percents = index_pattern.match(uri).group("index")
         name = unquote_plus(name_percents)
         # Create Interface object
         interface_obj = session.api.get_module(
-            session, 'Interface',
+            session, "Interface",
             name, uri=uri)
 
         return name, interface_obj
 
     @classmethod
     def get_facts(cls, session):
-        '''
+        """
         Perform a GET call to retrieve all Interfaces and their respective data
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :return facts: Dictionary containing Interface IDs as keys and
             Interface objects as values.
-        '''
+        """
         # Log
         logging.info("Retrieving the switch interfaces facts")
 
@@ -447,7 +447,7 @@ class Interface(PyaoscxModule):
             )
 
         except Exception as e:
-            raise ResponseError('GET', e)
+            raise ResponseError("GET", e)
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
@@ -468,10 +468,10 @@ class Interface(PyaoscxModule):
         """
         interface_data = utils.get_attrs(self, self.config_attrs)
 
-        interface_data['name'] = self.name
+        interface_data["name"] = self.name
         # Set Type
         if self.type is not None:
-            interface_data['type'] = self.type
+            interface_data["type"] = self.type
 
         uri = "{base_url}{class_uri}".format(
             base_url=self.session.base_url,
@@ -485,7 +485,7 @@ class Interface(PyaoscxModule):
                 uri, verify=False, data=post_data, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('POST', e)
+            raise ResponseError("POST", e)
 
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
@@ -501,7 +501,7 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.connected
     def apply(self):
-        '''
+        """
         Main method used to update or create a Interface or Port table entry.
         Checks whether the Interface exists in the switch
         Calls self.update() if Interface is being updated
@@ -509,7 +509,7 @@ class Interface(PyaoscxModule):
         :return modified: Boolean, True if object was created or modified
             False otherwise
 
-        '''
+        """
         modified = False
         if self.materialized:
             modified = self.update()
@@ -521,10 +521,10 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.connected
     def delete(self):
-        '''
+        """
         Perform DELETE call to delete Interface table entry.
 
-        '''
+        """
         if not self.__is_special_type:
             self.initialize_interface_entry()
         else:
@@ -540,7 +540,7 @@ class Interface(PyaoscxModule):
                     uri, verify=False, proxies=self.session.proxy)
 
             except Exception as e:
-                raise ResponseError('DELETE', e)
+                raise ResponseError("DELETE", e)
 
             if not utils._response_ok(response, "DELETE"):
                 raise GenericOperationError(
@@ -550,7 +550,7 @@ class Interface(PyaoscxModule):
             # Delete interface references
             for interface in self.__prev_interfaces:
                 # If interface name is not the same as the current one
-                if interface.name != self.name and self.type == 'lag':
+                if interface.name != self.name and self.type == "lag":
                     interface.__delete_lag(self)
 
             # Delete object attributes
@@ -558,12 +558,12 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.connected
     def update(self):
-        '''
+        """
         Perform a PUT call to apply changes to an existing Interface or Port
             table entry
         :return modified: True if Object was modified and a PUT request was
             made. False otherwise.
-        '''
+        """
         # Variable returned
         modified = False
 
@@ -572,21 +572,21 @@ class Interface(PyaoscxModule):
         iface_data = utils.get_attrs(self, self.config_attrs)
 
         # Check if VRF is inside the data related to interface
-        if hasattr(self, 'vrf') and self.vrf is not None:
+        if hasattr(self, "vrf") and self.vrf is not None:
             # Set VRF in the correct format for PUT
-            iface_data['vrf'] = self.vrf.get_info_format()
+            iface_data["vrf"] = self.vrf.get_info_format()
 
         # Check if vlan_tag is inside the data related to interface
-        if hasattr(self, 'vlan_tag') and self.vlan_tag is not None:
+        if hasattr(self, "vlan_tag") and self.vlan_tag is not None:
             # Set VLAN in the correct format for PUT
             iface_data["vlan_tag"] = self.vlan_tag.get_info_format()
 
         # Set interfaces into correct form
-        if hasattr(self, 'interfaces') and self.interfaces is not None:
+        if hasattr(self, "interfaces") and self.interfaces is not None:
             formatted_interfaces = {}
 
             # Check for interfaces no longer in LAG
-            if self.__is_special_type and self.type == 'lag':
+            if self.__is_special_type and self.type == "lag":
                 for element in self.__prev_interfaces:
                     # If element was deleted from interfaces
                     if element not in self.interfaces:
@@ -600,18 +600,18 @@ class Interface(PyaoscxModule):
             # Set interfaces into correct form
             for element in self.interfaces:
                 # If element is the same as current, ignore
-                if element.name == self.name and self.type == 'lag':
+                if element.name == self.name and self.type == "lag":
                     pass
                 else:
                     # Verify object is materialized
                     if not element.materialized:
                         raise VerificationError(
-                            'Interface {}'.format(element.name),
-                            'Object inside interfaces not materialized')
+                            "Interface {}".format(element.name),
+                            "Object inside interfaces not materialized")
                     formated_element = element.get_info_format()
                     formatted_interfaces.update(formated_element)
 
-                    if self.type == 'lag':
+                    if self.type == "lag":
                         # New element being added to LAG
                         element.__add_member_to_lag(self)
 
@@ -626,8 +626,8 @@ class Interface(PyaoscxModule):
                 # Verify object is materialized
                 if not element.materialized:
                     raise VerificationError(
-                        'Vlan {}'.format(element),
-                        'Object inside vlan trunks not materialized')
+                        "Vlan {}".format(element),
+                        "Object inside vlan trunks not materialized")
                 formated_element = element.get_info_format()
                 formated_vlans.update(formated_element)
 
@@ -708,7 +708,7 @@ class Interface(PyaoscxModule):
                 )
 
             except Exception as e:
-                raise ResponseError('PUT', e)
+                raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
@@ -733,12 +733,12 @@ class Interface(PyaoscxModule):
 
         if not lag.materialized:
             raise VerificationError(
-                'LAG {}'.format(lag.name),
-                'Object is not materialized - Perform get()')
+                "LAG {}".format(lag.name),
+                "Object is not materialized - Perform get()")
 
         lag_name = lag.name
         # Extract LAG ID from LAG name
-        lag_id = int(re.search('\\d+', lag_name).group())
+        lag_id = int(re.search("\\d+", lag_name).group())
 
         # Update Values
         try:
@@ -746,7 +746,7 @@ class Interface(PyaoscxModule):
         except AttributeError:
             pass
         try:
-            self.other_config['lacp-aggregation-key'] = lag_id
+            self.other_config["lacp-aggregation-key"] = lag_id
         except AttributeError:
             pass
 
@@ -765,27 +765,27 @@ class Interface(PyaoscxModule):
 
         if not lag.materialized:
             raise VerificationError(
-                'LAG {}'.format(lag.name),
-                'Object is not materialized - Perform get()')
+                "LAG {}".format(lag.name),
+                "Object is not materialized - Perform get()")
 
         # Update Values
         try:
             self.user_config["admin"] = "down"
         except AttributeError:
             pass
-        self.other_config.pop('lacp-aggregation-key', None)
+        self.other_config.pop("lacp-aggregation-key", None)
 
         # Make a PUT call and update values
         self.update()
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        '''
+        """
         Method used to obtain the specific Interface URI
         return: Object's URI
-        '''
+        """
         if self._uri is None:
-            self._uri = '{resource_prefix}{class_uri}/{name}'.format(
+            self._uri = "{resource_prefix}{class_uri}/{name}".format(
                 resource_prefix=self.session.resource_prefix,
                 class_uri=Interface.base_uri,
                 name=self.percents_name
@@ -795,11 +795,11 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
-        '''
+        """
         Method used to obtain correct object format for referencing inside
             other objects
         return: Object format depending on the API Version
-        '''
+        """
         return self.session.api.get_index(self)
 
     def __str__(self):
@@ -810,10 +810,10 @@ class Interface(PyaoscxModule):
         return "Interface Object, name: '{}'".format(self.name)
 
     def __set_to_default(self):
-        '''
+        """
         Perform a PUT call to set Interface to default settings
         :return: True if object was changed
-        '''
+        """
         # Check for IPv6 addresses and delete them
         for address in self.ip6_addresses:
             address.delete()
@@ -822,8 +822,8 @@ class Interface(PyaoscxModule):
 
         interface_data = {}
         # Clear Interfaces
-        if hasattr(self, 'interfaces') and self.interfaces is not None:
-            if self.__is_special_type and self.name == 'lag':
+        if hasattr(self, "interfaces") and self.interfaces is not None:
+            if self.__is_special_type and self.name == "lag":
                 self.interfaces = []
                 for element in self.__prev_interfaces:
                     # If element was deleted from interfaces
@@ -854,7 +854,7 @@ class Interface(PyaoscxModule):
                 uri, verify=False, data=put_data, proxies=self.session.proxy)
 
         except Exception as e:
-            raise ResponseError('PUT', e)
+            raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
             raise GenericOperationError(response.text, response.status_code)
@@ -933,7 +933,7 @@ class Interface(PyaoscxModule):
             self.interfaces = []
             for port in phys_ports:
                 port_obj = self.session.api.get_module(
-                    self.session, 'Interface',
+                    self.session, "Interface",
                     port)
                 # Materialize Port
                 port_obj.get()
@@ -945,7 +945,7 @@ class Interface(PyaoscxModule):
         if vlan_mode:
             self.vlan_mode = vlan_mode
 
-        if vlan_mode == 'access':
+        if vlan_mode == "access":
             # Convert VLAN Tag into Object
             if isinstance(vlan_tag, int):
                 # Create Vlan object
@@ -955,7 +955,7 @@ class Interface(PyaoscxModule):
                 self.vlan_tag = vlan_tag
 
         # Modify if trunk
-        elif vlan_mode == 'trunk':
+        elif vlan_mode == "trunk":
             if vlan_tag is None:
                 vlan_tag = 1
 
@@ -968,9 +968,9 @@ class Interface(PyaoscxModule):
 
             # Set VLAN mode
             if native_vlan_tag:
-                self.vlan_mode = 'native-tagged'
+                self.vlan_mode = "native-tagged"
             else:
-                self.vlan_mode = 'native-untagged'
+                self.vlan_mode = "native-untagged"
 
             if not trunk_allowed_all:
                 # Set VLAN Trunks
@@ -1050,7 +1050,7 @@ class Interface(PyaoscxModule):
             self.interfaces = []
             for port in phys_ports:
                 port_obj = self.session.api.get_module(
-                    self.session, 'Interface',
+                    self.session, "Interface",
                     port)
                 # Materialize Port
                 port_obj.get()
@@ -1072,7 +1072,7 @@ class Interface(PyaoscxModule):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
                     # list
                     ip_address = self.session.api.get_module(
-                        self.session, 'Ipv6', ip_address,
+                        self.session, "Ipv6", ip_address,
                         parent_int=self,
                         type="global-unicast",
                         preferred_lifetime=604800,
@@ -1122,7 +1122,7 @@ class Interface(PyaoscxModule):
             vrf=None,
             description=None,
             int_type="vlan",
-            user_config='up'):
+            user_config="up"):
         """
         Configure a Interface table entry for a VLAN.
 
@@ -1152,7 +1152,7 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                'Interface {}'.format(self.name), 'Object not materialized')
+                "Interface {}".format(self.name), "Object not materialized")
 
         if vlan is not None:
             vlan_tag = vlan
@@ -1161,7 +1161,7 @@ class Interface(PyaoscxModule):
                 name = "VLAN {}".format(str(vlan))
                 # Create Vlan object
                 vlan_tag = self.session.api.get_module(
-                    self.session, 'Vlan', vlan, name=name)
+                    self.session, "Vlan", vlan, name=name)
                 # Try to obtain data; if not, create
                 try:
                     vlan_tag.get()
@@ -1190,7 +1190,7 @@ class Interface(PyaoscxModule):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
                     # list
                     ip_address = self.session.api.get_module(
-                        self.session, 'Ipv6', ip_address,
+                        self.session, "Ipv6", ip_address,
                         parent_int=self,
                         type="global-unicast",
                         preferred_lifetime=604800,
@@ -1213,7 +1213,7 @@ class Interface(PyaoscxModule):
         if vrf is not None:
             if isinstance(vrf, str):
                 vrf = self.session.api.get_module(
-                    self.session, 'Vrf', vrf)
+                    self.session, "Vrf", vrf)
                 vrf.get()
 
             self.vrf = vrf
@@ -1261,7 +1261,7 @@ class Interface(PyaoscxModule):
         if isinstance(ip_address, str):
             # Create Ipv6 object -- add it to ipv6_addresses internal list
             ipv6 = self.session.api.get_module(
-                self.session, 'Ipv6', ip_address, parent_int=self,
+                self.session, "Ipv6", ip_address, parent_int=self,
                 type=address_type,
                 preferred_lifetime=604800,
                 valid_lifetime=2592000,
@@ -1294,7 +1294,7 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                'Interface {}'.format(self.name), 'Object not materialized')
+                "Interface {}".format(self.name), "Object not materialized")
 
         # Verify if incoming address is a object
         if isinstance(ip_address, Ipv6):
@@ -1328,14 +1328,14 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                'Interface {}'.format(self.name),
-                'Object not materialized')
+                "Interface {}".format(self.name),
+                "Object not materialized")
 
         # Set VRF
         if vrf is not None:
             if isinstance(vrf, str):
                 vrf = self.session.api.get_module(
-                    self.session, 'Vrf', vrf)
+                    self.session, "Vrf", vrf)
                 vrf.get()
 
             self.vrf = vrf
@@ -1408,7 +1408,7 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                'Interface {}'.format(self.name), 'Object not materialized')
+                "Interface {}".format(self.name), "Object not materialized")
 
         # Set Values
         self.vlan_mode = vlan_mode
@@ -1428,17 +1428,17 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                'Interface {}'.format(self.name), 'Object not materialized')
+                "Interface {}".format(self.name), "Object not materialized")
 
         # Set Values
-        self.vlan_mode = 'access'
+        self.vlan_mode = "access"
 
         vlan_tag = vlan
         # Set Vlan Tag into Object
         if isinstance(vlan, int):
             # Create Vlan object
             vlan_tag = self.session.api.get_module(
-                self.session, 'Vlan', vlan)
+                self.session, "Vlan", vlan)
             # Try to get data; if non-existent, throw error
             vlan_tag.get()
 
@@ -1469,7 +1469,7 @@ class Interface(PyaoscxModule):
             for vlan in vlan_trunk_ids:
 
                 vlan_obj = self.session.api.get_module(
-                    self.session, 'Vlan', vlan)
+                    self.session, "Vlan", vlan)
                 vlan_obj.get()
 
                 self.vlan_trunks.append(vlan_obj)
@@ -1482,7 +1482,7 @@ class Interface(PyaoscxModule):
 
         if self.vlan_tag is not None:
             vlan_tag_obj = self.session.api.get_module(
-                self.session, 'Vlan', 1)
+                self.session, "Vlan", 1)
             vlan_tag_obj.get()
             self.vlan_tag = vlan_tag_obj
 
@@ -1513,7 +1513,7 @@ class Interface(PyaoscxModule):
         if isinstance(vlan_tag, int):
             # Create Vlan object
             vlan_tag = self.session.api.get_module(
-                self.session, 'Vlan', vlan)
+                self.session, "Vlan", vlan)
             # Try to get data; if non-existent, throw error
             vlan_tag.get()
 
@@ -1577,7 +1577,7 @@ class Interface(PyaoscxModule):
         if isinstance(interface, str):
             # Create Interface Object
             interface_obj = self.session.api.get_module(
-                self.session, 'Interface', interface)
+                self.session, "Interface", interface)
             # Try to get data; if non-existent, throw error
             interface_obj.get()
 
@@ -1753,7 +1753,7 @@ class Interface(PyaoscxModule):
 
         # Set vrf
         vrf_obj = self.session.api.get_module(
-            self.session, 'Vrf', vrf)
+            self.session, "Vrf", vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
 
@@ -1790,7 +1790,7 @@ class Interface(PyaoscxModule):
         self.routing = True
         # Set vrf
         vrf_obj = self.session.api.get_module(
-            self.session, 'Vrf', vrf)
+            self.session, "Vrf", vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
 
@@ -1811,14 +1811,14 @@ class Interface(PyaoscxModule):
         :return: True if object was changed
         """
         _valid_interface_types = [
-            'broadcast',
-            'loopback',
-            'statistics',
-            'nbma',
-            'pointomultipoint',
-            'pointopoint',
-            'virtuallink',
-            'none'
+            "broadcast",
+            "loopback",
+            "statistics",
+            "nbma",
+            "pointomultipoint",
+            "pointopoint",
+            "virtuallink",
+            "none"
         ]
         if interface_type not in _valid_interface_types:
             raise Exception(
@@ -1833,7 +1833,7 @@ class Interface(PyaoscxModule):
         self.ospf_if_type = "".join(("ospf_iftype_", interface_type))
         self.routing = True
         # Set vrf
-        vrf_obj = self.session.api.get_module(self.session, 'Vrf', vrf)
+        vrf_obj = self.session.api.get_module(self.session, "Vrf", vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
 
@@ -1974,7 +1974,7 @@ class Interface(PyaoscxModule):
                 unit = rate[idx:]
 
                 rate_limits[traffic_type] = int(number)
-                rate_limits[traffic_type + '_units'] = unit
+                rate_limits[traffic_type + "_units"] = unit
 
         self.rate_limits = rate_limits
 
@@ -1994,28 +1994,28 @@ class Interface(PyaoscxModule):
 
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, 'ACL', index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type)
         # Get the current version
         acl_obj.get()
 
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
             if (
-                hasattr(self, 'aclv6_in_cfg_version')
+                hasattr(self, "aclv6_in_cfg_version")
                 and self.aclv6_in_cfg_version is None
             ):
                 self.aclv6_in_cfg_version = acl_obj.cfg_version
         elif list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
             if (
-                hasattr(self, 'aclv4_in_cfg_version')
+                hasattr(self, "aclv4_in_cfg_version")
                 and self.aclv4_in_cfg_version is None
             ):
                 self.aclv4_in_cfg_version = acl_obj.cfg_version
         elif list_type == "mac":
             self.aclmac_in_cfg = acl_obj
             if (
-                hasattr(self, 'aclmac_in_cfg_version')
+                hasattr(self, "aclmac_in_cfg_version")
                 and self.aclmac_in_cfg_version is None
             ):
                 self.aclmac_in_cfg_version = acl_obj.cfg_version
@@ -2039,28 +2039,28 @@ class Interface(PyaoscxModule):
 
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, 'ACL', index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type)
         # Get the current version
         acl_obj.get()
 
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
             if (
-                hasattr(self, 'aclv6_out_cfg_version')
+                hasattr(self, "aclv6_out_cfg_version")
                 and self.aclv6_out_cfg_version is None
             ):
                 self.aclv6_out_cfg_version = acl_obj.cfg_version
         elif list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
             if (
-                hasattr(self, 'aclv4_out_cfg_version')
+                hasattr(self, "aclv4_out_cfg_version")
                 and self.aclv4_out_cfg_version is None
             ):
                 self.aclv4_out_cfg_version = acl_obj.cfg_version
         elif list_type == "mac":
             self.aclmac_out_cfg = acl_obj
             if (
-                hasattr(self, 'aclmac_out_cfg_version')
+                hasattr(self, "aclmac_out_cfg_version")
                 and self.aclmac_out_cfg_version is None
             ):
                 self.aclmac_out_cfg_version = acl_obj.cfg_version

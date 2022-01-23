@@ -21,7 +21,7 @@ UNAUTHORIZED = 401
 
 
 class Session:
-    '''
+    """
     Represents a logical connection to the device. It keeps all the information
     needed to login/logout to an AOS-CX device, including parameters like the
     proxy, device's IP address (both IPv4 and IPv6 are supported), and the API
@@ -30,7 +30,7 @@ class Session:
         '1.1.1.1'
         or
         '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
-    '''
+    """
 
     def __init__(self, ip_address, api, proxy=None):
 
@@ -38,9 +38,9 @@ class Session:
         self.ip = ip_address
         self.connected = False
         self.proxy = {
-            'no_proxy': self.ip
+            "no_proxy": self.ip
         } if proxy is None else {
-            'https': proxy
+            "https": proxy
         }
         self.scheme = "https"
         self.version_path = "rest/v{}/".format(self.api)
@@ -52,17 +52,17 @@ class Session:
         self.resource_prefix = "/rest/v{}/".format(self.api)
         self.s = requests.Session()
         self.s.verify = False
-        self.__username = self.__password = ''
+        self.__username = self.__password = ""
 
     def cookies(self):
-        '''
+        """
         Return the cookie stored in the requests' session
-        '''
+        """
         return self.s.cookies._cookies
 
     @classmethod
     def from_session(cls, req_session, base_url, credentials=None):
-        '''
+        """
         Create a session from an existing request Session. It allows to create
         an internal session from an already-authenticated and serialized
             session
@@ -74,16 +74,16 @@ class Session:
                 password: <password>
             }
         :return session: Request Session Object
-        '''
-        ip_address = version = ''
+        """
+        ip_address = version = ""
 
         # From base url retrieve the ip address and the version
         url_pattern = re.compile(
-            r'https://(?P<ip_address>.+)/rest/v(?P<version>.+)/')
+            r"https://(?P<ip_address>.+)/rest/v(?P<version>.+)/")
         match = url_pattern.match(base_url)
         if match:
-            ip_address = match.group('ip_address')
-            version = match.group('version')
+            ip_address = match.group("ip_address")
+            version = match.group("version")
 
         else:
             raise Exception("Error creating Session")
@@ -103,28 +103,28 @@ class Session:
 
         # Set credentials
         if credentials is not None:
-            session.__username = credentials['username']
-            session.__password = credentials['password']
+            session.__username = credentials["username"]
+            session.__password = credentials["password"]
 
         return session
 
     def open(self, username=None, password=None):
-        '''
+        """
         Perform a POST call to login and gain access to other API calls.
         If either username or password is not specified, user will be prompted
         to enter the missing credential(s).
 
         :param username: username
         :param password: password
-        '''
+        """
         if self.__username is None:
             if username is None:
-                username = input('Enter username: ')
+                username = input("Enter username: ")
             else:
                 self.__username = username
         else:
             if username is None:
-                username = input('Enter username: ')
+                username = input("Enter username: ")
 
         if self.__password is None:
             if password is None:
@@ -135,40 +135,40 @@ class Session:
             if password is None:
                 password = getpass.getpass()
 
-        login_data = {'username': username, 'password': password}
+        login_data = {"username": username, "password": password}
         self.__username = username
         self.__password = password
         try:
-            login_uri = '%s%s' % (self.base_url, 'login')
+            login_uri = "%s%s" % (self.base_url, "login")
             response = self.s.post(login_uri, data=login_data, verify=False,
                                    timeout=5, proxies=self.proxy)
         except requests.exceptions.ConnectTimeout:
             raise Exception(
-                'Error connecting to host: connection attempt timed out.'
+                "Error connecting to host: connection attempt timed out."
             )
 
         if response.status_code != 200:
-            raise Exception('FAIL: Login failed with status code %d: %s' %
+            raise Exception("FAIL: Login failed with status code %d: %s" %
                             (response.status_code, response.text))
 
         cookies = self.s.cookies
         self.connected = (
-            hasattr(cookies, '_cookies') and self.ip in cookies._cookies
+            hasattr(cookies, "_cookies") and self.ip in cookies._cookies
         )
 
         if not self.connected:
             raise LoginError("Cookies were not set correctly. Login failed")
 
-        logging.info('SUCCESS: Login succeeded')
+        logging.info("SUCCESS: Login succeeded")
 
     def close(self):
-        '''
+        """
         Perform a POST call to logout and end the session.
         Given all the required information to perform the operation is already
         stored within the session, no parameters are required.
-        '''
+        """
         if self.connected:
-            logout_uri = "%s%s" % (self.base_url, 'logout')
+            logout_uri = "%s%s" % (self.base_url, "logout")
 
             try:
                 response = self.s.post(
@@ -178,10 +178,10 @@ class Session:
                                 (response.status_code, response.text))
 
             if response.status_code != 200:
-                raise Exception('FAIL: Logout failed with status code %d: %s' %
+                raise Exception("FAIL: Logout failed with status code %d: %s" %
                                 (response.status_code, response.text))
 
-            logging.info('SUCCESS: Logout succeeded')
+            logging.info("SUCCESS: Logout succeeded")
 
     # Session Login and Logout
     # Used for Connection within Ansible
@@ -206,7 +206,7 @@ class Session:
         :return: requests.session object with loaded cookie jar
         """
         if username is None and password is None:
-            username = input('Enter username: ')
+            username = input("Enter username: ")
             password = getpass.getpass()
 
         login_data = {"username": username, "password": password}
@@ -217,7 +217,7 @@ class Session:
             s.proxies["https"] = None
             s.proxies["http"] = None
         try:
-            print(base_url + 'login')
+            print(base_url + "login")
             response = s.post(
                 base_url + "login", data=login_data, verify=False,
                 timeout=5, proxies=s.proxies)
@@ -231,9 +231,9 @@ class Session:
                 "connection attempt timed out."
             )
         except requests.exceptions.ProxyError as err:
-            logging.warning('ERROR: %s' % str(err))
-            raise LoginError('ERROR: %s' % err)
-        # Response OK check needs to be passed "PUT" since this
+            logging.warning("ERROR: %s" % str(err))
+            raise LoginError("ERROR: %s" % err)
+        # Response OK check needs to be passed 'PUT' since this
         # POST call returns 200 instead of conventional 201
         if not utils._response_ok(response, "PUT"):
             if response.status_code == UNAUTHORIZED and handle_zeroized_device:
@@ -280,7 +280,7 @@ class Session:
         response = kwargs["s"].post(
             kwargs["url"] + "logout", verify=False,
             proxies=kwargs["s"].proxies)
-        # Response OK check needs to be passed "PUT" since this POST
+        # Response OK check needs to be passed 'PUT' since this POST
         # call returns 200 instead of conventional 201
         if not utils._response_ok(response, "PUT"):
             logging.warning(
