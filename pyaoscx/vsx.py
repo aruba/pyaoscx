@@ -200,6 +200,7 @@ class Vsx(PyaoscxModule):
         self._send_data(self.path, None, "DELETE", "Delete")
         utils.delete_attrs(self, self.config_attrs)
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Method used to obtain the specific VSX URI
@@ -207,11 +208,13 @@ class Vsx(PyaoscxModule):
         """
         return self.path
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         """
         Not applicable for VSX
         """
 
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute

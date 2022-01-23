@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -229,10 +229,11 @@ class OspfVlink(PyaoscxModule):
         """
         return self.session.api.get_index(self)
 
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified,
             False otherwise.
         """
-        return self.__modified
+        return self.modified

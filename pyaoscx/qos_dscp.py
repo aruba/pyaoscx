@@ -222,6 +222,7 @@ class QosDscp(PyaoscxModule):
         # Return identifier and object
         return code_point, qos_dscp
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Method used to obtain the specific QoS DSCP trust mode URI.
@@ -230,12 +231,20 @@ class QosDscp(PyaoscxModule):
         # Return self.path containing the object's URI
         return self.path
 
+    @property
+    def modified(self):
+        """
+        Return boolean with whether this object has been modified
+        """
+        return self.__modified
+
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method to check it object has been modified.
         :return: Boolean True if the object was recently modified.
         """
-        return self.__modified
+        return self.modified
 
     def __str__(self):
         return "QoS DSCP trust mode {0}".format(self.code_point)

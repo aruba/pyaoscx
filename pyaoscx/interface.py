@@ -777,6 +777,7 @@ class Interface(PyaoscxModule):
         # Make a PUT call and update values
         self.update()
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         '''
         Method used to obtain the specific Interface URI
@@ -791,6 +792,7 @@ class Interface(PyaoscxModule):
 
         return self._uri
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         '''
         Method used to obtain correct object format for referencing inside
@@ -862,14 +864,14 @@ class Interface(PyaoscxModule):
         self.get()
         return True
 
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified, False
             otherwise.
         """
-
-        return self.__modified
+        return self.modified
 
     ####################################################################
     # IMPERATIVE FUNCTIONS

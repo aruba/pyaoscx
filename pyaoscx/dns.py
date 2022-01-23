@@ -195,6 +195,7 @@ class Dns(PyaoscxModule):
     def __str__(self):
         return "DNS object with VRF: '{}'".format(self.vrf_name)
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Not applicable for DNS
@@ -202,6 +203,7 @@ class Dns(PyaoscxModule):
         """
         pass
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         """
         Not applicable for DNS
@@ -209,14 +211,21 @@ class Dns(PyaoscxModule):
         """
         pass
 
+    @property
+    def modified(self):
+        """
+        Return boolean with whether this object has been modified
+        """
+        return self.__modified
+
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified,
             False otherwise.
         """
-
-        return self.__modified
+        return self.modified
 
     ####################################################################
     # IMPERATIVE FUNCTIONS

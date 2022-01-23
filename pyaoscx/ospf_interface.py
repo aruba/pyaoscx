@@ -264,6 +264,7 @@ class OspfInterface(PyaoscxModule):
             self.interface_name
         )
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Method used to obtain the specific OSPF Interface uri
@@ -271,6 +272,7 @@ class OspfInterface(PyaoscxModule):
         """
         return self.path
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
@@ -279,10 +281,11 @@ class OspfInterface(PyaoscxModule):
         """
         return self.session.api.get_index(self)
 
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified,
             False otherwise.
         """
-        return self.__modified
+        return self.modified

@@ -273,6 +273,7 @@ class OspfRouter(PyaoscxModule):
             self.instance_tag
         )
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Method used to obtain the specific OSPF Router URI
@@ -281,6 +282,7 @@ class OspfRouter(PyaoscxModule):
         # PyaoscxModule's methods use self.path to store the URI
         return self.path
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
@@ -289,13 +291,14 @@ class OspfRouter(PyaoscxModule):
         """
         return self.session.api.get_index(self)
 
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified,
             False otherwise.
         """
-        return self.__modified
+        return self.modified
 
     def update_ospf_areas(self, new_area):
         """

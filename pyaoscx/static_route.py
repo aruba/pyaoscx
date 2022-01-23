@@ -401,6 +401,7 @@ class StaticRoute(PyaoscxModule):
     def __str__(self):
         return "Static Route: {}".format(self.prefix)
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         '''
         Method used to obtain the specific static route URI
@@ -416,6 +417,7 @@ class StaticRoute(PyaoscxModule):
 
         return self._uri
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         '''
         Method used to obtain correct object format for referencing inside
@@ -424,14 +426,21 @@ class StaticRoute(PyaoscxModule):
         '''
         return self.session.api.get_index(self)
 
+    @property
+    def modified(self):
+        """
+        Return boolean with whether this object has been modified
+        """
+        return self.__modified
+
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified, False
             otherwise.
         """
-
-        return self.__modified
+        return self.modified
 
     ####################################################################
     # IMPERATIVE FUNCTIONS

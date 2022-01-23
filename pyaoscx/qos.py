@@ -208,6 +208,7 @@ class Qos(PyaoscxModule):
 
         return name, qos
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Method used to obtain the this instance's URI.
@@ -216,12 +217,20 @@ class Qos(PyaoscxModule):
         # Parent class uses self.path internally to store the value of the URI
         return self.path
 
+    @property
+    def modified(self):
+        """
+        Return boolean with whether this object has been modified
+        """
+        return self.__modified
+
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method to check it object has been modified.
         :return: Boolean True if the object was recently modified.
         """
-        return self.__modified
+        return self.modified
 
     def __str__(self):
         return "Qos {0}".format(self.name)

@@ -186,6 +186,7 @@ class StaticMac(Mac):
 
         return reference_mac_addr, static_mac_obj
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         # TODO: remove this method in favor of uri_path once all
         # modules have been translated to the "properties" style
@@ -201,3 +202,19 @@ class StaticMac(Mac):
             self._uri = self.session.resource_prefix + self._mac_path()
 
         return self._uri
+
+    @property
+    def modified(self):
+        """
+        Return boolean with whether this object has been modified
+        """
+        return self.__modified
+
+    @PyaoscxModule.deprecated
+    def was_modified(self):
+        """
+        Getter method for the __modified attribute
+        :return: Boolean True if the object was recently modified,
+            False otherwise.
+        """
+        return self.modified

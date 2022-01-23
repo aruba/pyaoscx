@@ -1,22 +1,26 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+from abc import ABC, abstractmethod
+from copy import deepcopy
 import json
 import logging
 import functools
-from copy import deepcopy
+import warnings
 
-import pyaoscx.utils.util as utils
-from abc import ABC, abstractmethod
 from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.utils import util as utils
 
 
 class PyaoscxModule(ABC):
     '''
     Provide an Interface class for pyaoscx Modules
     '''
+
+    base_uri = ""
+    indices = []
 
     def connected(fnct):
         '''
@@ -48,8 +52,23 @@ class PyaoscxModule(ABC):
             return fnct(self, *args, **kwargs)
         return is_materialized
 
-    base_uri = ""
-    indices = []
+    def deprecated(func):
+        """
+        Function used as a decorator to show deprecation notice of a method
+        :param func: function whose behavior is modified/wrapped
+        :return func: function whose behavior is modified/wrapped
+        """
+
+        @functools.wraps(func)
+        def is_deprecated(*args, **kwargs):
+            warnings.warn("{0} will be removed in a future version".format(
+                func.__name__
+                ),
+                category=DeprecationWarning,
+                stacklevel=2
+            )
+            return func(*args, **kwargs)
+        return is_deprecated
 
     @abstractmethod
     @connected
@@ -323,6 +342,7 @@ class PyaoscxModule(ABC):
                     if getattr(self, param_name) is None:
                         setattr(self, param_name, deepcopy(param))
 
+    @deprecated
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside

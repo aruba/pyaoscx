@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -207,6 +207,7 @@ class QosCos(PyaoscxModule):
         # Return identifier and object
         return code_point, qos_cos
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Method used to obtain object's URI.
@@ -215,12 +216,20 @@ class QosCos(PyaoscxModule):
         # The self.path variable stores the URI
         return self.path
 
+    @property
+    def modified(self):
+        """
+        Return boolean with whether this object has been modified
+        """
+        return self.__modified
+
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method to check it object has been modified.
         :return: Boolean True if the object was recently modified.
         """
-        return self.__modified
+        return self.modified
 
     def __str__(self):
         return "QoS COS trust mode {0}".format(self.code_point)

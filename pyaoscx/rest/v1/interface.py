@@ -855,6 +855,7 @@ class Interface(AbstractInterface):
         # Object was created
         return True
 
+    @PyaoscxModule.deprecated
     def get_uri(self, interface=False):
         '''
         Method used to obtain the specific Interface URI
@@ -878,6 +879,7 @@ class Interface(AbstractInterface):
 
         return uri
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         '''
         Method used to obtain correct object format for referencing

@@ -267,6 +267,7 @@ class OspfArea(PyaoscxModule):
     def __str__(self):
         return "{0} with area_id {1}".format(type(self).__name__, self.area_id)
 
+    @PyaoscxModule.deprecated
     def get_uri(self):
         """
         Method used to obtain the specific OSPF Area URI
@@ -274,6 +275,7 @@ class OspfArea(PyaoscxModule):
         """
         return self.path
 
+    @PyaoscxModule.deprecated
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
@@ -282,13 +284,14 @@ class OspfArea(PyaoscxModule):
         """
         return self.session.api.get_index(self)
 
+    @PyaoscxModule.deprecated
     def was_modified(self):
         """
         Getter method for the __modified attribute
         :return: Boolean True if the object was recently modified,
             False otherwise.
         """
-        return self.__modified
+        return self.modified
 
     def update_ospf_interfaces(self, new_interface):
         """

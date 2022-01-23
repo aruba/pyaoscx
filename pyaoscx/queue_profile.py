@@ -3,7 +3,6 @@
 
 import json
 import logging
-import warnings
 
 from pyaoscx.utils import util as utils
 from pyaoscx.exceptions.response_error import ResponseError
@@ -221,13 +220,8 @@ class QueueProfile(PyaoscxModule):
     def modified(self):
         return self.__modified
 
+    @PyaoscxModule.deprecated
     def was_modified(self):
-        # This is a legacy method that has to be added because other modules
-        # depend on it
-        warnings.warn(
-            "This method will be removed in a future version",
-            DeprecationWarning
-        )
         return self.modified
 
     @classmethod
