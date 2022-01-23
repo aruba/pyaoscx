@@ -211,7 +211,7 @@ class OspfVlink(PyaoscxModule):
         return peer_router_id, vlink
 
     def __str__(self):
-        return "OSPF Virtual Link ID {}".format(self.__peer_router_id)
+        return "OSPF Virtual Link ID {0}".format(self.__peer_router_id)
 
     def get_uri(self):
         """

@@ -71,9 +71,10 @@ class Ipv6(PyaoscxModule):
         self.__parent_int_name = self.__parent_int.percents_name
 
         # Set URI
-        self.base_uri = "{base_int_uri}/{interface_name}/ip6_addresses".format(
-            base_int_uri=self.__parent_int.base_uri,
-            interface_name=self.__parent_int_name)
+        self.base_uri = "{0}/{1}/ip6_addresses".format(
+            self.__parent_int.base_uri,
+            self.__parent_int_name,
+        )
 
         # Add self to ip6_address list in parent Interface
         for ip6_address in self.__parent_int.ip6_addresses:
@@ -103,12 +104,13 @@ class Ipv6(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -373,7 +375,7 @@ class Ipv6(PyaoscxModule):
         return index, ipv6_obj
 
     def __str__(self):
-        return "IPv6 address {}".format(self.address)
+        return "IPv6 address {0}".format(self.address)
 
     @PyaoscxModule.deprecated
     def get_uri(self):

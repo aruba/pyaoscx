@@ -30,7 +30,7 @@ class API(ABC):
 
         try:
             # Import the appropriate API class based on the name.
-            target_module = "pyaoscx.rest.{}.api".format(version_name)
+            target_module = "pyaoscx.rest.{0}.api".format(version_name)
             api_class = getattr(import_module(target_module), version_name)
 
         except ModuleNotFoundError:
@@ -142,7 +142,7 @@ class API(ABC):
         """
 
         module_names = {
-            "Interface": "rest.v{}.interface".format(
+            "Interface": "rest.v{0}.interface".format(
                 self.version.replace(".", "_")),
             "Ipv6": "ipv6",
             "Vlan": "vlan",
@@ -179,7 +179,7 @@ class API(ABC):
             )
         except KeyError:
             raise ParameterError(
-                "Wrong module name. {} doesn't exist".format(module)
+                "Wrong module name. {0} doesn't exist".format(module)
             )
 
         if module == "OspfArea":

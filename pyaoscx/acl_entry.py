@@ -119,11 +119,12 @@ class AclEntry(PyaoscxModule):
         self.__parent_acl = parent_acl
 
         # Set URI
-        self.base_uri = "{base_acl_uri}/{id1}{separator}{id2}/cfg_aces".format(
-            base_acl_uri=self.__parent_acl.base_uri,
-            id1=self.__parent_acl.name,
-            separator=self.session.api.compound_index_separator,
-            id2=self.__parent_acl.list_type)
+        self.base_uri = "{0}/{1}{2}{3}/cfg_aces".format(
+            self.__parent_acl.base_uri,
+            self.__parent_acl.name,
+            self.session.api.compound_index_separator,
+            self.__parent_acl.list_type,
+        )
 
         # Verify acl_entry doesn't exist already inside acl
         for acl_entry in self.__parent_acl.cfg_aces:
@@ -153,12 +154,13 @@ class AclEntry(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {"depth": depth, "selector": selector}
 
@@ -265,9 +267,7 @@ class AclEntry(PyaoscxModule):
         except GenericOperationError:
             # If the get fails, the ACE doesn't exist, so a simple
             # create will suffice
-            logging.info(
-                "ACE %s for ACL %s will be created",
-                self.sequence_number, self.__parent_acl.name)
+            logging.info("%s for %s will be created", self, self.__parent_acl)
             modified = self.create()
         else:
             self._extract_missing_parameters_from(remote_ace)
@@ -278,8 +278,9 @@ class AclEntry(PyaoscxModule):
                     immutable_parameter_names=self.immutable_parameter_names
             ):
                 remote_ace.delete()
-                logging.info("ACE %s for ACL %s will be replaced",
-                             self.sequence_number, self.__parent_acl.name)
+                logging.info(
+                    "%s for %s will be replaced", self, self.__parent_acl.name
+                )
                 modified = self.create()
             else:
                 # A replace was not required, so it is possible that an
@@ -466,7 +467,7 @@ class AclEntry(PyaoscxModule):
         return index, acl_entry_obj
 
     def __str__(self):
-        return "ACL Entry ID {}".format(self.sequence_number)
+        return "ACL Entry ID {0}".format(self.sequence_number)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
@@ -476,11 +477,11 @@ class AclEntry(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = (
-                "{resource_prefix}{class_uri}/{sequence_number}".format(
-                    resource_prefix=self.session.resource_prefix,
-                    class_uri=self.base_uri,
-                    sequence_number=self.sequence_number))
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                self.base_uri,
+                self.sequence_number,
+            )
 
         return self._uri
 

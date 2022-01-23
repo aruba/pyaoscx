@@ -62,9 +62,10 @@ class StaticRoute(PyaoscxModule):
         self.__parent_vrf = parent_vrf
 
         # Set URI
-        self.base_uri = "{base_vrf_uri}/{vrf_name}/static_routes".format(
-            base_vrf_uri=self.__parent_vrf.base_uri,
-            vrf_name=self.__parent_vrf.name)
+        self.base_uri = "{0}/{1}/static_routes".format(
+            self.__parent_vrf.base_uri,
+            self.__parent_vrf.name,
+        )
 
         # Verify Static Route doesn't exist already inside VRF
         for static_route in self.__parent_vrf.static_routes:
@@ -94,12 +95,13 @@ class StaticRoute(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -369,7 +371,7 @@ class StaticRoute(PyaoscxModule):
         return index, static_route_obj
 
     def __str__(self):
-        return "Static Route: {}".format(self.prefix)
+        return "Static Route: {0}".format(self.prefix)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
@@ -379,10 +381,10 @@ class StaticRoute(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{prefix}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=self.base_uri,
-                prefix=self.reference_address
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                self.base_uri,
+                self.reference_address,
             )
 
         return self._uri

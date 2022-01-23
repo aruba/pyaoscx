@@ -36,7 +36,7 @@ try:
     vlan100.description = "New description, changed via pyaoscx SDK"
     vlan100.apply()
     # Now vlan100 contains the description attribute
-    print("VLAN 100 description {}".format(vlan100.description))
+    print("VLAN 100 description {0}".format(vlan100.description))
 
     # ===========================================================
     # ===========================================================
@@ -109,7 +109,7 @@ try:
     # If modified is True, a PUT request was done and object was modified
 
 except Exception as error:
-    print("Ran into exception: {}. Closing session.".format(error))
+    print("Ran into exception: {0}. Closing session.".format(error))
 
 finally:
     # At the end, the session MUST be closed

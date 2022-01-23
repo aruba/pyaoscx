@@ -60,12 +60,13 @@ class DhcpRelay(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -337,12 +338,12 @@ class DhcpRelay(PyaoscxModule):
 
         # Create DHCP Relay object
         dhcp_relay = DhcpRelay(session, vrf_obj, port_obj)
-        indices = "{},{}".format(vrf, port)
+        indices = "{0},{1}".format(vrf, port)
 
         return indices, dhcp_relay
 
     def __str__(self):
-        return "DhcpRelay vrf:{}, port:{}".format(self.vrf, self.port.name)
+        return "DhcpRelay vrf:{0}, port:{1}".format(self.vrf, self.port.name)
 
     @PyaoscxModule.deprecated
     def get_uri(self):

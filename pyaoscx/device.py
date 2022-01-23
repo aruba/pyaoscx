@@ -400,9 +400,11 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             if version in self.firmware_version:
                 raise VerificationError(
                     "Upload Firmware through HTTPs",
-                    "Minimum supported firmware version is 10.04 for" +
-                    " remote firmware upload, your version is {firmware}"
-                    .format(firmware=self.firmware_version))
+                    "Minimum supported firmware version is 10.04 for "
+                    "remote firmware upload, your version is {0}".format(
+                        self.firmware_version
+                    ),
+                )
         # Verify VRF
         if vrf is None:
             raise VerificationError(

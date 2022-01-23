@@ -68,12 +68,13 @@ class ACL(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {"depth": depth, "selector": selector}
 
@@ -138,7 +139,6 @@ class ACL(PyaoscxModule):
         :return: Dictionary containing ACLs IDs as keys and a
             Acl objects as values
         """
-
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
         try:
@@ -336,12 +336,12 @@ class ACL(PyaoscxModule):
 
         # Create Acl object
         acl = ACL(session, name, list_type)
-        indices = "{},{}".format(name, list_type)
+        indices = "{0},{1}".format(name, list_type)
 
         return indices, acl
 
     def __str__(self):
-        return "ACL name:{}, list_type:{}".format(self.name, self.list_type)
+        return "ACL name:{0}, list_type:{1}".format(self.name, self.list_type)
 
     @PyaoscxModule.deprecated
     def get_uri(self):

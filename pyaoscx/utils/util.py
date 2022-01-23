@@ -182,10 +182,8 @@ def file_upload(session, file_path, complete_uri):
             # User session login
             # Perform Login
             response_login = requests.post(
-                session.base_url +
-                "login?username={}&password={}".format(
-                    session.username(),
-                    session.password()
+                "{0}login?username={1}&password={2}".format(
+                    session.base_url, session.username(), session.password()
                 ),
                 verify=False, timeout=5,
                 proxies=session.proxy)
@@ -225,7 +223,7 @@ def get_ip_version(ip):
     """
     try:
         ip_net = IPNetwork(ip)
-        return "ipv{}".format(ip_net.version)
+        return "ipv{0}".format(ip_net.version)
     except ValueError:
-        msg = "Invalid IP Address: {}".format(ip)
+        msg = "Invalid IP Address: {0}".format(ip)
         raise ParameterError(msg)

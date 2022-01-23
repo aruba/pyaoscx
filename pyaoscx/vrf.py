@@ -78,12 +78,13 @@ class Vrf(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -449,10 +450,8 @@ class Vrf(PyaoscxModule):
         return: Object's URI
         """
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{name}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=Vrf.base_uri,
-                name=self.name
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix, Vrf.base_uri, self.name,
             )
 
         return self._uri
@@ -467,7 +466,7 @@ class Vrf(PyaoscxModule):
         return self.session.api.get_index(self)
 
     def __str__(self):
-        return "VRF name: '{}'".format(self.name)
+        return "VRF name: '{0}'".format(self.name)
 
     @property
     def modified(self):
@@ -505,8 +504,8 @@ class Vrf(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                "VRF {}".format(self.name),
-                "Object not materialized")
+                "VRF {0}".format(self.name), "Object not materialized"
+            )
 
         # Verify if incoming address is a string
         if isinstance(family_type, str):
@@ -543,8 +542,8 @@ class Vrf(PyaoscxModule):
         """
         if not self.materialized:
             raise VerificationError(
-                "VRF {}".format(self.name),
-                "Object not materialized")
+                "VRF {0}".format(self.name), "Object not materialized"
+            )
         # gotta use deferred import to avoid cyclical import error
         from pyaoscx.vrf_address_family import VrfAddressFamily
         # Verify if incoming address is a object

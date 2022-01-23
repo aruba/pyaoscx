@@ -79,9 +79,10 @@ class Mac(PyaoscxModule):
 
         # Set URI
         self.base_uri = "{0}/{1}/{2}".format(
-                self._parent_vlan.base_uri,
-                self._parent_vlan.id,
-                self.resource_uri_name)
+            self._parent_vlan.base_uri,
+            self._parent_vlan.id,
+            self.resource_uri_name,
+        )
 
         macs = getattr(self._parent_vlan, self.resource_uri_name)
         found = False
@@ -173,9 +174,8 @@ class Mac(PyaoscxModule):
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
         path = "{0}/{1}/{2}".format(
-            parent_vlan.base_uri,
-            parent_vlan.id,
-            cls.resource_uri_name)
+            parent_vlan.base_uri, parent_vlan.id, cls.resource_uri_name
+        )
 
         try:
             response = session.request("GET", path)
@@ -320,9 +320,7 @@ class Mac(PyaoscxModule):
         return: Object's URI
         """
         if self._uri is None:
-            self._uri = (
-                "{0}{1}/{2}{3}{4}"
-            ).format(
+            self._uri = "{0}{1}/{2}{3}{4}".format(
                 self.session.resource_prefix,
                 self.base_uri,
                 self.from_id,

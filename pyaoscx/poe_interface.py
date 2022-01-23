@@ -77,12 +77,13 @@ class PoEInterface(Interface):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise ValueError("ERROR: Depth should be {}".format(depths))
+            raise ValueError("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise ValueError(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         # Set payload
         payload = {
@@ -202,7 +203,7 @@ class PoEInterface(Interface):
         pass
 
     def __str__(self):
-        return "PoE Interface {}".format(self.name)
+        return "PoE Interface {0}".format(self.name)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
@@ -257,8 +258,10 @@ class PoEInterface(Interface):
         valid_criticalities = ["low", "high", "critical"]
         if level not in valid_criticalities:
             raise ValueError(
-                "ERROR: Criticality level must be one of {}".format(
-                    valid_criticalities))
+                "ERROR: Criticality level must be one of {0}".format(
+                    valid_criticalities
+                )
+            )
 
         # Set power level
         self.config["priority"] = level

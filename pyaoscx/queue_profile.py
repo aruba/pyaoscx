@@ -203,7 +203,7 @@ class QueueProfile(PyaoscxModule):
         return json.loads(response.text)
 
     def __str__(self):
-        return "Queue Profile {}".format(self.name)
+        return "Queue Profile {0}".format(self.name)
 
     @property
     def modified(self):

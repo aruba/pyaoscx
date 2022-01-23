@@ -43,13 +43,12 @@ class Session:
             "https": proxy
         }
         self.scheme = "https"
-        self.version_path = "rest/v{}/".format(self.api)
+        self.version_path = "rest/v{0}/".format(self.api)
 
         # TODO: remove base_url once all modules use the internal
         # request methods
-        self.base_url = "https://{}/rest/v{}/".format(
-            self.ip, self.api)
-        self.resource_prefix = "/rest/v{}/".format(self.api)
+        self.base_url = "https://{0}/rest/v{1}/".format(self.ip, self.api)
+        self.resource_prefix = "/rest/v{0}/".format(self.api)
         self.s = requests.Session()
         self.s.verify = False
         self.__username = self.__password = ""
@@ -139,7 +138,7 @@ class Session:
         self.__username = username
         self.__password = password
         try:
-            login_uri = "%s%s" % (self.base_url, "login")
+            login_uri = "{0}{1}".format(self.base_url, "login")
             response = self.s.post(login_uri, data=login_data, verify=False,
                                    timeout=5, proxies=self.proxy)
         except requests.exceptions.ConnectTimeout:
@@ -148,8 +147,11 @@ class Session:
             )
 
         if response.status_code != 200:
-            raise Exception("FAIL: Login failed with status code %d: %s" %
-                            (response.status_code, response.text))
+            raise Exception(
+                "FAIL: Login failed with status code {0}: {1}".format(
+                    response.status_code, response.text
+                )
+            )
 
         cookies = self.s.cookies
         self.connected = (
@@ -168,18 +170,24 @@ class Session:
         stored within the session, no parameters are required.
         """
         if self.connected:
-            logout_uri = "%s%s" % (self.base_url, "logout")
+            logout_uri = "{0}{1}".format(self.base_url, "logout")
 
             try:
                 response = self.s.post(
                     logout_uri, verify=False, proxies=self.proxy)
             except BaseException:
-                raise Exception("Unable to process the request: (%u) %s" %
-                                (response.status_code, response.text))
+                raise Exception(
+                    "Unable to process the request: ({0}) {1}".format(
+                        response.status_code, response.text
+                    )
+                )
 
             if response.status_code != 200:
-                raise Exception("FAIL: Logout failed with status code %d: %s" %
-                                (response.status_code, response.text))
+                raise Exception(
+                    "FAIL: Logout failed with status code {0}: {1}".format(
+                        response.status_code, response.text
+                    )
+                )
 
             logging.info("SUCCESS: Logout succeeded")
 

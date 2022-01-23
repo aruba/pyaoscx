@@ -92,12 +92,13 @@ class Interface(AbstractInterface):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}" .format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -631,8 +632,9 @@ class Interface(AbstractInterface):
                     # Verify object is materialized
                     if not element.materialized:
                         raise VerificationError(
-                            "Interface {}".format(element.name),
-                            "Object inside interfaces not materialized")
+                            "Interface {0}".format(element.name),
+                            "Object inside interfaces not materialized",
+                        )
                     # Only in V1 get_uri() is used,
                     # In any other version, element.get_info_format()
                     # is used
@@ -654,8 +656,9 @@ class Interface(AbstractInterface):
                 # Verify object is materialized
                 if not element.materialized:
                     raise VerificationError(
-                        "Vlan {}".format(element),
-                        "Object inside vlan trunks not materialized")
+                        "Vlan {0}".format(element),
+                        "Object inside vlan trunks not materialized",
+                    )
                 formated_element = element.get_info_format()
                 formated_vlans.append(formated_element)
 
@@ -785,7 +788,6 @@ class Interface(AbstractInterface):
         # Check if port is a LAG
         # If not, POST Request to Interface Table
         if self.type != "lag":
-
             # Set data for Interface Table
             interface_data = utils.get_attrs(self, self.config_attrs_int)
             interface_data["name"] = self.name
@@ -848,7 +850,7 @@ class Interface(AbstractInterface):
         return self.session.api.get_index(self)
 
     def __str__(self):
-        return "Port name: '{}'".format(self.name)
+        return "Port name: '{0}'".format(self.name)
 
     def __set_to_default(self):
         """
@@ -857,8 +859,7 @@ class Interface(AbstractInterface):
         """
 
         uri_ports = "{0}/{1}".format(
-            Interface.base_uri_ports,
-            self.percents_name
+            Interface.base_uri_ports, self.percents_name
         )
 
         # get Port data related to configuration

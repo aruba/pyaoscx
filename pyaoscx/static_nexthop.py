@@ -87,12 +87,13 @@ class StaticNexthop(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -372,7 +373,7 @@ class StaticNexthop(PyaoscxModule):
         return index, static_nexthop_obj
 
     def __str__(self):
-        return "Static Nexthop: {}".format(self.id)
+        return "Static Nexthop: {0}".format(self.id)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
@@ -382,10 +383,10 @@ class StaticNexthop(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = "{resource_id}{class_uri}/{id}".format(
-                resource_id=self.session.resource_id,
-                class_uri=self.base_uri,
-                id=self.id
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_id,
+                self.base_uri,
+                self.id,
             )
 
         return self._uri

@@ -334,7 +334,7 @@ class Vlan(PyaoscxModule):
                 self.name, self.id, self.description
             )
         except Exception:
-            return "Vlan, ID: '{}'".format(self.id)
+            return "Vlan, ID: '{0}'".format(self.id)
 
     @PyaoscxModule.deprecated
     def get_uri(self):

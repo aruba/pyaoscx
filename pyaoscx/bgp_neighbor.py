@@ -90,12 +90,13 @@ class BgpNeighbor(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {"depth": depth, "selector": selector}
 
@@ -386,7 +387,7 @@ class BgpNeighbor(PyaoscxModule):
         return index, bgp_obj
 
     def __str__(self):
-        return "Bgp Neighbor ID {}".format(self.ip_or_ifname_or_group_name)
+        return "Bgp Neighbor ID {0}".format(self.ip_or_ifname_or_group_name)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
@@ -395,10 +396,11 @@ class BgpNeighbor(PyaoscxModule):
         return: Object's URI
         """
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{id}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=self.base_uri,
-                id=self.ip_or_ifname_or_group_name)
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                self.base_uri,
+                self.ip_or_ifname_or_group_name,
+            )
 
         return self._uri
 

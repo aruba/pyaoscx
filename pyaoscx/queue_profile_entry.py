@@ -221,9 +221,9 @@ class QueueProfileEntry(PyaoscxModule):
         return json.loads(response.text)
 
     def __str__(self):
-        return "Queue Profile Entry {} of Profile {}".format(
-            self.queue_number,
-            self.__profile.name)
+        return "Queue Profile Entry {0} of Profile {1}".format(
+            self.queue_number, self.__profile.name
+        )
 
     @property
     def modified(self):

@@ -194,7 +194,7 @@ class Dns(PyaoscxModule):
         pass
 
     def __str__(self):
-        return "DNS object with VRF: '{}'".format(self.vrf_name)
+        return "DNS object with VRF: '{0}'".format(self.vrf_name)
 
     @PyaoscxModule.deprecated
     def get_uri(self):

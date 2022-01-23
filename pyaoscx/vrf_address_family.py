@@ -85,12 +85,13 @@ class VrfAddressFamily(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -341,7 +342,7 @@ class VrfAddressFamily(PyaoscxModule):
         return index, vrf_address_family_obj
 
     def __str__(self):
-        return "VRF Address Family ID {}".format(self.address_family)
+        return "VRF Address Family ID {0}".format(self.address_family)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
@@ -351,10 +352,10 @@ class VrfAddressFamily(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{address_family}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=self.base_uri,
-                address_family=self.address_family
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                self.base_uri,
+                self.address_family,
             )
 
         return self._uri

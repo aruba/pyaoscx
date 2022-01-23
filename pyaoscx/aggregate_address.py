@@ -108,12 +108,13 @@ class AggregateAddress(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -390,14 +391,15 @@ class AggregateAddress(PyaoscxModule):
         index2 = index_pattern.match(uri).group("index2")
 
         # Create Create a AggregateAddress object
-        aggr_address = AggregateAddress(session, index1, index2,
-                                        parent_bgp_router)
-        indices = "{},{}".format(index1, index2)
+        aggr_address = AggregateAddress(
+            session, index1, index2, parent_bgp_router
+        )
+        indices = "{0},{1}".format(index1, index2)
 
         return indices, aggr_address
 
     def __str__(self):
-        return "Aggregate Address ID {}".format(self.address_family)
+        return "Aggregate Address ID {0}".format(self.address_family)
 
     @PyaoscxModule.deprecated
     def get_uri(self):

@@ -49,8 +49,9 @@ class PyaoscxModule(ABC):
         @functools.wraps(fnct)
         def is_materialized(self, *args, **kwargs):
             if not self.materialized:
-                raise VerificationError("Object {}".format(self),
-                                        " not materialized")
+                raise VerificationError(
+                    "Object {0}".format(self), " not materialized"
+                )
             return fnct(self, *args, **kwargs)
         return is_materialized
 
@@ -200,12 +201,13 @@ class PyaoscxModule(ABC):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be one of {}".format(depths))
+            raise Exception("ERROR: Depth should be one of {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,

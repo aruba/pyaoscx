@@ -201,7 +201,7 @@ class PyaoscxFactory(metaclass=Singleton):
         :return: Vlan object
         """
         if name is None:
-            name = "VLAN {}".format(str(vlan_id))
+            name = "VLAN {0}".format(str(vlan_id))
 
         if vlan_type is None:
             pvlan_type = "static"
@@ -1282,7 +1282,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
 
         if isinstance(vlan, int):
-            vlan = self.vlan(vlan, "Vlan{}".format(vlan))
+            vlan = self.vlan(vlan, "Vlan{0}".format(vlan))
 
         mac_obj = self.session.api.get_module(
             self.session, "Mac",
@@ -1311,7 +1311,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
 
         if isinstance(vlan, int):
-            vlan = self.vlan(vlan, "Vlan{}".format(vlan))
+            vlan = self.vlan(vlan, "Vlan{0}".format(vlan))
 
         if isinstance(port, str):
             port = self.interface(port)

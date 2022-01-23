@@ -141,12 +141,13 @@ class Interface(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {
             "depth": depth,
@@ -576,8 +577,9 @@ class Interface(PyaoscxModule):
                     # Verify object is materialized
                     if not element.materialized:
                         raise VerificationError(
-                            "Interface {}".format(element.name),
-                            "Object inside interfaces not materialized")
+                            "Interface {0}".format(element.name),
+                            "Object inside interfaces not materialized",
+                        )
                     formated_element = element.get_info_format()
                     formatted_interfaces.update(formated_element)
 
@@ -596,8 +598,9 @@ class Interface(PyaoscxModule):
                 # Verify object is materialized
                 if not element.materialized:
                     raise VerificationError(
-                        "Vlan {}".format(element),
-                        "Object inside vlan trunks not materialized")
+                        "Vlan {0}".format(element),
+                        "Object inside vlan trunks not materialized",
+                    )
                 formated_element = element.get_info_format()
                 formated_vlans.update(formated_element)
 
@@ -694,8 +697,9 @@ class Interface(PyaoscxModule):
 
         if not lag.materialized:
             raise VerificationError(
-                "LAG {}".format(lag.name),
-                "Object is not materialized - Perform get()")
+                "LAG {0}".format(lag.name),
+                "Object is not materialized - Perform get()",
+            )
 
         lag_name = lag.name
         # Extract LAG ID from LAG name
@@ -726,8 +730,9 @@ class Interface(PyaoscxModule):
 
         if not lag.materialized:
             raise VerificationError(
-                "LAG {}".format(lag.name),
-                "Object is not materialized - Perform get()")
+                "LAG {0}".format(lag.name),
+                "Object is not materialized - Perform get()",
+            )
 
         # Update Values
         try:
@@ -768,7 +773,7 @@ class Interface(PyaoscxModule):
         String containing the Interface name
         :return: String
         """
-        return "Interface Object, name: '{}'".format(self.name)
+        return "Interface Object, name: '{0}'".format(self.name)
 
     def __set_to_default(self):
         """
@@ -1108,13 +1113,14 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                "Interface {}".format(self.name), "Object not materialized")
+                "Interface {0}".format(self.name), "Object not materialized"
+            )
 
         if vlan is not None:
             vlan_tag = vlan
             # Set VLAN Tag into Object
             if isinstance(vlan, int):
-                name = "VLAN {}".format(str(vlan))
+                name = "VLAN {0}".format(str(vlan))
                 # Create Vlan object
                 vlan_tag = self.session.api.get_module(
                     self.session, "Vlan", vlan, name=name)
@@ -1250,7 +1256,8 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                "Interface {}".format(self.name), "Object not materialized")
+                "Interface {0}".format(self.name), "Object not materialized"
+            )
 
         # Verify if incoming address is a object
         if isinstance(ip_address, Ipv6):
@@ -1284,8 +1291,8 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                "Interface {}".format(self.name),
-                "Object not materialized")
+                "Interface {0}".format(self.name), "Object not materialized"
+            )
 
         # Set VRF
         if vrf is not None:
@@ -1364,7 +1371,8 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                "Interface {}".format(self.name), "Object not materialized")
+                "Interface {0}".format(self.name), "Object not materialized"
+            )
 
         # Set Values
         self.vlan_mode = vlan_mode
@@ -1384,7 +1392,8 @@ class Interface(PyaoscxModule):
 
         if not self.materialized:
             raise VerificationError(
-                "Interface {}".format(self.name), "Object not materialized")
+                "Interface {0}".format(self.name), "Object not materialized"
+            )
 
         # Set Values
         self.vlan_mode = "access"
@@ -1563,8 +1572,9 @@ class Interface(PyaoscxModule):
         """
         if not self.__is_special_type:
             raise VerificationError(
-                "Interface {}".format(self.name),
-                "Interface object must be a lag to remove a Port")
+                "Interface {0}".format(self.name),
+                "Interface object must be a lag to remove a Port",
+            )
 
         # Identify interface type
         if isinstance(interface, Interface):
@@ -1786,7 +1796,7 @@ class Interface(PyaoscxModule):
         # Configure Port/Interface
         self.configure_l3_ipv4_port(vrf=vrf)
 
-        self.ospf_if_type = "".join(("ospf_iftype_", interface_type))
+        self.ospf_if_type = "ospf_iftype_{0}".format(interface_type)
         self.routing = True
         # Set vrf
         vrf_obj = self.session.api.get_module(self.session, "Vrf", vrf)
@@ -2058,13 +2068,15 @@ class Interface(PyaoscxModule):
         mac_format.word_sep = ":"
 
         if not self.materialized:
-            raise VerificationError("Interface {}".format(
-                self.name), "Object not materialized")
+            raise VerificationError(
+                "Interface {0}".format(self.name), "Object not materialized"
+            )
 
         if not hasattr(self, "port_security"):
             raise VerificationError(
                 "Unable to configure the port's security",
-                "Interface {} is not security capable".format(self.name))
+                "Interface {0} is not security capable".format(self.name)
+            )
 
         self.port_security["enable"] = True
 
@@ -2104,13 +2116,16 @@ class Interface(PyaoscxModule):
         :return: True if the object was changed
         """
         if not self.materialized:
-            raise VerificationError("interface {}".format(self.name),
-                                    "Object not materialized")
+            raise VerificationError(
+                "interface {0}".format(self.name), "Object not materialized"
+            )
 
         if not hasattr(self, "port_security"):
             # This interface is not security capable
-            warn("Interface {} is not security capable".format(self.name),
-                 RuntimeWarning)
+            warn(
+                "Interface {0} is not security capable".format(self.name),
+                RuntimeWarning,
+            )
 
         self.port_security["enable"] = False
         return self.apply()

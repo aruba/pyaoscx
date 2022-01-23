@@ -63,9 +63,10 @@ class BgpRouter(PyaoscxModule):
         self.__parent_vrf = parent_vrf
 
         # Set URI
-        self.base_uri = "{base_vrf_uri}/{vrf_name}/bgp_routers".format(
-            base_vrf_uri=self.__parent_vrf.base_uri,
-            vrf_name=self.__parent_vrf.name)
+        self.base_uri = "{0}/{1}/bgp_routers".format(
+            self.__parent_vrf.base_uri,
+            self.__parent_vrf.name,
+        )
 
         # Verify BGP Router doesn't exist already inside VRF
         for bgp_router in self.__parent_vrf.bgp_routers:
@@ -95,12 +96,13 @@ class BgpRouter(PyaoscxModule):
 
         if not self.session.api.valid_depth(depth):
             depths = self.session.api.valid_depths
-            raise Exception("ERROR: Depth should be {}".format(depths))
+            raise Exception("ERROR: Depth should be {0}".format(depths))
 
         if selector not in self.session.api.valid_selectors:
             selectors = " ".join(self.session.api.valid_selectors)
             raise Exception(
-                "ERROR: Selector should be one of {}".format(selectors))
+                "ERROR: Selector should be one of {0}".format(selectors)
+            )
 
         payload = {"depth": depth, "selector": selector}
 
@@ -373,7 +375,7 @@ class BgpRouter(PyaoscxModule):
         return index, bgp_obj
 
     def __str__(self):
-        return "BGP Router ID {}".format(self.asn)
+        return "BGP Router ID {0}".format(self.asn)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
@@ -383,10 +385,11 @@ class BgpRouter(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{asn}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=self.base_uri,
-                asn=self.asn)
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                self.base_uri,
+                self.asn,
+            )
 
         return self._uri
 
@@ -452,8 +455,9 @@ class BgpRouter(PyaoscxModule):
         """
 
         if not self.materialized:
-            raise VerificationError("VRF {}".format(self.name),
-                                    "Object not materialized")
+            raise VerificationError(
+                "VRF {0}".format(self.name), "Object not materialized"
+            )
 
         if local_interface != "":
             if isinstance(local_interface, str):
