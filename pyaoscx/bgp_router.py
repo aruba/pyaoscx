@@ -128,8 +128,11 @@ class BgpRouter(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, "config_attrs",
-                ["asn", "bgp_neighbors", "aggregate_addresses"])
+                self,
+                data,
+                "config_attrs",
+                ["asn", "bgp_neighbors", "aggregate_addresses"],
+            )
 
         # Set original attributes
         self.__original_attributes = data
@@ -250,8 +253,9 @@ class BgpRouter(PyaoscxModule):
                 raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(response.text,
-                                            response.status_code)
+                raise GenericOperationError(
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
 
@@ -405,12 +409,14 @@ class BgpRouter(PyaoscxModule):
     # IMPERATIVE FUNCTIONS
     ####################################################################
 
-    def create_bgp_neighbors(self,
-                             group_ip,
-                             family_type="l2vpn_evpn",
-                             reflector=False,
-                             send_community=False,
-                             local_interface=""):
+    def create_bgp_neighbors(
+        self,
+        group_ip,
+        family_type="l2vpn_evpn",
+        reflector=False,
+        send_community=False,
+        local_interface="",
+    ):
         """
         Perform a POST call to create BGP Neighbors to the associated current
             BGP Router. With l2vpn_evpn being True, this will also apply EVPN
@@ -439,13 +445,14 @@ class BgpRouter(PyaoscxModule):
         if local_interface != "":
             if isinstance(local_interface, str):
                 local_interface = self.session.api.get_module(
-                    self.session, "Interface", local_interface)
+                    self.session, "Interface", local_interface
+                )
 
         # Set values needed
         activate = {
             "ipv4-unicast": False,
             "ipv6-unicast": False,
-            "l2vpn-evpn": False
+            "l2vpn-evpn": False,
         }
 
         next_hop_unchanged = {"l2vpn-evpn": False}
@@ -453,13 +460,13 @@ class BgpRouter(PyaoscxModule):
         route_reflector_client = {
             "ipv4-unicast": False,
             "ipv6-unicast": False,
-            "l2vpn-evpn": False
+            "l2vpn-evpn": False,
         }
 
         send_community_data = {
             "ipv4-unicast": "none",
             "ipv6-unicast": "none",
-            "l2vpn-evpn": "none"
+            "l2vpn-evpn": "none",
         }
 
         activate[family_type] = True
@@ -482,7 +489,8 @@ class BgpRouter(PyaoscxModule):
             activate=activate,
             next_hop_unchanged=next_hop_unchanged,
             route_reflector_client=route_reflector_client,
-            send_community=send_community_data)
+            send_community=send_community_data,
+        )
 
         # Try to obtain data; if not, create
         try:

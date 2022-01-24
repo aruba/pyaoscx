@@ -105,7 +105,8 @@ try:
         vlan_mode="native-untagged",
         vlan_tag=1,
         trunk_allowed_all=True,
-        native_vlan_tag=True)
+        native_vlan_tag=True,
+    )
     # If modified is True, a PUT request was done and object was modified
 
 except Exception as error:

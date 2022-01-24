@@ -43,10 +43,7 @@ class QosCos(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
         # Build path
-        self.path = "{0}/{1}".format(
-            self.base_uri,
-            self.code_point
-        )
+        self.path = "{0}/{1}".format(self.base_uri, self.code_point)
 
     @property
     def code_point(self):
@@ -167,8 +164,7 @@ class QosCos(PyaoscxModule):
         :return: QoS COS trust mode object.
         """
         code_points_arr = session.api.get_keys(
-            response_data,
-            cls.resource_uri_name
+            response_data, cls.resource_uri_name
         )
         code_point = code_points_arr[0]
 

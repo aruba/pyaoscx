@@ -50,10 +50,7 @@ class Vlan(PyaoscxModule):
         self.__modified = False
 
         # Build the path that identifies the current Vlan
-        self.path = "{0}/{1}".format(
-            Vlan.base_uri,
-            self.id
-        )
+        self.path = "{0}/{1}".format(Vlan.base_uri, self.id)
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -95,6 +92,7 @@ class Vlan(PyaoscxModule):
 
         # Set all ACLs
         from pyaoscx.acl import ACL
+
         if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_in_cfg)
@@ -249,7 +247,8 @@ class Vlan(PyaoscxModule):
         :return: Vlan Object.
         """
         vlan_id_arr = session.api.get_keys(
-            response_data, Vlan.resource_uri_name)
+            response_data, Vlan.resource_uri_name
+        )
         vlan_id = vlan_id_arr[0]
         return Vlan(session, vlan_id)
 
@@ -298,9 +297,7 @@ class Vlan(PyaoscxModule):
         except Exception as e:
             raise ResponseError("GET", e)
         if not utils._response_ok(response, "GET"):
-            raise GenericOperationError(
-                response.text,
-                response.status_code)
+            raise GenericOperationError(response.text, response.status_code)
 
         # Load response text into json format
         facts = json.loads(response.text)
@@ -401,23 +398,27 @@ class Vlan(PyaoscxModule):
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, "ACL", index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type
+        )
 
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
             if self.aclv6_in_cfg_version is None:
                 self.aclv6_in_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+                    -9007199254740991, 9007199254740991
+                )
         if list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
             if self.aclv4_in_cfg_version is None:
                 self.aclv4_in_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+                    -9007199254740991, 9007199254740991
+                )
         if list_type == "mac":
             self.aclmac_in_cfg = acl_obj
             if self.aclmac_in_cfg_version is None:
                 self.aclmac_in_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+                    -9007199254740991, 9007199254740991
+                )
 
         # Apply changes
         return self.apply()
@@ -432,23 +433,27 @@ class Vlan(PyaoscxModule):
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, "ACL", index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type
+        )
 
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
             if self.aclv6_out_cfg_version is None:
                 self.aclv6_out_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+                    -9007199254740991, 9007199254740991
+                )
         if list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
             if self.aclv4_out_cfg_version is None:
                 self.aclv4_out_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+                    -9007199254740991, 9007199254740991
+                )
         if list_type == "mac":
             self.aclmac_out_cfg = acl_obj
             if self.aclmac_out_cfg_version is None:
                 self.aclmac_out_cfg_version = random.randint(
-                    -9007199254740991, 9007199254740991)
+                    -9007199254740991, 9007199254740991
+                )
 
         # Apply changes
         return self.apply()
@@ -504,10 +509,11 @@ class Vlan(PyaoscxModule):
         :return: Mac object.
         """
         mac_obj = self.session.api.get_module(
-            self.session, "Mac",
+            self.session,
+            "Mac",
             from_id,
             mac_addr=mac_address,
-            parent_vlan=self
+            parent_vlan=self,
         )
 
         # Get MAC data
@@ -523,16 +529,12 @@ class Vlan(PyaoscxModule):
         """
         if isinstance(port, str):
             # Make Interface into an object
-            port = self.session.api.get_module(
-                self.session, "Interface", port)
+            port = self.session.api.get_module(self.session, "Interface", port)
             # Materialize interface to ensure its existence
             port.get()
 
         static_mac_obj = self.session.api.get_module(
-            self.session, "StaticMac",
-            mac_address,
-            parent_vlan=self,
-            port=port
+            self.session, "StaticMac", mac_address, parent_vlan=self, port=port
         )
 
         # Create static Mac on the switch

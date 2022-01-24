@@ -85,10 +85,7 @@ class Vrf(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}".format(Vrf.base_uri, self.name)
 
@@ -125,13 +122,10 @@ class Vrf(PyaoscxModule):
                 "ospf_routers",
                 "ospfv3_routers",
                 "vrf_address_families",
-                "static_routes"
+                "static_routes",
             ]
             utils.set_config_attrs(
-                self,
-                data,
-                "config_attrs",
-                unwanted_attributes
+                self, data, "config_attrs", unwanted_attributes
             )
         # Set original attributes
         self.__original_attributes = data
@@ -166,6 +160,7 @@ class Vrf(PyaoscxModule):
         if "bgp" in device.capabilities and self.bgp_routers == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.bgp_router import BgpRouter
+
             # Set BGP Routers if any
             # Adds bgp_bouters to parent Vrf object
             BgpRouter.get_all(self.session, self)
@@ -174,6 +169,7 @@ class Vrf(PyaoscxModule):
         if self.address_families == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.vrf_address_family import VrfAddressFamily
+
             # Set Address Families if any
             # Adds address_families to parent Vrf object
             VrfAddressFamily.get_all(self.session, self)
@@ -182,6 +178,7 @@ class Vrf(PyaoscxModule):
         if "ospfv2" in device.capabilities and self.ospf_routers == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.ospf_router import OspfRouter
+
             # Set OSPF Routers if any
             # Adds ospf_routers to parent Vrf object
             OspfRouter.get_all(self.session, self)
@@ -190,6 +187,7 @@ class Vrf(PyaoscxModule):
         if "ospfv3" in device.capabilities and self.ospfv3_routers == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.ospfv3_router import Ospfv3Router
+
             # Add all ospfv3_routers (if any) to parent Vrf object
             Ospfv3Router.get_all(self.session, self)
 
@@ -197,6 +195,7 @@ class Vrf(PyaoscxModule):
         if self.static_routes == []:
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.static_route import StaticRoute
+
             # Set Static Route if any
             # Adds static_routes to parent Vrf object
             StaticRoute.get_all(self.session, self)
@@ -268,9 +267,8 @@ class Vrf(PyaoscxModule):
 
         # Compare dictionaries
         # if vrf_data == self.__original_attributes:
-        if (
-            json.dumps(vrf_data, sort_keys=True, indent=4)
-            == json.dumps(self.__original_attributes, sort_keys=True, indent=4)
+        if json.dumps(vrf_data, sort_keys=True, indent=4) == json.dumps(
+            self.__original_attributes, sort_keys=True, indent=4
         ):
             # Object was not modified
             modified = False
@@ -286,7 +284,8 @@ class Vrf(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Adding %s", self)
             # Set new original attributes
@@ -372,8 +371,7 @@ class Vrf(PyaoscxModule):
             vrf_name = "default"
         else:
             vrf_name_arr = session.api.get_keys(
-                response_data,
-                cls.resource_uri_name
+                response_data, cls.resource_uri_name
             )
             vrf_name = vrf_name_arr[0]
         return cls(session, vrf_name)
@@ -437,7 +435,9 @@ class Vrf(PyaoscxModule):
         """
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
-                self.session.resource_prefix, Vrf.base_uri, self.name,
+                self.session.resource_prefix,
+                Vrf.base_uri,
+                self.name,
             )
 
         return self._uri
@@ -473,8 +473,9 @@ class Vrf(PyaoscxModule):
     # IMPERATIVE FUNCTIONS
     ####################################################################
 
-    def add_address_family(self, family_type="ipv4_unicast", export_target=[],
-                           import_targets=[]):
+    def add_address_family(
+        self, family_type="ipv4_unicast", export_target=[], import_targets=[]
+    ):
         """
         Add a VRF Address Family to the current Vrf object.
         :param family_type: Alphanumeric type of the Address Family.
@@ -494,11 +495,14 @@ class Vrf(PyaoscxModule):
             # Create Vrf_Family_Address object -- add it to it's internal
             # address_families
             vrf_address_family = self.session.api.get_module(
-                self.session, "VrfAddressFamily", family_type,
+                self.session,
+                "VrfAddressFamily",
+                family_type,
                 parent_vrf=self,
                 export_route_targets=export_target,
                 import_route_targets=import_targets,
-                route_map={})
+                route_map={},
+            )
             # Try to get data, if non existent create
             try:
                 # Try to obtain vrf_address_family address data
@@ -527,6 +531,7 @@ class Vrf(PyaoscxModule):
             )
         # gotta use deferred import to avoid cyclical import error
         from pyaoscx.vrf_address_family import VrfAddressFamily
+
         # Verify if incoming address is a object
         if isinstance(family_type, VrfAddressFamily):
             # Obtain address
@@ -538,9 +543,14 @@ class Vrf(PyaoscxModule):
                 # Removing address does an internal delete
                 self.address_families.remove(add_family_obj)
 
-    def setup_dns(self, domain_name=None, domain_list=None,
-                  domain_servers=None, host_v4_address_mapping=None,
-                  host_v6_address_mapping=None):
+    def setup_dns(
+        self,
+        domain_name=None,
+        domain_list=None,
+        domain_servers=None,
+        host_v4_address_mapping=None,
+        host_v6_address_mapping=None,
+    ):
         """
         Setup DNS client configuration within a VRF.
         :param domain_name: Domain name used for name resolution by the DNS
@@ -591,9 +601,14 @@ class Vrf(PyaoscxModule):
 
         return self.apply()
 
-    def delete_dns(self, domain_name=None, domain_list=None,
-                   domain_servers=None, host_v4_address_mapping=None,
-                   host_v6_address_mapping=None):
+    def delete_dns(
+        self,
+        domain_name=None,
+        domain_list=None,
+        domain_servers=None,
+        host_v4_address_mapping=None,
+        host_v6_address_mapping=None,
+    ):
         """
         Delete DNS client configuration within a Vrf object.
         :param domain_name: If value is not None, it is deleted

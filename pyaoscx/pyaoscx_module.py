@@ -31,11 +31,13 @@ class PyaoscxModule(ABC):
         :param fnct: function which behavior is modified.
         :return ensure_connected: Function.
         """
+
         @functools.wraps(fnct)
         def ensure_connected(self, *args, **kwargs):
             if not self.session.connected:
                 self.session.open()
             return fnct(self, *args, **kwargs)
+
         return ensure_connected
 
     def materialized(fnct):
@@ -44,6 +46,7 @@ class PyaoscxModule(ABC):
         :para fnct: function which behavior is modified.
         :return is_materialized: Function.
         """
+
         @functools.wraps(fnct)
         def is_materialized(self, *args, **kwargs):
             if not self.materialized:
@@ -51,6 +54,7 @@ class PyaoscxModule(ABC):
                     "Object {0}".format(self), " not materialized"
                 )
             return fnct(self, *args, **kwargs)
+
         return is_materialized
 
     def deprecated(func):
@@ -59,15 +63,18 @@ class PyaoscxModule(ABC):
         :param func: function whose behavior is modified/wrapped.
         :return func: function whose behavior is modified/wrapped.
         """
+
         @functools.wraps(func)
         def is_deprecated(*args, **kwargs):
-            warnings.warn("{0} will be removed in a future version".format(
-                func.__name__
+            warnings.warn(
+                "{0} will be removed in a future version".format(
+                    func.__name__
                 ),
                 category=DeprecationWarning,
-                stacklevel=2
+                stacklevel=2,
             )
             return func(*args, **kwargs)
+
         return is_deprecated
 
     @abstractmethod
@@ -197,10 +204,7 @@ class PyaoscxModule(ABC):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         try:
             response = self.session.request("GET", self.path, params=payload)
@@ -252,20 +256,18 @@ class PyaoscxModule(ABC):
         send_data = json.dumps(data, sort_keys=True, indent=4)
 
         try:
-            response = self.session.request(
-                http_verb, path, data=send_data)
+            response = self.session.request(http_verb, path, data=send_data)
 
         except Exception as e:
             raise ResponseError(http_verb, e)
 
         if not utils._response_ok(response, http_verb):
-            raise GenericOperationError(
-                response.text, response.status_code)
+            raise GenericOperationError(response.text, response.status_code)
 
         logging.info(
             "SUCCESS: %s %s table entry succeeded",
             display_verb,
-            type(self).__name__
+            type(self).__name__,
         )
 
     @staticmethod
@@ -284,9 +286,8 @@ class PyaoscxModule(ABC):
         :return: True if a replacement is required.
         """
         for param_name in immutable_parameter_names:
-            if (
-                hasattr(current, param_name)
-                and hasattr(replacement, param_name)
+            if hasattr(current, param_name) and hasattr(
+                replacement, param_name
             ):
                 # In this case, a common parameter has a different value in the
                 # potential replacement config, so a replacement is required
@@ -313,8 +314,9 @@ class PyaoscxModule(ABC):
         # Until we are able to read the Schema we need to keep a list of the
         # the names of mutable an immutable parameters. Once we are capable of
         # using the schema, the information can be taken from there.
-        all_param_names = (self.immutable_parameter_names +
-                           self.mutable_parameter_names)
+        all_param_names = (
+            self.immutable_parameter_names + self.mutable_parameter_names
+        )
         for param_name in all_param_names:
             if hasattr(other, param_name):
                 param = getattr(other, param_name)

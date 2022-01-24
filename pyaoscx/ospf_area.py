@@ -29,13 +29,7 @@ class OspfArea(PyaoscxModule):
     # Use to manage references
     ospf_interfaces = ListDescriptor("ospf_interfaces")
 
-    def __init__(
-        self,
-        session,
-        area_id,
-        parent_ospf_router,
-        **kwargs
-    ):
+    def __init__(self, session, area_id, parent_ospf_router, **kwargs):
         self.session = session
         # Assign ID
         self.__area_id = area_id
@@ -92,12 +86,7 @@ class OspfArea(PyaoscxModule):
         # Determines if the OSPF Area is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self,
-                data,
-                "config_attrs",
-                self.indices
-            )
+            utils.set_config_attrs(self, data, "config_attrs", self.indices)
         # Set original attributes
         if "area_id" in data:
             del data["area_id"]
@@ -110,6 +99,7 @@ class OspfArea(PyaoscxModule):
             # Set Areas if any
             # Adds OSPF Interface to parent OSPF Area already
             from pyaoscx.ospf_interface import OspfInterface
+
             OspfInterface.get_all(self.session, self)
 
         return True
@@ -144,9 +134,7 @@ class OspfArea(PyaoscxModule):
         for uri in uri_list:
             # Create an OspfArea object
             area_id, ospf_area = OspfArea.from_uri(
-                session,
-                parent_ospf_router,
-                uri
+                session, parent_ospf_router, uri
             )
             # Load all OSPF Router data from within the Switch
             ospf_area_dict[area_id] = ospf_area
@@ -224,8 +212,7 @@ class OspfArea(PyaoscxModule):
         :return: OspfArea object.
         """
         ospf_area_arr = session.api.get_keys(
-            response_data,
-            cls.resource_uri_name
+            response_data, cls.resource_uri_name
         )
         ospf_area_id = ospf_area_arr[0]
         return cls(session, ospf_area_id, parent_ospf_router)

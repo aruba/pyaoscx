@@ -50,7 +50,7 @@ class OspfRouter(PyaoscxModule):
         uri_indices = {
             "name": self._parent_vrf.name,
             "version": self.version,
-            "instance_tag": self.__instance_tag
+            "instance_tag": self.__instance_tag,
         }
         self.base_uri = self.collection_uri.format(**uri_indices)
         self.path = self.object_uri.format(**uri_indices)
@@ -102,6 +102,7 @@ class OspfRouter(PyaoscxModule):
             )
             # gotta use deferred import to avoid cyclical import error
             from pyaoscx.interface import Interface
+
             for uri in uri_list:
                 # Create an Interface object
                 _, iface = Interface.from_uri(self.session, uri)
@@ -113,6 +114,7 @@ class OspfRouter(PyaoscxModule):
             # Set Areas if any
             # Adds Area to parent OspfRouter
             from pyaoscx.ospf_area import OspfArea
+
             OspfArea.get_all(self.session, self)
         return True
 
@@ -129,10 +131,7 @@ class OspfRouter(PyaoscxModule):
             (OSPF Router ID, OspfRouter object) (key,value) pairs.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
-        uri_indices = {
-            "name": parent_vrf.name,
-            "version": cls.version
-        }
+        uri_indices = {"name": parent_vrf.name, "version": cls.version}
         uri = cls.collection_uri.format(**uri_indices)
         try:
             response = session.request("GET", uri)
@@ -263,8 +262,7 @@ class OspfRouter(PyaoscxModule):
 
     def __str__(self):
         return "{0} with instance_tag {1}".format(
-            type(self).__name__,
-            self.instance_tag
+            type(self).__name__, self.instance_tag
         )
 
     @PyaoscxModule.deprecated

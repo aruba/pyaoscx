@@ -26,8 +26,7 @@ class Mac(PyaoscxModule):
     indices = ["from", "mac_addr"]
     resource_uri_name = "macs"
 
-    def __init__(self, session, from_id, mac_addr, parent_vlan,
-                 uri=None):
+    def __init__(self, session, from_id, mac_addr, parent_vlan, uri=None):
         """
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -98,14 +97,16 @@ class Mac(PyaoscxModule):
             self.base_uri,
             self.from_id,
             self.session.api.compound_index_separator,
-            quote_plus(str(self.mac_address)))
+            quote_plus(str(self.mac_address)),
+        )
 
     def _set_configuration_items(self, data, selector):
         # Determines if the MAC is configurable
         if selector in self.session.api.configurable_selectors:
             # Sets self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, "config_attrs", ["from", "mac_addr"])
+                self, data, "config_attrs", ["from", "mac_addr"]
+            )
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -142,10 +143,12 @@ class Mac(PyaoscxModule):
             port_response = self.port
             # Instantiate empty object to use static method correctly
             interface_cls = self.session.api.get_module(
-                self.session, "Interface", "")
+                self.session, "Interface", ""
+            )
             # Set port as a Interface Object
             self.port = interface_cls.from_response(
-                self.session, port_response)
+                self.session, port_response
+            )
             self.port.get()
 
         # Sets object as materialized
@@ -187,8 +190,7 @@ class Mac(PyaoscxModule):
 
         for uri in uri_list:
             # Create a Mac object
-            indices, mac = cls.from_uri(
-                session, parent_vlan, uri)
+            indices, mac = cls.from_uri(session, parent_vlan, uri)
             mac_dict[indices] = mac
 
         return mac_dict
@@ -241,16 +243,13 @@ class Mac(PyaoscxModule):
         """
         mac_format = mac_eui48
         mac_format.word_sep = ":"
-        mac_pair = session.api.get_keys(
-            response_data, cls.resource_uri_name)
+        mac_pair = session.api.get_keys(response_data, cls.resource_uri_name)
         mac_addr = mac_pair[1]
         from_id = mac_pair[0]
 
-        mac_address = MacAddress(unquote_plus(mac_addr),
-                                 dialect=mac_format)
+        mac_address = MacAddress(unquote_plus(mac_addr), dialect=mac_format)
 
-        return Mac(
-            session, from_id, mac_address, parent_vlan)
+        return Mac(session, from_id, mac_address, parent_vlan)
 
     @classmethod
     def from_uri(cls, session, parent_vlan, uri):
@@ -268,19 +267,19 @@ class Mac(PyaoscxModule):
         # Get ID from URI. Note that using a uri object here is of no
         # benefit because we are dealing with the path
         index_pattern = re.compile(
-                r"(.*)macs/(?P<index1>.+)[,./-](?P<index2>.+)")
+            r"(.*)macs/(?P<index1>.+)[,./-](?P<index2>.+)"
+        )
         from_id = index_pattern.match(uri).group("index1")
         reference_mac_addr = index_pattern.match(uri).group("index2")
 
-        mac_addr = MacAddress(unquote_plus(
-            reference_mac_addr), dialect=mac_format)
+        mac_addr = MacAddress(
+            unquote_plus(reference_mac_addr), dialect=mac_format
+        )
 
-        mac = Mac(session, from_id, mac_addr,
-                  parent_vlan)
+        mac = Mac(session, from_id, mac_addr, parent_vlan)
         indices = "{0}{1}{2}".format(
-            from_id,
-            session.api.compound_index_separator,
-            reference_mac_addr)
+            from_id, session.api.compound_index_separator, reference_mac_addr
+        )
 
         return indices, mac
 
@@ -309,7 +308,7 @@ class Mac(PyaoscxModule):
                 self.base_uri,
                 self.from_id,
                 self.session.api.compound_index_separator,
-                quote_plus(str(self.mac_address))
+                quote_plus(str(self.mac_address)),
             )
 
         return self._uri

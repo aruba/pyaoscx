@@ -90,10 +90,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         utils.create_attrs(self, data)
 
         utils.set_config_attrs(
-            self,
-            data,
-            "config_attrs",
-            non_configurable_attrs
+            self, data, "config_attrs", non_configurable_attrs
         )
 
         # Save original attributes
@@ -114,8 +111,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     @PyaoscxModule.connected
     def get_subsystems(self):
         """
-         Perform GET call to retrieve subsystem attributes and create a
-             dictionary containing them.
+        Perform GET call to retrieve subsystem attributes and create a
+            dictionary containing them.
         """
         logging.info(
             "Retrieving the switch subsystem attributes and capabilities"
@@ -127,7 +124,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             "power_supplies",
             "interfaces",
             "fans",
-            "resource_utilization"
+            "resource_utilization",
         ]
 
         # Format attribute list by joining every element with a comma
@@ -202,10 +199,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
-            raise GenericOperationError(
-                response.text,
-                response.status_code
-            )
+            raise GenericOperationError(response.text, response.status_code)
 
         # Set new original attributes
         self.__original_attributes = deepcopy(device_data)
@@ -231,10 +225,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
         # Second GET request to obtain just the variables that are writable
         selector = self.session.api.default_selector
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
         try:
             response = self.session.request(
                 "GET", Device.base_uri, params=payload
@@ -295,10 +286,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
         # Second GET request to obtain just the variables that are writable
         selector = self.session.api.default_selector
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
         try:
             response = self.session.request(
                 "GET", Device.base_uri, params=payload
@@ -333,7 +321,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code, "DELETE Banner")
+                    response.text, response.status_code, "DELETE Banner"
+                )
 
             # Object was modified, returns True
             modified = True
@@ -366,9 +355,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         # Return result
         return success
 
-    def upload_firmware_http(self, remote_firmware_file_path,
-                             vrf,
-                             partition_name="primary"):
+    def upload_firmware_http(
+        self, remote_firmware_file_path, vrf, partition_name="primary"
+    ):
         """
         Perform a PUT request to upload a firmware image given a http_request.
         :param remote_firmware_file_path: "HTTP server address and path for
@@ -401,8 +390,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         if vrf is None:
             raise VerificationError(
                 "VRF",
-                "VRF needs to be provided in order" +
-                " to upload firmware from HTTP server")
+                "VRF needs to be provided in order"
+                + " to upload firmware from HTTP server",
+            )
         http_path_encoded = quote_plus(http_path)
 
         # Build URI
@@ -418,14 +408,14 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
-            raise GenericOperationError(
-                response.text, response.status_code)
+            raise GenericOperationError(response.text, response.status_code)
 
         # True if successful
         return True
 
-    def upload_firmware_local(self, partition_name="primary",
-                              firmware_file_path=None):
+    def upload_firmware_local(
+        self, partition_name="primary", firmware_file_path=None
+    ):
         """
         Perform a POST request to upload a firmware image from a local file.
         :param partition_name: Name of the partition for the image to be
@@ -440,10 +430,13 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         # If no errors detected
         return success
 
-    def upload_firmware(self, partition_name=None,
-                        firmware_file_path=None,
-                        remote_firmware_file_path=None,
-                        vrf=None):
+    def upload_firmware(
+        self,
+        partition_name=None,
+        firmware_file_path=None,
+        remote_firmware_file_path=None,
+        vrf=None,
+    ):
         """
         Upload a firmware image from a local file OR from a remote location.
         :param partition_name: Name of the partition for the image to be
@@ -466,15 +459,14 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         # Use HTTP Server
         if remote_firmware_file_path is not None:
             result = self.upload_firmware_http(
-                remote_firmware_file_path,
-                vrf,
-                partition_name)
+                remote_firmware_file_path, vrf, partition_name
+            )
 
         # Locally
         else:
             result = self.upload_firmware_local(
-                partition_name,
-                firmware_file_path)
+                partition_name, firmware_file_path
+            )
 
         # If no errors detected
         return result

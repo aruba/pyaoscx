@@ -11,16 +11,20 @@ class Dns(PyaoscxModule):
     Provide configuration management for DNS on AOS-CX devices. As it is a
         special module, behaves differently.
     """
+
     base_uri_vrf = "system/vrf"
 
-    def __init__(self, session,
-                 vrf_name,
-                 domain_name=None,
-                 domain_list=None,
-                 domain_servers=None,
-                 host_v4_address_mapping=None,
-                 host_v6_address_mapping=None,
-                 uri=None):
+    def __init__(
+        self,
+        session,
+        vrf_name,
+        domain_name=None,
+        domain_list=None,
+        domain_servers=None,
+        host_v4_address_mapping=None,
+        host_v6_address_mapping=None,
+        uri=None,
+    ):
 
         self.session = session
         self._uri = uri
@@ -43,7 +47,7 @@ class Dns(PyaoscxModule):
             "dns_domain_list",
             "dns_name_servers",
             "dns_host_v4_address_mapping",
-            "dns_host_v6_address_mapping"
+            "dns_host_v6_address_mapping",
         ]
         # Attribute used to know if object was changed recently
         self.__modified = False
@@ -51,7 +55,8 @@ class Dns(PyaoscxModule):
         self.__internal_vrf = None
         # Try to create VRF
         self.__internal_vrf = self.session.api.get_module(
-            self.session, "Vrf", self.vrf_name)
+            self.session, "Vrf", self.vrf_name
+        )
         # Materialize internal VRF
         self.__internal_vrf.get()
 
@@ -68,7 +73,8 @@ class Dns(PyaoscxModule):
         """
         # Get VRF
         vrf_obj = self.session.api.get_module(
-            self.session, "Vrf", self.vrf_name)
+            self.session, "Vrf", self.vrf_name
+        )
 
         # Get vrf Object
         vrf_obj.get()
@@ -243,9 +249,14 @@ class Dns(PyaoscxModule):
 
         return config.delete_mgmt_nameservers_dns()
 
-    def setup_dns(self, domain_name=None, domain_list=None,
-                  domain_servers=None, host_v4_address_mapping=None,
-                  host_v6_address_mapping=None):
+    def setup_dns(
+        self,
+        domain_name=None,
+        domain_list=None,
+        domain_servers=None,
+        host_v4_address_mapping=None,
+        host_v6_address_mapping=None,
+    ):
         """
         Setup DNS client configuration within a Vrf object.
         :param domain_name: Domain name used for name resolution by the DNS
@@ -295,9 +306,14 @@ class Dns(PyaoscxModule):
 
         return self.apply()
 
-    def delete_dns(self, domain_name=None, domain_list=None,
-                   domain_servers=None, host_v4_address_mapping=None,
-                   host_v6_address_mapping=None):
+    def delete_dns(
+        self,
+        domain_name=None,
+        domain_list=None,
+        domain_servers=None,
+        host_v4_address_mapping=None,
+        host_v6_address_mapping=None,
+    ):
         """
         Delete DNS client configuration within a Vrf object.
         :param domain_name: If value is not None, it is deleted.

@@ -32,7 +32,7 @@ class AclEntry(PyaoscxModule):
         "pim": 103,
         "sctp": 132,
         "tcp": 6,
-        "udp": 17
+        "udp": 17,
     }
 
     # These parameters cannot be changed once the ACE is created
@@ -84,12 +84,9 @@ class AclEntry(PyaoscxModule):
     # parameters to create copies.
     mutable_parameter_names = ["comment"]
 
-    def __init__(self,
-                 session,
-                 sequence_number,
-                 parent_acl,
-                 uri=None,
-                 **kwargs):
+    def __init__(
+        self, session, sequence_number, parent_acl, uri=None, **kwargs
+    ):
 
         self.session = session
         # Assign ID
@@ -180,8 +177,9 @@ class AclEntry(PyaoscxModule):
         # Determines if the ACL Entry is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, "config_attrs",
-                                   ["sequence_number"])
+            utils.set_config_attrs(
+                self, data, "config_attrs", ["sequence_number"]
+            )
 
         # Set original attributes
         self.__original_attributes = data
@@ -211,7 +209,7 @@ class AclEntry(PyaoscxModule):
             parent_acl.base_uri,
             parent_acl.name,
             session.api.compound_index_separator,
-            parent_acl.list_type
+            parent_acl.list_type,
         )
 
         try:
@@ -231,7 +229,8 @@ class AclEntry(PyaoscxModule):
         for uri in uri_list:
             # Create a AclEntry object and adds it to parent acl list
             sequence_number, acl_entry = AclEntry.from_uri(
-                session, parent_acl, uri)
+                session, parent_acl, uri
+            )
             # Load all acl_entry data from within the Switch
             acl_entry.get()
             acl_entry_dict[sequence_number] = acl_entry
@@ -254,7 +253,8 @@ class AclEntry(PyaoscxModule):
         modified = False
 
         remote_ace = AclEntry(
-            self.session, self.sequence_number, self.__parent_acl)
+            self.session, self.sequence_number, self.__parent_acl
+        )
 
         try:
             # Should get all configurable attributes, not just the one that
@@ -269,9 +269,9 @@ class AclEntry(PyaoscxModule):
             self._extract_missing_parameters_from(remote_ace)
             # Get was successful, so the ACE already exists
             if PyaoscxModule._is_replace_required(
-                    current=remote_ace,
-                    replacement=self,
-                    immutable_parameter_names=self.immutable_parameter_names
+                current=remote_ace,
+                replacement=self,
+                immutable_parameter_names=self.immutable_parameter_names,
             ):
                 remote_ace.delete()
                 logging.info(
@@ -324,8 +324,9 @@ class AclEntry(PyaoscxModule):
                 raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(response.text,
-                                            response.status_code)
+                raise GenericOperationError(
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
@@ -430,7 +431,8 @@ class AclEntry(PyaoscxModule):
         :return: AclEntry object.
         """
         acl_entry_arr = session.api.get_keys(
-            response_data, AclEntry.resource_uri_name)
+            response_data, AclEntry.resource_uri_name
+        )
         sequence_number = acl_entry_arr[0]
         return AclEntry(session, sequence_number, parent_acl)
 
@@ -500,14 +502,14 @@ class AclEntry(PyaoscxModule):
         modified = False
         for key, value in current.items():
             if key in original:
-                modified |= (value != original[key])
+                modified |= value != original[key]
             else:
-                modified |= (value is not None)
+                modified |= value is not None
         for key, value in original.items():
             if key in current:
-                modified |= (value != current[key])
+                modified |= value != current[key]
             else:
-                modified |= (value is not None)
+                modified |= value is not None
 
         return modified
 
@@ -523,16 +525,18 @@ class AclEntry(PyaoscxModule):
     # IMPERATIVE FUNCTIONS
     ####################################################################
 
-    def modify(self,
-               action=None,
-               count=None,
-               src_ip=None,
-               dst_ip=None,
-               dst_l4_port_min=None,
-               dst_l4_port_max=None,
-               src_mac=None,
-               dst_mac=None,
-               ethertype=None):
+    def modify(
+        self,
+        action=None,
+        count=None,
+        src_ip=None,
+        dst_ip=None,
+        dst_l4_port_min=None,
+        dst_l4_port_max=None,
+        src_mac=None,
+        dst_mac=None,
+        ethertype=None,
+    ):
         """
         Create an AclEntry object, ACL Entry already exists, value passed won't
             update the entry.

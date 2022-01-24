@@ -28,13 +28,7 @@ class OspfInterface(PyaoscxModule):
     indices = ["interface_name"]
     resource_uri_name = "ospf_interfaces"
 
-    def __init__(
-        self,
-        session,
-        interface_name,
-        parent_ospf_area,
-        **kwargs
-    ):
+    def __init__(self, session, interface_name, parent_ospf_area, **kwargs):
         self.session = session
         # Assign ID
         self.__interface_name = quote_plus(interface_name)
@@ -79,6 +73,7 @@ class OspfInterface(PyaoscxModule):
 
     def _set_port(self, name):
         from pyaoscx.interface import Interface
+
         self.__port = Interface(self.session, name)
 
     @PyaoscxModule.connected
@@ -143,9 +138,7 @@ class OspfInterface(PyaoscxModule):
         for uri in uri_list:
             # Create a OspfInterface object
             interface_name, ospf_interface = cls.from_uri(
-                session,
-                parent_ospf_area,
-                uri
+                session, parent_ospf_area, uri
             )
             # Load all OSPF Interfaces data from within the Switch
             ospf_interface_dict[interface_name] = ospf_interface
@@ -222,8 +215,7 @@ class OspfInterface(PyaoscxModule):
         :return: OspfInterface object.
         """
         ospf_interface_arr = session.api.get_keys(
-            response_data,
-            cls.resource_uri_name
+            response_data, cls.resource_uri_name
         )
         ospf_interface_name = ospf_interface_arr[0]
         return cls(session, ospf_interface_name, parent_ospf_area)
@@ -243,18 +235,13 @@ class OspfInterface(PyaoscxModule):
         interface_name = uri.split("/")[-1]
 
         # Create OspfInterface object
-        ospf_interface_obj = cls(
-            session,
-            interface_name,
-            parent_ospf_area
-        )
+        ospf_interface_obj = cls(session, interface_name, parent_ospf_area)
 
         return interface_name, ospf_interface_obj
 
     def __str__(self):
         return "{0} with interface_name {1}".format(
-            type(self).__name__,
-            self.interface_name
+            type(self).__name__, self.interface_name
         )
 
     @PyaoscxModule.deprecated

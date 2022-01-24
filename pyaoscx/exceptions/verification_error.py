@@ -19,6 +19,7 @@ class VerificationError(PyaoscxError):
     def __str__(self):
         if self.message:
             return "VERIFICATION ERROR: {0} DETAIL: {1}".format(
-                self.module, self.message)
+                self.module, self.message
+            )
         else:
             return "VERIFICATION ERROR"

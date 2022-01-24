@@ -23,8 +23,15 @@ class AggregateAddress(PyaoscxModule):
     indices = ["address-family", "ip_prefix"]
     resource_uri_name = "aggregate_addresses"
 
-    def __init__(self, session, address_family, ip_prefix, parent_bgp_router,
-                 uri=None, **kwargs):
+    def __init__(
+        self,
+        session,
+        address_family,
+        ip_prefix,
+        parent_bgp_router,
+        uri=None,
+        **kwargs
+    ):
         self.session = session
         # Assign ID
         self.address_family = address_family
@@ -58,8 +65,7 @@ class AggregateAddress(PyaoscxModule):
             self.reference_ip_prefix = ip_prefix
         else:
             self.ip_prefix = ip_prefix
-            self.reference_ip_prefix = quote_plus(
-                self.ip_prefix)
+            self.reference_ip_prefix = quote_plus(self.ip_prefix)
 
     def __set_parent_bgp_router(self, parent_bgp_router):
         """
@@ -71,8 +77,7 @@ class AggregateAddress(PyaoscxModule):
 
         # Set URI
         self.base_uri = "{0}/{1}/aggregate_addresses".format(
-            self.__parent_bgp_router.base_uri,
-            self.__parent_bgp_router.asn
+            self.__parent_bgp_router.base_uri, self.__parent_bgp_router.asn
         )
 
         for address in self.__parent_bgp_router.aggregate_addresses:
@@ -112,16 +117,13 @@ class AggregateAddress(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}{2}{3}".format(
             self.base_uri,
             self.address_family,
             self.session.api.compound_index_separator,
-            self.reference_ip_prefix
+            self.reference_ip_prefix,
         )
 
         try:
@@ -142,7 +144,8 @@ class AggregateAddress(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, "config_attrs", ["address-family"])
+                self, data, "config_attrs", ["address-family"]
+            )
 
         # Set original attributes
         self.__original_attributes = data
@@ -191,7 +194,8 @@ class AggregateAddress(PyaoscxModule):
         for uri in uri_list:
             # Create a AggregateAddress object
             indices, aggregate_address = AggregateAddress.from_uri(
-                session, parent_bgp_router, uri)
+                session, parent_bgp_router, uri
+            )
             agg_address_dict[indices] = aggregate_address
 
         return agg_address_dict
@@ -233,7 +237,7 @@ class AggregateAddress(PyaoscxModule):
             self.base_uri,
             self.address_family,
             self.session.api.compound_index_separator,
-            self.reference_ip_prefix
+            self.reference_ip_prefix,
         )
         # Compare dictionaries
         if agg_address_data == self.__original_attributes:
@@ -251,7 +255,8 @@ class AggregateAddress(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
@@ -301,7 +306,7 @@ class AggregateAddress(PyaoscxModule):
             self.base_uri,
             self.address_family,
             self.session.api.compound_index_separator,
-            self.reference_ip_prefix
+            self.reference_ip_prefix,
         )
 
         try:
@@ -344,12 +349,14 @@ class AggregateAddress(PyaoscxModule):
         :return: AggregateAddress object.
         """
         aggr_address_arr = session.api.get_keys(
-            response_data, cls.resource_uri_name)
+            response_data, cls.resource_uri_name
+        )
         ip_prefix = aggr_address_arr[1]
         address_family = aggr_address_arr[0]
 
         return AggregateAddress(
-            session, address_family, ip_prefix, parent_bgp_router)
+            session, address_family, ip_prefix, parent_bgp_router
+        )
 
     @classmethod
     def from_uri(cls, session, parent_bgp_router, uri):
@@ -393,7 +400,7 @@ class AggregateAddress(PyaoscxModule):
                 self.base_uri,
                 self.address_family,
                 self.session.api.compound_index_separator,
-                self.reference_ip_prefix
+                self.reference_ip_prefix,
             )
 
         return self._uri

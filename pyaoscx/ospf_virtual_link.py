@@ -63,9 +63,7 @@ class OspfVlink(PyaoscxModule):
             respective value to perform a GET request, or empty dictionary
             if the collection_uri has no indices.
         """
-        indices = {
-            "area_id": self.__parent_ospf_area.area_id
-        }
+        indices = {"area_id": self.__parent_ospf_area.area_id}
         indices.update(self.__parent_ospf_area._get_indices())
         return indices
 
@@ -111,9 +109,7 @@ class OspfVlink(PyaoscxModule):
             Virtual Link objects as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
-        uri_indices = {
-            "area_id": parent_ospf_area.area_id
-        }
+        uri_indices = {"area_id": parent_ospf_area.area_id}
         uri_indices.update(parent_ospf_area._get_indices())
         uri = cls.collection_uri.format(uri_indices)
         try:
@@ -127,9 +123,7 @@ class OspfVlink(PyaoscxModule):
         uri_list = session.api.get_uri_from_data(data)
         for uri in uri_list:
             peer_router_id, vlink = cls.from_uri(
-                session,
-                uri,
-                parent_ospf_area
+                session, uri, parent_ospf_area
             )
             vlink.get()
             ospf_vlink_dict[peer_router_id] = vlink

@@ -1,6 +1,7 @@
 # (C) Copyright 2019-2021 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+
 class LoginError(Exception):
     """
     Exception raised for errors during login.

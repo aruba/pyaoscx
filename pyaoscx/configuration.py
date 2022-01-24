@@ -15,7 +15,7 @@ from pyaoscx.utils import util as utils
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
-class Configuration():
+class Configuration:
     """
     Represents a Device's Configuration and all of its attributes.
     Keeping all configuration information.
@@ -56,10 +56,7 @@ class Configuration():
 
         # Second GET request to obtain just the variables that are writable
         selector = self.session.api.default_selector
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
         try:
             response = self.session.request(
                 "GET", Configuration.base_uri, params=payload
@@ -127,7 +124,8 @@ class Configuration():
                 raise GenericOperationError(
                     response.text,
                     response.status_code,
-                    "UPDATE SYSTEM ATTRIBUTES")
+                    "UPDATE SYSTEM ATTRIBUTES",
+                )
 
             logging.info("SUCCESS: Updating System Attributes")
             # Set new original attributes
@@ -164,8 +162,9 @@ class Configuration():
 
         return config_data
 
-    def tftp_switch_config_from_remote_location(self, config_file_location,
-                                                config_name, vrf):
+    def tftp_switch_config_from_remote_location(
+        self, config_file_location, config_name, vrf
+    ):
         """
         TFTP switch config from TFTP server.
         :param config_file_location: TFTP server address and path for
@@ -195,8 +194,9 @@ class Configuration():
 
         return success
 
-    def copy_switch_config_to_remote_location(self, config_name, config_type,
-                                              destination, vrf):
+    def copy_switch_config_to_remote_location(
+        self, config_name, config_type, destination, vrf
+    ):
         """
         Copy TFTP switch config to TFTP server using a PUT request.
         :param config_name:  String with the config file or checkpoint to be
@@ -224,9 +224,14 @@ class Configuration():
         # If no errors, return True for completion
         return True
 
-    def backup_configuration(self, config_name, output_file=None,
-                             vrf=None, config_type="json",
-                             remote_file_tftp_path=None):
+    def backup_configuration(
+        self,
+        config_name,
+        output_file=None,
+        vrf=None,
+        config_type="json",
+        remote_file_tftp_path=None,
+    ):
         """
         Obtains the switch's full config in json format and saves it to
             a local file or a remote location over TFTP.
@@ -251,7 +256,8 @@ class Configuration():
                 raise VerificationError(
                     "Backup Config",
                     "VRF needs to be provided in order to TFTP "
-                    "the configuration from the switch")
+                    "the configuration from the switch",
+                )
 
             tftp_path_encoded = quote_plus(tftp_path)
 
@@ -259,10 +265,11 @@ class Configuration():
                 raise VerificationError(
                     "Backup Config",
                     "Only running-config or "
-                    "startup-config can be backed-up using TFTP"
+                    "startup-config can be backed-up using TFTP",
                 )
             success = self.copy_switch_config_to_remote_location(
-                config_name, config_type, tftp_path_encoded, vrf)
+                config_name, config_type, tftp_path_encoded, vrf
+            )
         else:
             config_json = self.get_full_config()
             with open(output_file, "w") as to_file:
@@ -343,12 +350,14 @@ class Configuration():
 
         return self.apply()
 
-    def upload_switch_config(self,
-                             config_name=None,
-                             config_file=None,
-                             config_json=None,
-                             vrf=None,
-                             remote_file_tftp_path=None):
+    def upload_switch_config(
+        self,
+        config_name=None,
+        config_file=None,
+        config_json=None,
+        vrf=None,
+        remote_file_tftp_path=None,
+    ):
         """
         Uploads configuration from a configuration file.
         :param config_name:  String with the Config file or checkpoint to be
@@ -374,32 +383,33 @@ class Configuration():
                 raise VerificationError(
                     "Upload Config",
                     "VRF needs to be provided in order to TFTP "
-                    "the configuration onto the switch")
+                    "the configuration onto the switch",
+                )
 
-            tftp_path_encoded = quote_plus(
-                remote_file_tftp_path)
+            tftp_path_encoded = quote_plus(remote_file_tftp_path)
 
             if config_name not in ("running-config", "startup-config"):
                 raise VerificationError(
                     "Upload Config",
                     "Only running-config or startup-config "
-                    "can be uploaded using TFTP"
+                    "can be uploaded using TFTP",
                 )
 
             success = self.tftp_switch_config_from_remote_location(
-                tftp_path_encoded, config_name, vrf)
+                tftp_path_encoded, config_name, vrf
+            )
 
         else:
 
             success = self.upload_switch_config_from_local(
-                config_json, config_file, config_name)
+                config_json, config_file, config_name
+            )
 
         return success
 
-    def upload_switch_config_from_local(self,
-                                        config_json=None,
-                                        config_file=None,
-                                        config_name=None):
+    def upload_switch_config_from_local(
+        self, config_json=None, config_file=None, config_name=None
+    ):
         """
         Uploads configuration from a configuration file.
         :param config_name:  String with the Config file or checkpoint
@@ -437,7 +447,6 @@ class Configuration():
             raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
-            raise GenericOperationError(
-                response.text, response.status_code)
+            raise GenericOperationError(response.text, response.status_code)
 
         return success

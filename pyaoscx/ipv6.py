@@ -55,8 +55,7 @@ class Ipv6(PyaoscxModule):
             self.reference_address = address
         else:
             self.address = address
-            self.reference_address = quote_plus(
-                self.address)
+            self.reference_address = quote_plus(self.address)
 
     def __set_interface(self, parent_int):
         """
@@ -109,10 +108,7 @@ class Ipv6(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}".format(self.base_uri, self.reference_address)
 
@@ -253,7 +249,8 @@ class Ipv6(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
 
@@ -335,8 +332,7 @@ class Ipv6(PyaoscxModule):
             }
         :return: IPv6 object.
         """
-        ipv6_arr = session.api.get_keys(
-            response_data, Ipv6.resource_uri_name)
+        ipv6_arr = session.api.get_keys(response_data, Ipv6.resource_uri_name)
         address = ipv6_arr[0]
         return Ipv6(session, address, parent_int)
 
@@ -374,7 +370,7 @@ class Ipv6(PyaoscxModule):
             self._uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix,
                 self.base_uri,
-                self.reference_address
+                self.reference_address,
             )
 
         return self._uri

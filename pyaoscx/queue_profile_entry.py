@@ -25,13 +25,7 @@ class QueueProfileEntry(PyaoscxModule):
     resource_name = "queue_number"
     indices = ["queue_number"]
 
-    def __init__(
-            self,
-            session,
-            queue_number,
-            parent_profile,
-            **kwargs
-    ):
+    def __init__(self, session, queue_number, parent_profile, **kwargs):
         self.__profile = parent_profile
         self.__queue_number = queue_number
         self.session = session
@@ -51,8 +45,7 @@ class QueueProfileEntry(PyaoscxModule):
 
         # Build the URI that identifies the current Queue profile
         self.path = self.object_uri.format(
-            name=self.__profile.name,
-            queue_number=queue_number
+            name=self.__profile.name, queue_number=queue_number
         )
         self.base_uri = self.collection_uri.format(name=self.__profile.name)
 

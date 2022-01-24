@@ -81,7 +81,7 @@ class ACL(PyaoscxModule):
             ACL.base_uri,
             self.name,
             self.session.api.compound_index_separator,
-            self.list_type
+            self.list_type,
         )
         try:
             response = self.session.request("GET", uri, params=payload)
@@ -109,8 +109,9 @@ class ACL(PyaoscxModule):
         # Determines if the ACL is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, "config_attrs",
-                                   ["name", "list_type"])
+            utils.set_config_attrs(
+                self, data, "config_attrs", ["name", "list_type"]
+            )
 
         # Set original attributes
         self.__original_attributes = data
@@ -124,6 +125,7 @@ class ACL(PyaoscxModule):
             # Set ACL Entries if any
             # Adds ACL Entries to parent ACL already
             from pyaoscx.acl_entry import AclEntry
+
             AclEntry.get_all(self.session, self)
         return True
 
@@ -208,7 +210,7 @@ class ACL(PyaoscxModule):
                 ACL.base_uri,
                 self.name,
                 self.session.api.compound_index_separator,
-                self.list_type
+                self.list_type,
             )
             try:
                 response = self.session.request("PUT", uri, data=post_data)
@@ -217,8 +219,9 @@ class ACL(PyaoscxModule):
                 raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(response.text,
-                                            response.status_code)
+                raise GenericOperationError(
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
@@ -267,7 +270,7 @@ class ACL(PyaoscxModule):
             ACL.base_uri,
             self.name,
             self.session.api.compound_index_separator,
-            self.list_type
+            self.list_type,
         )
 
         try:
@@ -340,7 +343,7 @@ class ACL(PyaoscxModule):
                 ACL.base_uri,
                 self.name,
                 self.session.api.compound_index_separator,
-                self.list_type
+                self.list_type,
             )
 
         return self._uri
@@ -384,13 +387,13 @@ class ACL(PyaoscxModule):
                     "ACL %s was modified, but the version wasn't, "
                     "so the version was changed automatically to %d",
                     str(self),
-                    new_cfg_version
+                    new_cfg_version,
                 )
             else:
                 logging.warning(
                     "ACL %s didn't have a version configured. %d was added",
                     str(self),
-                    new_cfg_version
+                    new_cfg_version,
                 )
 
         self.cfg_version = new_cfg_version
@@ -399,18 +402,20 @@ class ACL(PyaoscxModule):
     # IMPERATIVE FUNCTIONS
     ####################################################################
 
-    def add_acl_entry(self,
-                      sequence_num,
-                      action,
-                      count=None,
-                      protocol=None,
-                      src_ip=None,
-                      dst_ip=None,
-                      dst_l4_port_min=None,
-                      dst_l4_port_max=None,
-                      src_mac=None,
-                      dst_mac=None,
-                      ethertype=None):
+    def add_acl_entry(
+        self,
+        sequence_num,
+        action,
+        count=None,
+        protocol=None,
+        src_ip=None,
+        dst_ip=None,
+        dst_l4_port_min=None,
+        dst_l4_port_max=None,
+        src_mac=None,
+        dst_mac=None,
+        ethertype=None,
+    ):
         """
         Create an AclEntry object, ACL Entry already exists, value passed
             won't update the entry.
@@ -457,7 +462,8 @@ class ACL(PyaoscxModule):
             dst_l4_port_max=dst_l4_port_max,
             src_mac=src_mac,
             dst_mac=dst_mac,
-            ethertype=ethertype)
+            ethertype=ethertype,
+        )
 
         # Try to obtain data; if not, create
         try:
@@ -468,17 +474,19 @@ class ACL(PyaoscxModule):
 
         return acl_entry_obj
 
-    def modify_acl_entry(self,
-                         sequence_num,
-                         action,
-                         count=None,
-                         src_ip=None,
-                         dst_ip=None,
-                         dst_l4_port_min=None,
-                         dst_l4_port_max=None,
-                         src_mac=None,
-                         dst_mac=None,
-                         ethertype=None):
+    def modify_acl_entry(
+        self,
+        sequence_num,
+        action,
+        count=None,
+        src_ip=None,
+        dst_ip=None,
+        dst_l4_port_min=None,
+        dst_l4_port_max=None,
+        src_mac=None,
+        dst_mac=None,
+        ethertype=None,
+    ):
         """
         Modify an existing ACL Entry.
         :param sequence_num: Integer number of the sequence.
@@ -516,8 +524,17 @@ class ACL(PyaoscxModule):
         acl_entry_obj.get()
 
         # Modify data
-        acl_entry_obj.modify(action, count, src_ip, dst_ip, dst_l4_port_min,
-                             dst_l4_port_max, src_mac, dst_mac, ethertype)
+        acl_entry_obj.modify(
+            action,
+            count,
+            src_ip,
+            dst_ip,
+            dst_l4_port_min,
+            dst_l4_port_max,
+            src_mac,
+            dst_mac,
+            ethertype,
+        )
 
         return acl_entry_obj
 

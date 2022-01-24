@@ -20,7 +20,11 @@ class v10_08(API):
         self.default_facts_depth = 2
         self.default_subsystem_facts_depth = 4
         self.valid_selectors = [
-            "configuration", "status", "statistics", "writable"]
+            "configuration",
+            "status",
+            "statistics",
+            "writable",
+        ]
         self.configurable_selectors = ["writable"]
         self.compound_index_separator = ","
         self.valid_depths = [0, 1, 2, 3, 4]
@@ -31,6 +35,6 @@ class v10_08(API):
             # value, it's needed for correct OSPF Area creation
             kwargs["other_config"] = {
                 "stub_default_cost": 1,
-                "stub_metric_type": "metric_non_comparable"
+                "stub_metric_type": "metric_non_comparable",
             }
         return module_class(session, index_id, **kwargs)

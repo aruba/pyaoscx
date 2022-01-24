@@ -7,7 +7,7 @@ import logging
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.unsupported_capability_error import (
-    UnsupportedCapabilityError
+    UnsupportedCapabilityError,
 )
 
 from pyaoscx.utils import util as utils
@@ -52,10 +52,7 @@ class QosDscp(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
         # Build path
-        self.path = "{0}/{1}".format(
-            self.base_uri,
-            self.code_point
-        )
+        self.path = "{0}/{1}".format(self.base_uri, self.code_point)
 
     @property
     def code_point(self):
@@ -184,7 +181,8 @@ class QosDscp(PyaoscxModule):
         :return: QoS DSCP trust mode object.
         """
         code_points_arr = session.api.get_keys(
-            response_data, cls.resource_uri_name)
+            response_data, cls.resource_uri_name
+        )
 
         code_point = code_points_arr[0]
 

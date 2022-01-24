@@ -7,7 +7,7 @@ import logging
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.unsupported_capability_error import (
-    UnsupportedCapabilityError
+    UnsupportedCapabilityError,
 )
 from pyaoscx.utils import util as utils
 
@@ -60,15 +60,10 @@ class Queue(PyaoscxModule):
         self.__modified = False
 
         self.base_uri = "{0}/{1}/{2}".format(
-            Qos.base_uri,
-            qos_name,
-            self.resource_uri_name
+            Qos.base_uri, qos_name, self.resource_uri_name
         )
 
-        self.path = "{0}/{1}".format(
-            self.base_uri,
-            self.queue_number
-        )
+        self.path = "{0}/{1}".format(self.base_uri, self.queue_number)
 
     @property
     def burst(self):
@@ -153,10 +148,8 @@ class Queue(PyaoscxModule):
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{0}{1}/{2}/{3}".format(
-            cls.base_uri,
-            Qos.base_uri,
-            qos_name,
-            cls.resource_uri_name)
+            cls.base_uri, Qos.base_uri, qos_name, cls.resource_uri_name
+        )
 
         try:
             response = session.request("GET", uri)

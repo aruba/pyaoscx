@@ -35,7 +35,8 @@ class StaticMac(Mac):
         :param uri: Optional string containing the uri of the MAC object
         """
         super(StaticMac, self).__init__(
-            session, "static", mac_addr, parent_vlan, uri=uri)
+            session, "static", mac_addr, parent_vlan, uri=uri
+        )
         # Set arguments needed for correct creation
         utils.set_creation_attrs(self, **kwargs)
         self.display_name = "static Mac"
@@ -45,8 +46,8 @@ class StaticMac(Mac):
         Get the path for internal purposes.
         """
         return "{0}/{1}".format(
-            self.base_uri,
-            quote_plus(str(self.mac_address)))
+            self.base_uri, quote_plus(str(self.mac_address))
+        )
 
     def _set_configuration_items(self, data, selector):
         # Determines if the Static MAC is configurable
@@ -116,12 +117,8 @@ class StaticMac(Mac):
         Perform DELETE call to delete Static MAC mac_addr from interface on
             the switch.
         """
-        reference_address = quote_plus(
-            str(self.mac_address))
-        uri = "{0}/{1}".format(
-            self.base_uri,
-            reference_address
-        )
+        reference_address = quote_plus(str(self.mac_address))
+        uri = "{0}/{1}".format(self.base_uri, reference_address)
 
         self._send_data(uri, None, "DELETE", "Delete")
 
@@ -150,7 +147,8 @@ class StaticMac(Mac):
         mac_format = mac_eui48
         mac_format.word_sep = ":"
         static_mac_arr = session.api.get_keys(
-            response_data, StaticMac.resource_uri_name)
+            response_data, StaticMac.resource_uri_name
+        )
         mac_addr = static_mac_arr[0]
         return StaticMac(session, mac_addr, parent_vlan)
 
@@ -172,8 +170,9 @@ class StaticMac(Mac):
         index_pattern = re.compile(r"(.*)static_macs/(?P<index>.+)")
         reference_mac_addr = index_pattern.match(uri).group("index")
 
-        mac_addr = MacAddress(unquote_plus(
-            reference_mac_addr), dialect=mac_format)
+        mac_addr = MacAddress(
+            unquote_plus(reference_mac_addr), dialect=mac_format
+        )
 
         static_mac_obj = StaticMac(session, mac_addr, parent_vlan, uri=uri)
 

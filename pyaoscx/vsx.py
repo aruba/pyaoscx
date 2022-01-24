@@ -141,9 +141,7 @@ class Vsx(PyaoscxModule):
         if hasattr(self, "keepalive_vrf") and self.keepalive_vrf:
             put_data["keepalive_vrf"] = self.keepalive_vrf
         if hasattr(self, "software_update_vrf") and self.software_update_vrf:
-            put_data[
-                "software_update_vrf"
-            ] = self.software_update_vrf
+            put_data["software_update_vrf"] = self.software_update_vrf
         if hasattr(self, "isl_port") and self.isl_port:
             self._set_isl_port_for_requests()
             put_data["isl_port"] = self.isl_port

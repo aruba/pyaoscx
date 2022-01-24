@@ -19,6 +19,7 @@ class HttpRequestError(PyaoscxError):
     def __str__(self):
         if self.message:
             return "Request ERROR in {0}: {1}".format(
-                self.message, self.request)
+                self.message, self.request
+            )
         else:
             return "Request ERROR"

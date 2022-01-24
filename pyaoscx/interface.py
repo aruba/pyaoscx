@@ -147,10 +147,7 @@ class Interface(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}".format(Interface.base_uri, self.percents_name)
 
@@ -182,8 +179,7 @@ class Interface(PyaoscxModule):
         if hasattr(self, "interfaces") and self.interfaces is not None:
             interfaces_list = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api.get_uri_from_data(
-                self.interfaces)
+            uri_list = self.session.api.get_uri_from_data(self.interfaces)
 
             for uri in uri_list:
                 # Create an Interface object
@@ -227,8 +223,7 @@ class Interface(PyaoscxModule):
         if hasattr(self, "vlan_trunks") and self.vlan_trunks is not None:
             vlan_trunks = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api.get_uri_from_data(
-                self.vlan_trunks)
+            uri_list = self.session.api.get_uri_from_data(self.vlan_trunks)
 
             for uri in uri_list:
                 # Create a Vlan object
@@ -242,6 +237,7 @@ class Interface(PyaoscxModule):
 
         # Set all ACLs
         from pyaoscx.acl import ACL
+
         if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_in_cfg)
@@ -371,11 +367,10 @@ class Interface(PyaoscxModule):
         :return: Interface object.
         """
         interfaces_id_arr = session.api.get_keys(
-            response_data, Interface.resource_uri_name)
+            response_data, Interface.resource_uri_name
+        )
         interface_name = interfaces_id_arr[0]
-        return session.api.get_module(
-            session, "Interface",
-            interface_name)
+        return session.api.get_module(session, "Interface", interface_name)
 
     @classmethod
     def from_uri(cls, session, uri):
@@ -394,8 +389,8 @@ class Interface(PyaoscxModule):
         name = unquote_plus(name_percents)
         # Create Interface object
         interface_obj = session.api.get_module(
-            session, "Interface",
-            name, uri=uri)
+            session, "Interface", name, uri=uri
+        )
 
         return name, interface_obj
 
@@ -503,7 +498,8 @@ class Interface(PyaoscxModule):
 
             if not utils._response_ok(response, "DELETE"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             # Clean LAG from interfaces
             # Delete interface references
@@ -664,7 +660,8 @@ class Interface(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
             logging.info("SUCCESS: Updating %s", self)
 
             # Set new original attributes
@@ -736,7 +733,7 @@ class Interface(PyaoscxModule):
             self._uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix,
                 Interface.base_uri,
-                self.percents_name
+                self.percents_name,
             )
 
         return self._uri
@@ -833,7 +830,7 @@ class Interface(PyaoscxModule):
         mc_lag=False,
         vlan_mode="native-untagged",
         trunk_allowed_all=False,
-        native_vlan_tag=True
+        native_vlan_tag=True,
     ):
         """
         Configure an Interface object, set the attributes to a L2 LAG and
@@ -869,8 +866,8 @@ class Interface(PyaoscxModule):
             self.interfaces = []
             for port in phys_ports:
                 port_obj = self.session.api.get_module(
-                    self.session, "Interface",
-                    port)
+                    self.session, "Interface", port
+                )
                 # Materialize Port
                 port_obj.get()
                 self.interfaces.append(port_obj)
@@ -949,7 +946,7 @@ class Interface(PyaoscxModule):
         lacp="passive",
         description=None,
         fallback_enabled=False,
-        mc_lag=False
+        mc_lag=False,
     ):
         """
         Configure an Interface object, if not materialized, materialize it and
@@ -982,8 +979,8 @@ class Interface(PyaoscxModule):
             self.interfaces = []
             for port in phys_ports:
                 port_obj = self.session.api.get_module(
-                    self.session, "Interface",
-                    port)
+                    self.session, "Interface", port
+                )
                 # Materialize Port
                 port_obj.get()
                 self.interfaces.append(port_obj)
@@ -1004,13 +1001,16 @@ class Interface(PyaoscxModule):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
                     # list
                     ip_address = self.session.api.get_module(
-                        self.session, "Ipv6", ip_address,
+                        self.session,
+                        "Ipv6",
+                        ip_address,
                         parent_int=self,
                         type="global-unicast",
                         preferred_lifetime=604800,
                         valid_lifetime=2592000,
                         node_address=True,
-                        ra_prefix=True)
+                        ra_prefix=True,
+                    )
                     # Try to get data, if non existent create
                     try:
                         # Try to obtain IPv6 address data
@@ -1047,14 +1047,15 @@ class Interface(PyaoscxModule):
         return self.apply()
 
     def configure_svi(
-            self,
-            vlan=None,
-            ipv4=None,
-            ipv6=None,
-            vrf=None,
-            description=None,
-            int_type="vlan",
-            user_config="up"):
+        self,
+        vlan=None,
+        ipv4=None,
+        ipv6=None,
+        vrf=None,
+        description=None,
+        int_type="vlan",
+        user_config="up",
+    ):
         """
         Configure a Interface table entry for a VLAN.
         :param vlan: Numeric ID of VLAN
@@ -1087,7 +1088,8 @@ class Interface(PyaoscxModule):
                 name = "VLAN {0}".format(str(vlan))
                 # Create Vlan object
                 vlan_tag = self.session.api.get_module(
-                    self.session, "Vlan", vlan, name=name)
+                    self.session, "Vlan", vlan, name=name
+                )
                 # Try to obtain data; if not, create
                 try:
                     vlan_tag.get()
@@ -1116,13 +1118,16 @@ class Interface(PyaoscxModule):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
                     # list
                     ip_address = self.session.api.get_module(
-                        self.session, "Ipv6", ip_address,
+                        self.session,
+                        "Ipv6",
+                        ip_address,
                         parent_int=self,
                         type="global-unicast",
                         preferred_lifetime=604800,
                         valid_lifetime=2592000,
                         node_address=True,
-                        ra_prefix=True)
+                        ra_prefix=True,
+                    )
                     # Try to get data, if non existent create
                     try:
                         # Try to obtain IPv6 address data
@@ -1138,8 +1143,7 @@ class Interface(PyaoscxModule):
         # Set VRF
         if vrf is not None:
             if isinstance(vrf, str):
-                vrf = self.session.api.get_module(
-                    self.session, "Vrf", vrf)
+                vrf = self.session.api.get_module(self.session, "Vrf", vrf)
                 vrf.get()
 
             self.vrf = vrf
@@ -1183,12 +1187,16 @@ class Interface(PyaoscxModule):
         if isinstance(ip_address, str):
             # Create Ipv6 object -- add it to ipv6_addresses internal list
             ipv6 = self.session.api.get_module(
-                self.session, "Ipv6", ip_address, parent_int=self,
+                self.session,
+                "Ipv6",
+                ip_address,
+                parent_int=self,
                 type=address_type,
                 preferred_lifetime=604800,
                 valid_lifetime=2592000,
                 node_address=True,
-                ra_prefix=True)
+                ra_prefix=True,
+            )
             # Try to get data, if non existent create
             try:
                 # Try to obtain IPv6 address data
@@ -1248,8 +1256,7 @@ class Interface(PyaoscxModule):
         # Set VRF
         if vrf is not None:
             if isinstance(vrf, str):
-                vrf = self.session.api.get_module(
-                    self.session, "Vrf", vrf)
+                vrf = self.session.api.get_module(self.session, "Vrf", vrf)
                 vrf.get()
 
             self.vrf = vrf
@@ -1280,8 +1287,9 @@ class Interface(PyaoscxModule):
         return self.apply()
 
     @PyaoscxModule.materialized
-    def configure_vxlan(self, source_ipv4=None, description=None,
-                        dest_udp_port=4789):
+    def configure_vxlan(
+        self, source_ipv4=None, description=None, dest_udp_port=4789
+    ):
         """
         Configure VXLAN table entry for a logical L3 Interface. If the VXLAN
             Interface already exists and an IPv4 address is given, the function
@@ -1348,8 +1356,7 @@ class Interface(PyaoscxModule):
         # Set Vlan Tag into Object
         if isinstance(vlan, int):
             # Create Vlan object
-            vlan_tag = self.session.api.get_module(
-                self.session, "Vlan", vlan)
+            vlan_tag = self.session.api.get_module(self.session, "Vlan", vlan)
             # Try to get data; if non-existent, throw error
             vlan_tag.get()
 
@@ -1378,7 +1385,8 @@ class Interface(PyaoscxModule):
             for vlan in vlan_trunk_ids:
 
                 vlan_obj = self.session.api.get_module(
-                    self.session, "Vlan", vlan)
+                    self.session, "Vlan", vlan
+                )
                 vlan_obj.get()
 
                 self.vlan_trunks.append(vlan_obj)
@@ -1390,8 +1398,7 @@ class Interface(PyaoscxModule):
             self.vlan_mode = "native-untagged"
 
         if self.vlan_tag is not None:
-            vlan_tag_obj = self.session.api.get_module(
-                self.session, "Vlan", 1)
+            vlan_tag_obj = self.session.api.get_module(self.session, "Vlan", 1)
             vlan_tag_obj.get()
             self.vlan_tag = vlan_tag_obj
 
@@ -1418,8 +1425,7 @@ class Interface(PyaoscxModule):
         # Set Vlan Tag into Object
         if isinstance(vlan_tag, int):
             # Create Vlan object
-            vlan_tag = self.session.api.get_module(
-                self.session, "Vlan", vlan)
+            vlan_tag = self.session.api.get_module(self.session, "Vlan", vlan)
             # Try to get data; if non-existent, throw error
             vlan_tag.get()
 
@@ -1451,6 +1457,7 @@ class Interface(PyaoscxModule):
         """
         # Import VLAN to  identify object type
         from pyaoscx.vlan import Vlan
+
         if isinstance(vlan, Vlan):
             vlan_id = vlan.id
         else:
@@ -1480,7 +1487,8 @@ class Interface(PyaoscxModule):
         if isinstance(interface, str):
             # Create Interface Object
             interface_obj = self.session.api.get_module(
-                self.session, "Interface", interface)
+                self.session, "Interface", interface
+            )
             # Try to get data; if non-existent, throw error
             interface_obj.get()
 
@@ -1575,8 +1583,9 @@ class Interface(PyaoscxModule):
         ):
             self.user_config["admin"] = state
 
-    def configure_vsx(self, active_forwarding, vsx_sync, act_gw_mac,
-                      act_gw_ip):
+    def configure_vsx(
+        self, active_forwarding, vsx_sync, act_gw_mac, act_gw_ip
+    ):
         """
         Configure VSX IPv4 settings on a VLAN Interface.
         :param active_forwarding: True or False Boolean to set VSX active
@@ -1646,8 +1655,7 @@ class Interface(PyaoscxModule):
             self.description = port_desc
 
         # Set vrf
-        vrf_obj = self.session.api.get_module(
-            self.session, "Vrf", vrf)
+        vrf_obj = self.session.api.get_module(self.session, "Vrf", vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
 
@@ -1657,9 +1665,9 @@ class Interface(PyaoscxModule):
         # Apply Changes inside Switch
         return self.apply()
 
-    def update_ospf_interface_authentication(self, vrf,
-                                             auth_type,
-                                             digest_key, auth_pass):
+    def update_ospf_interface_authentication(
+        self, vrf, auth_type, digest_key, auth_pass
+    ):
         """
         Perform PUT calls to update an Interface with OSPF to have
             authentication.
@@ -1681,16 +1689,14 @@ class Interface(PyaoscxModule):
         self.ospf_if_type = "ospf_iftype_broadcast"
         self.routing = True
         # Set vrf
-        vrf_obj = self.session.api.get_module(
-            self.session, "Vrf", vrf)
+        vrf_obj = self.session.api.get_module(self.session, "Vrf", vrf)
         vrf_obj.get()
         self.vrf = vrf_obj
 
         # Apply changes
         return self.apply()
 
-    def update_ospf_interface_type(self, vrf,
-                                   interface_type="pointtopoint"):
+    def update_ospf_interface_type(self, vrf, interface_type="pointtopoint"):
         """
         Update the Interface's OSPFv2 type, as well as enable routing on the
             interface.
@@ -1709,7 +1715,7 @@ class Interface(PyaoscxModule):
             "pointomultipoint",
             "pointopoint",
             "virtuallink",
-            "none"
+            "none",
         ]
         if interface_type not in _valid_interface_types:
             raise Exception(
@@ -1758,8 +1764,7 @@ class Interface(PyaoscxModule):
         """
         # Verify argument type and value
         if not isinstance(qos, str) and qos is not None:
-            raise ParameterError(
-                "ERROR: QoS must be in a string format")
+            raise ParameterError("ERROR: QoS must be in a string format")
 
         self.qos = qos
 
@@ -1785,10 +1790,7 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.materialized
     def update_interface_qos_trust_mode(
-            self,
-            qos_trust_mode,
-            cos_override=None,
-            dscp_override=None
+        self, qos_trust_mode, cos_override=None, dscp_override=None
     ):
         """
         Update the QoS trust mode of this port.
@@ -1805,12 +1807,14 @@ class Interface(PyaoscxModule):
         # Verify argument type and value
         if not isinstance(qos_trust_mode, str):
             raise ParameterError(
-                "ERROR: QoS trust mode must be in a string format")
+                "ERROR: QoS trust mode must be in a string format"
+            )
 
         allowed_trust_modes = ["cos", "dscp", "none", "global"]
         if qos_trust_mode not in allowed_trust_modes:
-            raise VerificationError("ERROR: QoS trust mode must be one of: ",
-                                    allowed_trust_modes)
+            raise VerificationError(
+                "ERROR: QoS trust mode must be one of: ", allowed_trust_modes
+            )
 
         # Set trust mode in a key-value format
         if qos_trust_mode == "global":
@@ -1821,13 +1825,15 @@ class Interface(PyaoscxModule):
 
         if cos_override:
             if not isinstance(cos_override, int):
-                raise ParameterError("ERROR: COS Override must be in integer"
-                                     "format")
+                raise ParameterError(
+                    "ERROR: COS Override must be in integer" "format"
+                )
             self.qos_config["cos_override"] = cos_override
         if dscp_override:
             if not isinstance(dscp_override, int):
-                raise ParameterError("ERROR: DSCP Override must be in integer"
-                                     "format")
+                raise ParameterError(
+                    "ERROR: DSCP Override must be in integer" "format"
+                )
             self.cos_config["dscp_override"] = dscp_override
 
         # Apply changes
@@ -1875,7 +1881,8 @@ class Interface(PyaoscxModule):
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, "ACL", index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type
+        )
         # Get the current version
         acl_obj.get()
 
@@ -1916,7 +1923,8 @@ class Interface(PyaoscxModule):
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
-            self.session, "ACL", index_id=acl_name, list_type=list_type)
+            self.session, "ACL", index_id=acl_name, list_type=list_type
+        )
         # Get the current version
         acl_obj.get()
 
@@ -1949,13 +1957,15 @@ class Interface(PyaoscxModule):
         return self.apply()
 
     def port_security_enable(
-            self, client_limit=0,
-            sticky_mac_learning=True,
-            allowed_mac_addr=[],
-            allowed_sticky_mac_addr={},
-            violation_action="notify",
-            violation_recovery_time=10,
-            violation_shutdown_recovery_enable=True):
+        self,
+        client_limit=0,
+        sticky_mac_learning=True,
+        allowed_mac_addr=[],
+        allowed_sticky_mac_addr={},
+        violation_action="notify",
+        violation_recovery_time=10,
+        violation_shutdown_recovery_enable=True,
+    ):
         """
         Enable port security on an specified Interface.
         :param client_limit: Integer with the maximum amount of MAC
@@ -1986,7 +1996,7 @@ class Interface(PyaoscxModule):
         if not hasattr(self, "port_security"):
             raise VerificationError(
                 "Unable to configure the port's security",
-                "Interface {0} is not security capable".format(self.name)
+                "Interface {0} is not security capable".format(self.name),
             )
 
         self.port_security["enable"] = True
@@ -2001,22 +2011,30 @@ class Interface(PyaoscxModule):
         # accepts
         self.port_security_static_client_mac_addr = [
             str(MacAddress(mac_addr, dialect=mac_format))
-            for mac_addr in allowed_mac_addr]
+            for mac_addr in allowed_mac_addr
+        ]
 
         # Add static sticky MAC addresses. We convert all dictionary
         # keys to netadd.EUI to verify they are valid, and then pass them
         # back to string because that is what the API accepts.
         self.port_security_static_sticky_client_mac_addr = dict(
-            [(str(MacAddress(addr, dialect=mac_format)),
-              allowed_sticky_mac_addr[addr])
-             for addr in allowed_sticky_mac_addr])
+            [
+                (
+                    str(MacAddress(addr, dialect=mac_format)),
+                    allowed_sticky_mac_addr[addr],
+                )
+                for addr in allowed_sticky_mac_addr
+            ]
+        )
 
         self.port_access_security_violation["action"] = violation_action
 
         self.port_access_security_violation[
-            "recovery_timer"] = violation_recovery_time
+            "recovery_timer"
+        ] = violation_recovery_time
         self.port_access_security_violation[
-            "shutdown_recovery_enable"] = violation_shutdown_recovery_enable
+            "shutdown_recovery_enable"
+        ] = violation_shutdown_recovery_enable
 
         # Apply the changes
         return self.apply()
@@ -2043,10 +2061,7 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.materialized
     def speed_duplex_configure(
-        self,
-        speeds=["1000"],
-        duplex="half",
-        autonegotiation="off"
+        self, speeds=["1000"], duplex="half", autonegotiation="off"
     ):
         """
         Configure the Interface speed and duplex mode.

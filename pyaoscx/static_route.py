@@ -101,10 +101,7 @@ class StaticRoute(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}".format(self.base_uri, self.reference_address)
         try:
@@ -128,8 +125,8 @@ class StaticRoute(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, "config_attrs",
-                ["prefix", "static_nexthops"])
+                self, data, "config_attrs", ["prefix", "static_nexthops"]
+            )
 
         # Set original attributes
         self.__original_attributes = data
@@ -187,7 +184,8 @@ class StaticRoute(PyaoscxModule):
         for uri in uri_list:
             # Create a StaticRoute object and adds it to parent_vrf list
             prefix, static_route = StaticRoute.from_uri(
-                session, parent_vrf, uri)
+                session, parent_vrf, uri
+            )
             # Load all Static Route data from within the Switch
             static_route.get()
             static_route_dict[prefix] = static_route
@@ -246,7 +244,8 @@ class StaticRoute(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
 
@@ -334,7 +333,8 @@ class StaticRoute(PyaoscxModule):
         :return: Static Route Object.
         """
         static_route_arr = session.api.get_keys(
-            response_data, StaticRoute.resource_uri_name)
+            response_data, StaticRoute.resource_uri_name
+        )
         prefix = static_route_arr[0]
         return StaticRoute(session, prefix, parent_vrf)
 
@@ -405,12 +405,14 @@ class StaticRoute(PyaoscxModule):
     # IMPERATIVE FUNCTIONS
     ####################################################################
 
-    def add_static_nexthop(self,
-                           next_hop_ip_address=None,
-                           next_hop_interface=None,
-                           distance=None,
-                           nexthop_type=None,
-                           bfd_enable=None):
+    def add_static_nexthop(
+        self,
+        next_hop_ip_address=None,
+        next_hop_interface=None,
+        distance=None,
+        nexthop_type=None,
+        bfd_enable=None,
+    ):
         """
         Create a Static Nexthop, with a VRF and a Destination Address related
             to a Static Route.
@@ -435,8 +437,8 @@ class StaticRoute(PyaoscxModule):
         next_hop_interface_obj = None
         if next_hop_interface is not None:
             next_hop_interface_obj = self.session.api.get_module(
-                self.session, "Interface",
-                next_hop_interface)
+                self.session, "Interface", next_hop_interface
+            )
 
         if nexthop_type is None:
             nexthop_type = "forward"
@@ -445,7 +447,9 @@ class StaticRoute(PyaoscxModule):
             bfd_enable = False
 
         static_nexthop_obj = self.session.api.get_module(
-            self.session, "StaticNexthop", 0,
+            self.session,
+            "StaticNexthop",
+            0,
             parent_static_route=self,
         )
 
@@ -460,14 +464,15 @@ class StaticRoute(PyaoscxModule):
 
         finally:
             static_nexthop_obj = self.session.api.get_module(
-                self.session, "StaticNexthop",
+                self.session,
+                "StaticNexthop",
                 0,
                 parent_static_route=self,
                 ip_address=next_hop_ip_address,
                 distance=distance,
                 port=next_hop_interface_obj,
                 type=nexthop_type,
-                bfd_enable=bfd_enable
+                bfd_enable=bfd_enable,
             )
             # Create object inside switch
             static_nexthop_obj.apply()

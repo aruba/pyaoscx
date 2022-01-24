@@ -74,9 +74,7 @@ class API(ABC):
             attributes.append(attr_value)
 
         key_str = ",".join(attributes)
-        info = {
-            key_str: obj.get_uri()
-        }
+        info = {key_str: obj.get_uri()}
         return info
 
     def get_keys(self, response_data, module_name=None):
@@ -132,7 +130,8 @@ class API(ABC):
         """
         module_names = {
             "Interface": "rest.v{0}.interface".format(
-                self.version.replace(".", "_")),
+                self.version.replace(".", "_")
+            ),
             "Ipv6": "ipv6",
             "Vlan": "vlan",
             "Vrf": "vrf",

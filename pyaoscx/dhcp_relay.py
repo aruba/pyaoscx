@@ -67,16 +67,13 @@ class DhcpRelay(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}{2}{3}".format(
             DhcpRelay.base_uri,
             self.vrf.name,
             self.session.api.compound_index_separator,
-            self.port.percents_name
+            self.port.percents_name,
         )
         try:
             response = self.session.request("GET", uri, params=payload)
@@ -101,8 +98,7 @@ class DhcpRelay(PyaoscxModule):
         # Determines if the DHCP Relay is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self, data, "config_attrs", ["vrf", "port"])
+            utils.set_config_attrs(self, data, "config_attrs", ["vrf", "port"])
 
         # Set original attributes
         self.__original_attributes = data
@@ -147,8 +143,7 @@ class DhcpRelay(PyaoscxModule):
 
         for uri in uri_list:
             # Create a DHCP Relay object
-            indices, dhcp_relay = DhcpRelay.from_uri(
-                session, uri)
+            indices, dhcp_relay = DhcpRelay.from_uri(session, uri)
             dhcp_relay_dict[indices] = dhcp_relay
 
         return dhcp_relay_dict
@@ -187,7 +182,7 @@ class DhcpRelay(PyaoscxModule):
             DhcpRelay.base_uri,
             self.vrf.name,
             self.session.api.compound_index_separator,
-            self.port.percents_name
+            self.port.percents_name,
         )
 
         # Compare dictionaries
@@ -207,7 +202,8 @@ class DhcpRelay(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
@@ -258,7 +254,7 @@ class DhcpRelay(PyaoscxModule):
             DhcpRelay.base_uri,
             self.vrf.name,
             self.session.api.compound_index_separator,
-            self.port.percents_name
+            self.port.percents_name,
         )
 
         try:
@@ -289,18 +285,15 @@ class DhcpRelay(PyaoscxModule):
         return: DhcpRelay object.
         """
         dhcp_relay_arr = session.api.get_keys(
-            response_data, DhcpRelay.resource_uri_name)
+            response_data, DhcpRelay.resource_uri_name
+        )
         port_name = dhcp_relay_arr[1]
         vrf_name = dhcp_relay_arr[0]
         # Create Modules
-        port_obj = session.api.get_module(
-            session, "Interface",
-            port_name)
-        vrf_obj = session.api.get_module(
-            session, "Vrf", vrf_name)
+        port_obj = session.api.get_module(session, "Interface", port_name)
+        vrf_obj = session.api.get_module(session, "Vrf", vrf_name)
 
-        return DhcpRelay(
-            session, vrf_obj, port_obj)
+        return DhcpRelay(session, vrf_obj, port_obj)
 
     @classmethod
     def from_uri(cls, session, uri):
@@ -320,11 +313,8 @@ class DhcpRelay(PyaoscxModule):
         vrf = index_pattern.match(uri).group("index1")
         port = index_pattern.match(uri).group("index2")
 
-        port_obj = session.api.get_module(
-            session, "Interface",
-            port)
-        vrf_obj = session.api.get_module(
-            session, "Vrf", vrf)
+        port_obj = session.api.get_module(session, "Interface", port)
+        vrf_obj = session.api.get_module(session, "Vrf", vrf)
 
         # Create DHCP Relay object
         dhcp_relay = DhcpRelay(session, vrf_obj, port_obj)
@@ -347,7 +337,7 @@ class DhcpRelay(PyaoscxModule):
                 DhcpRelay.base_uri,
                 self.vrf.name,
                 self.session.api.compound_index_separator,
-                self.port.percents_name
+                self.port.percents_name,
             )
 
         return self._uri

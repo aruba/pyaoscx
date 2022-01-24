@@ -7,7 +7,7 @@ import logging
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.unsupported_capability_error import (
-    UnsupportedCapabilityError
+    UnsupportedCapabilityError,
 )
 
 from pyaoscx.utils import util as utils
@@ -81,10 +81,7 @@ class PoEInterface(Interface):
             )
 
         # Set payload
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         # Set URI
         uri = "{0}/{1}/{2}".format(
@@ -109,8 +106,7 @@ class PoEInterface(Interface):
         # Determines if the PoE Interface is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs
-            utils.set_config_attrs(
-                self, data, "config_attrs")
+            utils.set_config_attrs(self, data, "config_attrs")
 
         # Set original attributes
         self.__original_attributes = data
@@ -166,7 +162,8 @@ class PoEInterface(Interface):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
             logging.info("SUCCESS: Updating %s", self)
 
             # Set new original attributes
@@ -204,9 +201,7 @@ class PoEInterface(Interface):
         """
         if self._uri is None:
             self._uri = "{0}/{1}/{2}".format(
-                self.base_uri,
-                self.percents_name,
-                self.resource_uri_name
+                self.base_uri, self.percents_name, self.resource_uri_name
             )
 
         return self._uri

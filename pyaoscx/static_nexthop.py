@@ -55,7 +55,7 @@ class StaticNexthop(PyaoscxModule):
         # Set URI
         self.base_uri = "{0}/{1}/static_nexhops".format(
             self.__parent_static_route.base_uri,
-            self.__parent_static_route.reference_address
+            self.__parent_static_route.reference_address,
         )
 
         # Verify Static Nexthop data doesn't exist already for Static Route
@@ -93,10 +93,7 @@ class StaticNexthop(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}".format(self.base_uri, self.id)
         try:
@@ -116,9 +113,7 @@ class StaticNexthop(PyaoscxModule):
         # Determines if the Static Nexthop is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(
-                self, data, "config_attrs",
-                ["id"])
+            utils.set_config_attrs(self, data, "config_attrs", ["id"])
 
         # Set original attributes
         self.__original_attributes = data
@@ -130,10 +125,12 @@ class StaticNexthop(PyaoscxModule):
         if "port" in data and self.port:
             port_response = self.port
             interface_cls = self.session.api.get_module(
-                self.session, "Interface", "")
+                self.session, "Interface", ""
+            )
             # Set port as a Interface Object
             self.port = interface_cls.from_response(
-                self.session, port_response)
+                self.session, port_response
+            )
             # Materialize port
             self.port.get()
 
@@ -181,7 +178,8 @@ class StaticNexthop(PyaoscxModule):
             # Create a StaticNexthop object and adds it to parent static_route
             # list
             _id, static_nexthop = StaticNexthop.from_uri(
-                session, parent_static_route, uri)
+                session, parent_static_route, uri
+            )
             # Load all Static Nexthop data from within the Switch
             static_nexthop.get()
             static_nexthop_dict[_id] = static_nexthop
@@ -243,7 +241,8 @@ class StaticNexthop(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
 
@@ -310,7 +309,8 @@ class StaticNexthop(PyaoscxModule):
         for static_nexthop in self.__parent_static_route.static_nexthops:
             if static_nexthop.id == self.id:
                 self.__parent_static_route.static_nexthops.remove(
-                    static_nexthop)
+                    static_nexthop
+                )
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
@@ -332,7 +332,8 @@ class StaticNexthop(PyaoscxModule):
         :return: StaticNexthop object.
         """
         static_nexthop_arr = session.api.get_keys(
-            response_data, StaticNexthop.resource_uri_name)
+            response_data, StaticNexthop.resource_uri_name
+        )
         _id = static_nexthop_arr[0]
         return StaticNexthop(session, _id, parent_static_route)
 
@@ -355,7 +356,8 @@ class StaticNexthop(PyaoscxModule):
 
         # Create static_nexthop object
         static_nexthop_obj = StaticNexthop(
-            session, index, parent_static_route, uri=uri)
+            session, index, parent_static_route, uri=uri
+        )
 
         return index, static_nexthop_obj
 
@@ -437,7 +439,8 @@ class StaticNexthop(PyaoscxModule):
         for uri in uri_list:
             # Obtain ID from uri
             _id, static_nexthop = StaticNexthop.from_uri(
-                session, parent_static_route, uri)
+                session, parent_static_route, uri
+            )
             next_id = int(_id)
 
         # Set next ID

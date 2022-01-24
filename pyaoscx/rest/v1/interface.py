@@ -28,6 +28,7 @@ class Interface(AbstractInterface):
         Version 1. Uses methods inside AbstractInterface and any ones different
         are overridden by this class.
     """
+
     base_uri = "system/ports"
     base_uri_ports = "system/ports"
     base_uri_interface = "system/interfaces"
@@ -99,10 +100,7 @@ class Interface(AbstractInterface):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri_ports = "{0}/{1}".format(
             Interface.base_uri_ports, self.percents_name
@@ -119,8 +117,8 @@ class Interface(AbstractInterface):
 
         if not utils._response_ok(response_ports, "GET"):
             raise GenericOperationError(
-                response_ports.text,
-                response_ports.status_code)
+                response_ports.text, response_ports.status_code
+            )
 
         data_port = json.loads(response_ports.text)
         # Adding ACL attributes to data_port
@@ -129,7 +127,8 @@ class Interface(AbstractInterface):
             "aclv6_in_cfg",
             "aclv4_in_cfg",
             "aclmac_in_cfg",
-            "aclv4_out_cfg"]
+            "aclv4_out_cfg",
+        ]
 
         for acl_attr in acl_names:
             data_port[acl_attr] = None
@@ -143,8 +142,11 @@ class Interface(AbstractInterface):
         if selector in self.session.api.configurable_selectors:
             # Get list of keys and create a list with the given keys
             utils.set_config_attrs(
-                self, data_port, "config_attrs",
-                ["name", "origin", "other_config", "ip6_addresses"])
+                self,
+                data_port,
+                "config_attrs",
+                ["name", "origin", "other_config", "ip6_addresses"],
+            )
         # Set original attributes
         self.__original_attributes_port = data_port
         # Delete unwanted attributes
@@ -173,8 +175,9 @@ class Interface(AbstractInterface):
                 raise ResponseError("GET", e)
 
             if not utils._response_ok(response_ints, "GET"):
-                raise GenericOperationError(response_ints.text,
-                                            response_ints.status_code)
+                raise GenericOperationError(
+                    response_ints.text, response_ints.status_code
+                )
 
             data_int = json.loads(response_ints.text)
             # Add Interface dictionary as attributes for the object
@@ -184,7 +187,8 @@ class Interface(AbstractInterface):
             if selector in self.session.api.configurable_selectors:
                 # Get list of keys and create a list with the given keys
                 utils.set_config_attrs(
-                    self, data_int, "config_attrs_int", ["name", "origin"])
+                    self, data_int, "config_attrs_int", ["name", "origin"]
+                )
             # Set original attributes
             self.__original_attributes_int = data_int
             # Delete unwanted attributes
@@ -197,8 +201,7 @@ class Interface(AbstractInterface):
         if hasattr(self, "interfaces") and self.interfaces is not None:
             interfaces_list = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api.get_uri_from_data(
-                self.interfaces)
+            uri_list = self.session.api.get_uri_from_data(self.interfaces)
             for uri in uri_list:
                 # Create an Interface object
                 name, interface = Interface.from_uri(self.session, uri)
@@ -241,8 +244,7 @@ class Interface(AbstractInterface):
         if hasattr(self, "vlan_trunks") and self.vlan_trunks is not None:
             vlan_trunks = []
             # Get all URI elements in the form of a list
-            uri_list = self.session.api.get_uri_from_data(
-                self.vlan_trunks)
+            uri_list = self.session.api.get_uri_from_data(self.vlan_trunks)
 
             for uri in uri_list:
                 # Create a Vlan object
@@ -256,6 +258,7 @@ class Interface(AbstractInterface):
 
         # Set all ACLs
         from pyaoscx.acl import ACL
+
         if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclmac_in_cfg)
@@ -408,9 +411,7 @@ class Interface(AbstractInterface):
 
         depth = session.api.default_facts_depth
 
-        payload = {
-            "depth": depth
-        }
+        payload = {"depth": depth}
 
         # Get Ports information
         try:
@@ -423,8 +424,8 @@ class Interface(AbstractInterface):
 
         if not utils._response_ok(response_ports, "GET"):
             raise GenericOperationError(
-                response_ports.text,
-                response_ports.status_code)
+                response_ports.text, response_ports.status_code
+            )
 
         ports_data = json.loads(response_ports.text)
 
@@ -444,8 +445,8 @@ class Interface(AbstractInterface):
 
         if not utils._response_ok(response_interface, "GET"):
             raise GenericOperationError(
-                response_interface.text,
-                response_interface.status_code)
+                response_interface.text, response_interface.status_code
+            )
 
         # Load response text into json format
         interfaces_data = json.loads(response_interface.text)
@@ -482,15 +483,13 @@ class Interface(AbstractInterface):
         try:
             # Try using interfaces
             interfaces_id_arr = session.api.get_keys(
-                response_data, "interfaces")
+                response_data, "interfaces"
+            )
         except AttributeError:
             # If AttributeError for Nonetype, try with ports
-            interfaces_id_arr = session.api.get_keys(
-                response_data, "ports")
+            interfaces_id_arr = session.api.get_keys(response_data, "ports")
         interface_name = interfaces_id_arr[0]
-        return session.api.get_module(
-            session, "Interface",
-            interface_name)
+        return session.api.get_module(session, "Interface", interface_name)
 
     @PyaoscxModule.connected
     def delete(self):
@@ -526,8 +525,8 @@ class Interface(AbstractInterface):
 
             if not utils._response_ok(response_ints, "DELETE"):
                 raise GenericOperationError(
-                    response_ints.text,
-                    response_ints.status_code)
+                    response_ints.text, response_ints.status_code
+                )
 
         # Clean LAG from interfaces
         # Delete interface references
@@ -579,8 +578,8 @@ class Interface(AbstractInterface):
 
                 if not utils._response_ok(response_ints, "PUT"):
                     raise GenericOperationError(
-                        response_ints.text,
-                        response_ints.status_code)
+                        response_ints.text, response_ints.status_code
+                    )
 
                 # Set new original attributes
                 self.__original_attributes_int = int_data
@@ -684,15 +683,15 @@ class Interface(AbstractInterface):
 
         if "aclv4_routed_in_cfg" in port_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
-            port_data["aclv4_routed_in_cfg"] = (
-                self.aclv4_routed_in_cfg.get_info_format()
-            )
+            port_data[
+                "aclv4_routed_in_cfg"
+            ] = self.aclv4_routed_in_cfg.get_info_format()
 
         if "aclv4_routed_out_cfg" in port_data and self.aclv4_routed_out_cfg:
             # Set values in correct form
-            port_data["aclv4_routed_out_cfg"] = (
-                self.aclv4_routed_out_cfg.get_info_format()
-            )
+            port_data[
+                "aclv4_routed_out_cfg"
+            ] = self.aclv4_routed_out_cfg.get_info_format()
 
         if "aclv6_in_cfg" in port_data and self.aclv6_in_cfg is not None:
             # Set values in correct form
@@ -704,15 +703,15 @@ class Interface(AbstractInterface):
 
         if "aclv6_routed_in_cfg" in port_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
-            port_data["aclv6_routed_in_cfg"] = (
-                self.aclv6_routed_in_cfg.get_info_format()
-            )
+            port_data[
+                "aclv6_routed_in_cfg"
+            ] = self.aclv6_routed_in_cfg.get_info_format()
 
         if "aclv6_routed_out_cfg" in port_data and self.aclv6_routed_out_cfg:
             # Set values in correct form
-            port_data["aclv6_routed_out_cfg"] = (
-                self.aclv6_routed_out_cfg.get_info_format()
-            )
+            port_data[
+                "aclv6_routed_out_cfg"
+            ] = self.aclv6_routed_out_cfg.get_info_format()
 
         # Set addresses the correct way
         if self.ip6_addresses is not None:
@@ -753,8 +752,8 @@ class Interface(AbstractInterface):
 
             if not utils._response_ok(response_ports, "PUT"):
                 raise GenericOperationError(
-                    response_ports.text,
-                    response_ports.status_code)
+                    response_ports.text, response_ports.status_code
+                )
             # Set new original attributes
             self.__original_attributes_port = port_data
 
@@ -807,8 +806,8 @@ class Interface(AbstractInterface):
 
             if not utils._response_ok(response_ints, "POST"):
                 raise GenericOperationError(
-                    response_ints.text,
-                    response_ints.status_code)
+                    response_ints.text, response_ints.status_code
+                )
 
         # Get all objects data
         self.get()
@@ -828,13 +827,13 @@ class Interface(AbstractInterface):
             uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix,
                 Interface.base_uri_ports,
-                self.percents_name
+                self.percents_name,
             )
         else:
             uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix,
                 Interface.base_uri_interface,
-                self.percents_name
+                self.percents_name,
             )
 
         return uri
@@ -892,8 +891,9 @@ class Interface(AbstractInterface):
             raise ResponseError("PUT", e)
 
         if not utils._response_ok(response_ports, "PUT"):
-            raise GenericOperationError(response_ports.text,
-                                        response_ports.status_code)
+            raise GenericOperationError(
+                response_ports.text, response_ports.status_code
+            )
 
         # Update values with new ones
         self.get()

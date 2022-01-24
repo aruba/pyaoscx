@@ -12,6 +12,7 @@
 #
 import os
 import sys
+
 sys.path.insert(0, os.path.abspath("../.."))
 
 
@@ -33,7 +34,9 @@ autosummary_generate = True
 # ones.
 extensions = [
     # Need the autodoc and autosummary packages to generate our docs.
-    "sphinx.ext.autodoc", "sphinx.ext.coverage", "sphinx.ext.autosummary"
+    "sphinx.ext.autodoc",
+    "sphinx.ext.coverage",
+    "sphinx.ext.autosummary",
 ]
 
 # Add any paths that contain templates here, relative to this directory.

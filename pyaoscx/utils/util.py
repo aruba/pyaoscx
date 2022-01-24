@@ -20,6 +20,7 @@ def create_attrs(obj, data_dictionary):
     :param data_dictionary: dictionary containing the attributes.
     """
     import copy
+
     # Used to create a deep copy of the dictionary
     dictionary_var = copy.deepcopy(data_dictionary)
 
@@ -103,8 +104,9 @@ def set_creation_attrs(obj, **kwargs):
         )
 
 
-def set_config_attrs(obj, config_dict, config_attrs="config_attrs",
-                     unwanted_attrs=[]):
+def set_config_attrs(
+    obj, config_dict, config_attrs="config_attrs", unwanted_attrs=[]
+):
     """
     Add a list of strings inside the object to represent each attribute for
         config purposes.
@@ -123,11 +125,7 @@ def set_config_attrs(obj, config_dict, config_attrs="config_attrs",
             # Remove all occurrences of element inside
             # the list representing the attributes related
             # to configuration
-            new_config_attrs = list(
-                filter(
-                    (element).__ne__, new_config_attrs
-                )
-            )
+            new_config_attrs = list(filter((element).__ne__, new_config_attrs))
     # Set config attributes list with new values
     obj.__setattr__(config_attrs, new_config_attrs)
 
@@ -143,7 +141,7 @@ def _response_ok(response, call_type):
         "GET": [200],
         "PUT": [200, 204],
         "POST": [201],
-        "DELETE": [204]
+        "DELETE": [204],
     }
 
     return response.status_code in ok_codes[call_type]
@@ -170,14 +168,18 @@ def file_upload(session, file_path, complete_uri):
                 "{0}login?username={1}&password={2}".format(
                     session.base_url, session.username(), session.password()
                 ),
-                verify=False, timeout=5,
-                proxies=session.proxy)
+                verify=False,
+                timeout=5,
+                proxies=session.proxy,
+            )
 
             # Perform File Upload
             response_file_upload = requests.post(
-                url=complete_uri, files=file_param, verify=False,
+                url=complete_uri,
+                files=file_param,
+                verify=False,
                 proxies=session.proxy,
-                cookies=response_login.cookies
+                cookies=response_login.cookies,
             )
 
             # Perform Logout
@@ -185,15 +187,16 @@ def file_upload(session, file_path, complete_uri):
                 session.base_url + "logout",
                 verify=False,
                 proxies=session.proxy,
-                cookies=response_login.cookies)
+                cookies=response_login.cookies,
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
 
         if response_file_upload.status_code != 200:
             raise GenericOperationError(
-                response_file_upload.text,
-                response_file_upload.status_code)
+                response_file_upload.text, response_file_upload.status_code
+            )
 
     # Return true if successful
     return True

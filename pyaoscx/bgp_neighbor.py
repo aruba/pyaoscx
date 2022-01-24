@@ -22,12 +22,14 @@ class BgpNeighbor(PyaoscxModule):
     indices = ["ip_or_ifname_or_group_name"]
     resource_uri_name = "bgp_neighbors"
 
-    def __init__(self,
-                 session,
-                 ip_or_ifname_or_group_name,
-                 parent_bgp_router,
-                 uri=None,
-                 **kwargs):
+    def __init__(
+        self,
+        session,
+        ip_or_ifname_or_group_name,
+        parent_bgp_router,
+        uri=None,
+        **kwargs
+    ):
 
         self.session = session
         # Assign ID
@@ -119,8 +121,9 @@ class BgpNeighbor(PyaoscxModule):
         # Determines if the BGP Neighbor is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, "config_attrs",
-                                   ["ip_or_ifname_or_group_name"])
+            utils.set_config_attrs(
+                self, data, "config_attrs", ["ip_or_ifname_or_group_name"]
+            )
 
         # Set original attributes
         self.__original_attributes = data
@@ -132,10 +135,12 @@ class BgpNeighbor(PyaoscxModule):
         if hasattr(self, "local_interface") and self.local_interface:
             local_interface_response = self.local_interface
             interface_cls = self.session.api.get_module(
-                self.session, "Interface", "")
+                self.session, "Interface", ""
+            )
             # Set port as a Interface Object
             self.local_interface = interface_cls.from_response(
-                self.session, local_interface_response)
+                self.session, local_interface_response
+            )
             self.local_interface.get()
 
         # Sets object as materialized
@@ -179,7 +184,8 @@ class BgpNeighbor(PyaoscxModule):
         for uri in uri_list:
             # Create a BgpNeighbor object
             ip_or_ifname_or_group_name, bgp_neighbor = BgpNeighbor.from_uri(
-                session, parent_bgp_router, uri)
+                session, parent_bgp_router, uri
+            )
             # Load all BGP Neighbor data from within the Switch
             bgp_neighbor.get()
             bgp_dict[ip_or_ifname_or_group_name] = bgp_neighbor
@@ -242,8 +248,9 @@ class BgpNeighbor(PyaoscxModule):
                 raise ResponseError("PUT", e)
 
             if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(response.text,
-                                            response.status_code)
+                raise GenericOperationError(
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
@@ -271,8 +278,9 @@ class BgpNeighbor(PyaoscxModule):
             # If local interface is NOT a string
             if not isinstance(self.local_interface, str):
                 if not self.local_interface.materialized:
-                    raise VerificationError("Local Interface",
-                                            "Object not materialized")
+                    raise VerificationError(
+                        "Local Interface", "Object not materialized"
+                    )
 
                 # Get ISL port uri
                 bgp_neighbor_data[

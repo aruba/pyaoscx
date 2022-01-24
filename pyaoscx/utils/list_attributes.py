@@ -11,7 +11,10 @@ class ListDescriptor(list):
         list changes, then every pyaoscx_module object has to be changed.
     """
 
-    def __init__(self, name,):
+    def __init__(
+        self,
+        name,
+    ):
         self.name = name
 
     def __get__(self, instance, owner):
@@ -28,8 +31,11 @@ class ListDescriptor(list):
         :param new_list: new list being set to current attribute object.
         """
         new_list = ReferenceList(new_list)
-        prev_list = instance.__dict__[
-            self.name] if self.name in instance.__dict__ else None
+        prev_list = (
+            instance.__dict__[self.name]
+            if self.name in instance.__dict__
+            else None
+        )
 
         # Update value inside the instance dictionary
         instance.__dict__[self.name] = new_list

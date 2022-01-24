@@ -36,11 +36,9 @@ class Session:
         self.api = API.create(api)
         self.ip = ip_address
         self.connected = False
-        self.proxy = {
-            "no_proxy": self.ip
-        } if proxy is None else {
-            "https": proxy
-        }
+        self.proxy = (
+            {"no_proxy": self.ip} if proxy is None else {"https": proxy}
+        )
         self.scheme = "https"
         self.version_path = "rest/v{0}/".format(self.api)
 
@@ -77,7 +75,8 @@ class Session:
 
         # From base url retrieve the ip address and the version
         url_pattern = re.compile(
-            r"https://(?P<ip_address>.+)/rest/v(?P<version>.+)/")
+            r"https://(?P<ip_address>.+)/rest/v(?P<version>.+)/"
+        )
         match = url_pattern.match(base_url)
         if match:
             ip_address = match.group("ip_address")
@@ -137,8 +136,13 @@ class Session:
         self.__password = password
         try:
             login_uri = "{0}{1}".format(self.base_url, "login")
-            response = self.s.post(login_uri, data=login_data, verify=False,
-                                   timeout=5, proxies=self.proxy)
+            response = self.s.post(
+                login_uri,
+                data=login_data,
+                verify=False,
+                timeout=5,
+                proxies=self.proxy,
+            )
         except requests.exceptions.ConnectTimeout:
             raise Exception(
                 "Error connecting to host: connection attempt timed out."
@@ -172,7 +176,8 @@ class Session:
 
             try:
                 response = self.s.post(
-                    logout_uri, verify=False, proxies=self.proxy)
+                    logout_uri, verify=False, proxies=self.proxy
+                )
             except BaseException:
                 raise Exception(
                     "Unable to process the request: ({0}) {1}".format(
@@ -193,8 +198,14 @@ class Session:
     # Used for Connection within Ansible
 
     @classmethod
-    def login(cls, base_url, username=None, password=None, use_proxy=True,
-              handle_zeroized_device=False):
+    def login(
+        cls,
+        base_url,
+        username=None,
+        password=None,
+        use_proxy=True,
+        handle_zeroized_device=False,
+    ):
         """
         Perform a POST call to login and gain access to other API calls. If
             either username or password is not specified, user will be prompted
@@ -223,8 +234,12 @@ class Session:
         try:
             print(base_url + "login")
             response = s.post(
-                base_url + "login", data=login_data, verify=False,
-                timeout=5, proxies=s.proxies)
+                base_url + "login",
+                data=login_data,
+                verify=False,
+                timeout=5,
+                proxies=s.proxies,
+            )
         except requests.exceptions.ConnectTimeout:
             logging.warning(
                 "ERROR: Error connecting to host: "
@@ -244,28 +259,34 @@ class Session:
                 # Try to login with default credentials:
                 ztp_login_data = {"username": username}
                 response = s.post(
-                    base_url + "login", data=ztp_login_data, verify=False,
-                    timeout=5, proxies=s.proxies)
+                    base_url + "login",
+                    data=ztp_login_data,
+                    verify=False,
+                    timeout=5,
+                    proxies=s.proxies,
+                )
                 if response.status_code == ZEROIZED:
-                    data = {
-                        "password": password
-                    }
+                    data = {"password": password}
                     response = s.put(
-                        base_url + "system/users/admin", data=json.dumps(data),
-                        verify=False, timeout=5, proxies=s.proxies)
+                        base_url + "system/users/admin",
+                        data=json.dumps(data),
+                        verify=False,
+                        timeout=5,
+                        proxies=s.proxies,
+                    )
                     if utils._response_ok(response, "PUT"):
                         logging.info("SUCCESS: Login succeeded")
                         return s
             logging.warning(
                 "FAIL: Login failed with status code %d: %s",
                 response.status_code,
-                response.text
+                response.text,
             )
             raise LoginError(
                 "FAIL: Login failed with status code {0}: {1}".format(
                     response.status_code, response.text
                 ),
-                response.status_code
+                response.status_code,
             )
         else:
             logging.info("SUCCESS: Login succeeded")
@@ -281,15 +302,15 @@ class Session:
         :return: True if successful.
         """
         response = kwargs["s"].post(
-            kwargs["url"] + "logout", verify=False,
-            proxies=kwargs["s"].proxies)
+            kwargs["url"] + "logout", verify=False, proxies=kwargs["s"].proxies
+        )
         # Response OK check needs to be passed 'PUT' since this POST
         # call returns 200 instead of conventional 201
         if not utils._response_ok(response, "PUT"):
             logging.warning(
                 "FAIL: Logout failed with status code %d: %s",
                 response.status_code,
-                response.text
+                response.text,
             )
             return False
         else:
@@ -336,18 +357,19 @@ class Session:
             "PUT": self.s.put,
             "GET": self.s.get,
             "POST": self.s.post,
-            "DELETE": self.s.delete
+            "DELETE": self.s.delete,
         }
 
         if operation not in operations:
             raise VerificationError(
                 "The operation {0} is not supported."
-                " Use any of {1}".format(
-                    operation, list(operations.keys)))
+                " Use any of {1}".format(operation, list(operations.keys))
+            )
 
         return operations[operation](
             self._build_uri(path),
             verify=verify,
             params=params,
             data=data,
-            proxies=self.proxy)
+            proxies=self.proxy,
+        )

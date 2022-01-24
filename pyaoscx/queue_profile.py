@@ -43,9 +43,7 @@ class QueueProfile(PyaoscxModule):
         self.__modified = False
 
         # Build the URI that identifies the current Queue profile
-        self.path = self.object_uri.format(
-            name=self.name
-        )
+        self.path = self.object_uri.format(name=self.name)
         self.base_uri = self.collection_uri
 
     @property

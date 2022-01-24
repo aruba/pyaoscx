@@ -46,10 +46,7 @@ class Qos(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
         # Build path
-        self.path = "{0}/{1}".format(
-            self.base_uri,
-            self.name
-        )
+        self.path = "{0}/{1}".format(self.base_uri, self.name)
 
     @property
     def name(self):
@@ -174,8 +171,7 @@ class Qos(PyaoscxModule):
         :return: Qos Object.
         """
         qos_name_arr = session.api.get_keys(
-            response_data,
-            cls.resource_uri_name
+            response_data, cls.resource_uri_name
         )
         qos_name = qos_name_arr[0]
         return cls(session, qos_name)
@@ -244,8 +240,7 @@ class Qos(PyaoscxModule):
         allowed_trust_modes = ["cos", "dscp", "none", "default"]
         if trust_mode not in allowed_trust_modes:
             raise VerificationError(
-                "ERROR: QoS trust mode must be one of: ",
-                allowed_trust_modes
+                "ERROR: QoS trust mode must be one of: ", allowed_trust_modes
             )
 
         device = Device(session)

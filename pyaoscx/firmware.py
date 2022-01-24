@@ -17,15 +17,14 @@ def get_firmware_version(**kwargs):
     target_url = kwargs["url"] + "firmware"
 
     response = kwargs["s"].get(
-        target_url,
-        verify=False,
-        proxies=kwargs["s"].proxies)
+        target_url, verify=False, proxies=kwargs["s"].proxies
+    )
 
     if not utils._response_ok(response, "GET"):
         logging.warning(
             "FAIL: Getting firmware version %d: %s",
             response.status_code,
-            response.text
+            response.text,
         )
         firmware_version = None
     else:

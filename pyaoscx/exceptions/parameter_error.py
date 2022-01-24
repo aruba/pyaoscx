@@ -20,6 +20,7 @@ class ParameterError(VerificationError):
     def __str__(self):
         if self.message:
             return "Parameter Error: {0} detail: {1}".format(
-                self.module, self.message)
+                self.module, self.message
+            )
         else:
             return "Parameter Error"

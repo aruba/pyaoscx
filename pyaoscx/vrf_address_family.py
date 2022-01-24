@@ -22,8 +22,9 @@ class VrfAddressFamily(PyaoscxModule):
     indices = ["address_family"]
     resource_uri_name = "vrf_address_families"
 
-    def __init__(self, session, address_family, parent_vrf, uri=None,
-                 **kwargs):
+    def __init__(
+        self, session, address_family, parent_vrf, uri=None, **kwargs
+    ):
 
         self.session = session
         # Assign ID
@@ -91,10 +92,7 @@ class VrfAddressFamily(PyaoscxModule):
                 "ERROR: Selector should be one of {0}".format(selectors)
             )
 
-        payload = {
-            "depth": depth,
-            "selector": selector
-        }
+        payload = {"depth": depth, "selector": selector}
 
         uri = "{0}/{1}".format(self.base_uri, self.address_family)
 
@@ -116,7 +114,8 @@ class VrfAddressFamily(PyaoscxModule):
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
             utils.set_config_attrs(
-                self, data, "config_attrs", ["address_family"])
+                self, data, "config_attrs", ["address_family"]
+            )
 
         # Set original attributes
         self.__original_attributes = data
@@ -166,7 +165,8 @@ class VrfAddressFamily(PyaoscxModule):
             # Create a VrfAddressFamily object and adds it to parent
             # VRF list
             address_family, vrf_address_family = VrfAddressFamily.from_uri(
-                session, parent_vrf, uri)
+                session, parent_vrf, uri
+            )
             # Load all VRF Address Families data from within the Switch
             vrf_address_family.get()
             vrf_address_family_dict[address_family] = vrf_address_family
@@ -224,7 +224,8 @@ class VrfAddressFamily(PyaoscxModule):
 
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
-                    response.text, response.status_code)
+                    response.text, response.status_code
+                )
 
             logging.info("SUCCESS: Updating %s", self)
 
@@ -308,7 +309,8 @@ class VrfAddressFamily(PyaoscxModule):
         :return: VrfAddressFamily object.
         """
         vrf_address_family_arr = session.api.get_keys(
-            response_data, VrfAddressFamily.resource_uri_name)
+            response_data, VrfAddressFamily.resource_uri_name
+        )
         address_family = vrf_address_family_arr[0]
         return VrfAddressFamily(session, address_family, parent_vrf)
 
@@ -329,7 +331,8 @@ class VrfAddressFamily(PyaoscxModule):
         index = index_pattern.match(uri).group("index")
         # Create VrfAddressFamily object
         vrf_address_family_obj = VrfAddressFamily(
-            session, index, parent_vrf, uri=uri)
+            session, index, parent_vrf, uri=uri
+        )
 
         return index, vrf_address_family_obj
 
