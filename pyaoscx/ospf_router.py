@@ -16,8 +16,7 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 class OspfRouter(PyaoscxModule):
     """
-    Provide configuration management for OSPF Routers on AOS-CX
-        devices.
+    Provide configuration management for OSPF Routers on AOS-CX devices.
     """
 
     version = ""
@@ -60,14 +59,14 @@ class OspfRouter(PyaoscxModule):
     @property
     def instance_tag(self):
         """
-        Return this OSPF Router's instance_tag
+        Return this OSPF Router's instance_tag.
         """
         return self.__instance_tag
 
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
@@ -75,12 +74,12 @@ class OspfRouter(PyaoscxModule):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a OSPF Router table entry and
-        fill the object with the incoming attributes
+            fill the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
         # this is common for all PyaoscxModule derived classes
@@ -121,13 +120,13 @@ class OspfRouter(PyaoscxModule):
     def get_all(cls, session, parent_vrf):
         """
         Perform a GET call to retrieve all system OSPF Router settings for a
-            given VRF, and create a dictionary containing them
-        :param cls: Object's class
+            given VRF, and create a dictionary containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vrf: Vrf object where OspfRouter object is stored
+            connection to the device.
+        :param parent_vrf: Vrf object where OspfRouter object is stored.
         :return: Dictionary containing
-            (OSPF Router ID, OspfRouter object) (key,value) pairs
+            (OSPF Router ID, OspfRouter object) (key,value) pairs.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
         uri_indices = {
@@ -155,13 +154,11 @@ class OspfRouter(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create update an existing
-        OSPF Router Table Entry.
-        Checks whether the VRF exists in the switch
-        Calls self.update() if OSPF Router is being updated
-        Calls self.create() if a new OSPF Router is being created
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
+        Main method used to either create update an existing OSPF Router.
+            Checks whether the VRF exists in the switch. Calls self.update() if
+            OSPF Router is being updated. Calls self.create() if a new OSPF
+            Router is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         if not self._parent_vrf.materialized:
             self._parent_vrf.apply()
@@ -171,7 +168,8 @@ class OspfRouter(PyaoscxModule):
 
     def __get_passive_interfaces_to_correct_form(self):
         """
-        Auxiliary method to set passive interfaces to correct form for requests
+        Auxiliary method to set passive interfaces to correct form for
+            requests.
         """
         formatted_interfaces = {}
         if self.passive_interfaces is not None:
@@ -188,10 +186,9 @@ class OspfRouter(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing OSPF Router table
-        entry
+        Perform a PUT call to apply changes to an existing OSPF Router.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise
+            made.
         """
         ospf_router_data = utils.get_attrs(self, self.config_attrs)
 
@@ -205,9 +202,9 @@ class OspfRouter(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new  OSPF Router table entry
-            Only returns if an exception is not raised
-        :return modified: True if entry was created
+        Perform a POST call to create a new  OSPF Router. Only returns if an
+            exception is not raised.
+        :return modified: True if entry was created.
         """
         ospf_router_data = utils.get_attrs(self, self.config_attrs)
         ospf_router_data["instance_tag"] = self.__instance_tag
@@ -232,19 +229,15 @@ class OspfRouter(PyaoscxModule):
     def from_response(cls, session, parent_vrf, response_data):
         """
         Create a OspfRouter object given a response_data related to the
-            OspfRouter object
-        :param cls: Object's class
+            OspfRouter object.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vrf: Vrf object where OspfRouter object is stored
-        :param response_data: The response can be either a
-            dictionary: {
-                instance_tag:
-                    "/rest/v10.04/system/vrfs/vrf/ospf_routers/instance_tag"
-            }
-            or a
-            string: "/rest/v10.04/system/vrfs/vrf/ospf_routers/instance_tag"
-        :return: OspfRouter object
+            connection to the device.
+        :param parent_vrf: Vrf object where OspfRouter object is stored.
+        :param response_data: The response must be a dictionary of the form:
+            {id: URL}, with the URL being of the form:
+            "/rest/v10.04/system/vrfs/<name>/ospf_routers/<id>"
+        :return: OspfRouter object.
         """
         ospf_arr = session.api.get_keys(response_data, cls.resource_uri_name)
         instance_tag = ospf_arr[0]
@@ -253,11 +246,11 @@ class OspfRouter(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, parent_vrf, uri):
         """
-        Create a OspfRouter object given a URI
+        Create a OspfRouter object given a URI.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
-        :return: tuple(OSPF Instance Tag: int, OSPF Router: OspfRouter)
+            connection to the device.
+        :param uri: a String with a URI.
+        :return: tuple(OSPF Instance Tag: int, OSPF Router: OspfRouter).
         """
         # Obtain ID from URI like:
         # system/vrfs/{name}/ospf{version}_routers/{instance_tag}
@@ -277,8 +270,8 @@ class OspfRouter(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific OSPF Router URI
-        return: Object's URI
+        Method used to obtain the specific OSPF Router URI.
+        return: Object's URI.
         """
         # PyaoscxModule's methods use self.path to store the URI
         return self.path
@@ -287,17 +280,16 @@ class OspfRouter(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -305,8 +297,8 @@ class OspfRouter(PyaoscxModule):
         """
         Update references to OSPF Areas. If an Area with the same area_id is
             found, update the reference to the new area, otherwise, add
-            reference to the new area
-        :param new_area: Area to add reference to
+            reference to the new area.
+        :param new_area: Area to add reference to.
         """
         for area in self.areas:
             if area.area_id == new_area.area_id:
@@ -319,8 +311,8 @@ class OspfRouter(PyaoscxModule):
     def remove_ospf_area(self, area):
         """
         Update references to OSPF Areas. If an Area with the same area_id is
-            found, delete the reference to it
-        :param new_area: Area to add reference to
+            found, delete the reference to it.
+        :param new_area: Area to add reference to.
         """
         for area_ in self.areas:
             if area.area_id == area_.area_id:

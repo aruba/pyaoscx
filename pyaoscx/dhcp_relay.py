@@ -45,13 +45,12 @@ class DhcpRelay(PyaoscxModule):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a DHCP Relay table entry and
-        fill the object with the incoming attributes
-
+            fill the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -122,13 +121,13 @@ class DhcpRelay(PyaoscxModule):
     @classmethod
     def get_all(cls, session):
         """
-        Perform a GET call to retrieve all system DHCP Relays,
-        and create a dictionary containing them
-        :param cls: Object's class
+        Perform a GET call to retrieve all system DHCP Relays, and create a
+            dictionary containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :return: Dictionary containing DHCP Relays IDs as keys and a
-            DHCP Relay objects as values
+            connection to the device.
+        :return: Dictionary containing DHCP Relays IDs as keys and a DHCP Relay
+            objects as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -157,14 +156,11 @@ class DhcpRelay(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-        DHCP Relay table entry.
-        Checks whether the DHCP Relay exists in the switch
-        Calls self.update() if DHCP Relay is being updated
-        Calls self.create() if a new DHCP Relay is being created
-
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
+        Main method used to either create or update an existing DHCP Relay.
+            Checks whether the DHCP Relay exists in the switch. Calls
+            self.update() if DHCP Relay is being updated. Calls self.create()
+            if a new DHCP Relay is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         modified = False
         if self.materialized:
@@ -178,11 +174,9 @@ class DhcpRelay(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing DHCP Relay table
-        entry
-
+        Perform a PUT call to apply changes to an existing DHCP Relay.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise
+            made.
         """
         # Variable returned
         modified = False
@@ -226,10 +220,9 @@ class DhcpRelay(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new DHCP Relay table entry
-        Only returns if an exception is not raise
-
-        :return modified: Boolean, True if entry was created
+        Perform a POST call to create a new DHCP Relay. Only returns if no
+            exception is raised.
+        :return modified: Boolean, True if entry was created.
         """
         dhcp_relay_data = utils.get_attrs(self, self.config_attrs)
         dhcp_relay_data["vrf"] = self.vrf.get_info_format()
@@ -261,7 +254,6 @@ class DhcpRelay(PyaoscxModule):
         """
         Perform DELETE call to delete DhcpRelay table entry.
         """
-
         uri = "{0}/{1}{2}{3}".format(
             DhcpRelay.base_uri,
             self.vrf.name,
@@ -286,16 +278,15 @@ class DhcpRelay(PyaoscxModule):
     @classmethod
     def from_response(cls, session, response_data):
         """
-        Create a DhcpRelay object given a response_data
-        :param cls: Class calling the method
+        Create a DhcpRelay object given a response_data.
+        :param cls: Class calling the method.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param response_data: The response can be either a
-            dictionary: {
-                id: "/rest/v10.04/system/dhcp_relays/{vrf},{port}"
-                }
-            or a string: "/rest/v10.04/system/dhcp_relays/{vrf},{port}"
-        return: DhcpRelay object
+            connection to the device.
+        :param response_data: The response must be a dictionary of the form:
+            {
+                {vrf},{port}: "/rest/v10.04/system/dhcp_relays/{vrf},{port}"
+            }
+        return: DhcpRelay object.
         """
         dhcp_relay_arr = session.api.get_keys(
             response_data, DhcpRelay.resource_uri_name)
@@ -314,14 +305,13 @@ class DhcpRelay(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create a DHCP Relay object given a URI
-        :param cls: Class calling the method
+        Create a DHCP Relay object given a URI.
+        :param cls: Class calling the method.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
-
+            connection to the device.
+        :param uri: a String with a URI.
         :return indices, dhcp_relay: tuple containing both the indices and
-            DhcpRelay object
+            DhcpRelay object.
         """
         # Obtain ID from URI
         index_pattern = re.compile(
@@ -348,10 +338,9 @@ class DhcpRelay(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific DhcpRelay URI
-        return: Object's URI
+        Method used to obtain the specific DhcpRelay URI.
+        return: Object's URI.
         """
-
         if self._uri is None:
             self._uri = "{0}{1}/{2}{3}{4}".format(
                 self.session.resource_prefix,
@@ -367,8 +356,8 @@ class DhcpRelay(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
@@ -382,9 +371,8 @@ class DhcpRelay(PyaoscxModule):
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -394,14 +382,12 @@ class DhcpRelay(PyaoscxModule):
 
     def add_ipv4_addresses(self, ipv4_list):
         """
-        Perform a PUT calls to modify an existing DhcpRelay.
-        Adding a list of IPv4 addresses into IPv4_ucast_server
-        :param ipv4_list: List of IPv4 addresses
-            Example:
-                ['1.1.1.1', '2.2.2.2']
-        :return: True if object was changed
+        Perform a PUT calls to modify an existing DhcpRelay. Adding a list of
+            IPv4 addresses into IPv4_ucast_server
+        :param ipv4_list: List of IPv4 addresses. Example: ['1.1.1.1',
+            '2.2.2.2']
+        :return: True if object was changed.
         """
-
         # Set IPv4
         if ipv4_list is not None and ipv4_list != []:
             for i in range(len(ipv4_list)):
@@ -413,15 +399,12 @@ class DhcpRelay(PyaoscxModule):
 
     def add_ipv6_addresses(self, ipv6_list):
         """
-        Perform a PUT calls to modify an existing DhcpRelay.
-        Adding a list of IPv6 addresses into IPv6_ucast_server
-        :param ipv6_list: List of IPv6 addresses
-            Example:
-                ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
-        :return: True if object was changed
-
+        Perform a PUT calls to modify an existing DhcpRelay. Adding a list of
+            IPv6 addresses into IPv6_ucast_server.
+        :param ipv6_list: List of IPv6 addresses. Example:
+            ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
+        :return: True if object was changed.
         """
-
         # Set IPv6
         if ipv6_list is not None and ipv6_list != []:
             for i in range(len(ipv6_list)):

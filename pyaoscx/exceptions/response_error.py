@@ -6,7 +6,7 @@ from pyaoscx.exceptions.pyaoscx_error import PyaoscxError
 
 class ResponseError(PyaoscxError):
     """
-    Exception class for a Response Error inside PYAOSCX
+    Exception class for a PYAOSCX Response Error.
     """
 
     def __init__(self, *args):

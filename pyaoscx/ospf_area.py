@@ -64,20 +64,20 @@ class OspfArea(PyaoscxModule):
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
-        Perform a GET call to retrieve data for a OSPF Area table entry and
-            fill the object with the incoming attributes
+        Perform a GET call to retrieve data for a OSPF Area and fill the object
+            with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is no exception raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -117,15 +117,15 @@ class OspfArea(PyaoscxModule):
     @classmethod
     def get_all(cls, session, parent_ospf_router):
         """
-        Perform a GET call to retrieve all system OSPF Area inside a
-        OPSF Router, and create a dictionary containing them
-        :param cls: Object's class
+        Perform a GET call to retrieve all system OSPF Area inside a OPSF
+            Router, and create a dictionary containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param parent_ospf_router: parent OPSF Router object where OPSF Area
-            is stored
-        :return: Dictionary containing OSPF Area IDs as keys and a OSPF
-            Area objects as values
+            is stored.
+        :return: Dictionary containing OSPF Area IDs as keys and a OSPF Area
+            objects as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
         uri = "{0}/{1}/areas".format(
@@ -155,13 +155,11 @@ class OspfArea(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-        Ospf Area table entry.
-        Checks whether the OSPF Area exists in the switch
-        Calls self.update() if OSPF Area is being updated
-        Calls self.create() if a new OSPF Area is being created
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
+        Main method used to either create or update an existing Ospf Area.
+            Checks whether the OSPF Area exists in the switch. Calls
+            self.update() if OSPF Area is being updated. Calls self.create() if
+            a new OSPF Area is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         if not self.__parent_ospf_router.materialized:
             self.__parent_ospf_router.apply()
@@ -172,10 +170,9 @@ class OspfArea(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing OSPF Area table
-            entry
+        Perform a PUT call to apply changes to an existing OSPF Area.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise
+            made.
         """
         # IMPORTANT: OSPF Area's ipsec_ah, ipsec_esp, and other_config MUST be
         # configured together, so if any of them needs to be updated, existing
@@ -191,9 +188,9 @@ class OspfArea(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new OSPF Area
-            Only returns if an exception is not raised
-        :return modified: Boolean, True if entry was created
+        Perform a POST call to create a new OSPF Area. Only returns if an
+            exception is not raised.
+        :return modified: Boolean, True if entry was created.
         """
         post_data = utils.get_attrs(self, self.config_attrs)
         post_data["area_id"] = self.area_id
@@ -216,20 +213,15 @@ class OspfArea(PyaoscxModule):
         """
         Create an OspfArea object given a response_data related to the ospf
             router ID object
-        :param cls: Object's class
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param parent_ospf_router: parent OspfRouter object where OspfArea
-            object is stored
-        :param response_data: The response can be either a
-        dictionary: {
-                id: "/rest/v10.04/system/vrfs/<vrf_name>/ospf_routers/
-                instance_tag/areas/area_id"
-            }
-        or a
-        string: "/rest/v10.04/system/vrfs/<vrf_name>/ospf_routers/
-            instance_tag/areas/area_id"
-        :return: OspfArea object
+            object is stored.
+        :param response_data: The response must be a dictionary of the form:
+            { id: URL }, with the URL being of the form:
+            "/rest/v10.04/system/vrfs/<name>/ospf_routers/<id>/areas/<id>"
+        :return: OspfArea object.
         """
         ospf_area_arr = session.api.get_keys(
             response_data,
@@ -241,12 +233,12 @@ class OspfArea(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, parent_ospf_router, uri):
         """
-        Create an OspfArea object given a URI
+        Create an OspfArea object given a URI.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
+            connection to the device.
+        :param uri: a String with a URI.
         :return index, ospf_area_obj: tuple containing both the OspfArea object
-            and the OSPF Area's ID
+            and the OSPF Area's ID.
         """
         # Obtain ID from URI
         # system/vrfs/name/ospf_routers/1/areas/1.1.1.1
@@ -270,8 +262,8 @@ class OspfArea(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific OSPF Area URI
-        return: Object's URI
+        Method used to obtain the specific OSPF Area URI.
+        return: Object's URI.
         """
         return self.path
 
@@ -279,8 +271,8 @@ class OspfArea(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
@@ -288,8 +280,7 @@ class OspfArea(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -297,8 +288,8 @@ class OspfArea(PyaoscxModule):
         """
         Update references to OSPF Interfaces. If an Interface with the same
             interface_name is found, update the reference to the new interface,
-            otherwise, add reference to the new interface
-        :param new_interface: Interface to add reference to
+            otherwise, add reference to the new interface.
+        :param new_interface: Interface to add reference to.
         """
         for interface in self.ospf_interfaces:
             if interface.interface_name == new_interface.interface_name:
@@ -311,8 +302,8 @@ class OspfArea(PyaoscxModule):
     def remove_ospf_interface(self, interface):
         """
         Update references to OSPF Interfaces. If an Interface with the same
-            interface_name is found, delete the reference to it
-        :param interface: Interface to add reference to
+            interface_name is found, delete the reference to it.
+        :param interface: Interface to add reference to.
         """
         for i in self.ospf_interfaces:
             if i.interface_name == interface.interface_name:

@@ -79,12 +79,11 @@ class Interface(PyaoscxModule):
 
     def __set_name(self, name):
         """
-        Set name attribute in the proper form for Interface object
-        Also sets the "percents name"-the name with any special characters
-        replaced with percent-encodings
-        :param name: Interface name
+        Set name attribute in the proper form for Interface object. Also sets
+            the "percents name"-the name with any special characters replaced
+            with percent-encodings.
+        :param name: Interface name.
         """
-
         # Add attributes to class
         self.name = None
         self.percents_name = None
@@ -98,7 +97,7 @@ class Interface(PyaoscxModule):
 
     def __set_type(self):
         """
-        Set Interface type when creating an Interface Object
+        Set Interface type when creating an Interface Object.
         """
         # Define all patterns
         lag_pattern = re.compile(r"lag[0-9]+$")
@@ -126,13 +125,12 @@ class Interface(PyaoscxModule):
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
-        Perform a GET call to retrieve data for a Interface table entry
-
+        Perform a GET call to retrieve data for a Interface table entry.
         :param depth: Integer deciding how many levels into the API JSON
             that references will be returned.
         :param selector: Alphanumeric option to select specific
             information to return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -327,13 +325,13 @@ class Interface(PyaoscxModule):
     @classmethod
     def get_all(cls, session):
         """
-        Perform a GET call to retrieve all system Interfaces and create
-        a dictionary containing each Interface as a Interface Object
-        :param cls: Object's class
+        Perform a GET call to retrieve all system Interfaces and create.
+        a dictionary containing each Interface as a Interface Object.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :return: Dictionary containing Interface's name as key and a Interface
-            objects as values
+            objects as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -363,18 +361,14 @@ class Interface(PyaoscxModule):
     def from_response(cls, session, response_data):
         """
         Create an Interface object given a response_data related to the
-            Interface object
-        :param cls: Object's class
+            Interface object.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param response_data: The response can be either a
-            dictionary: {
-                    1: "/rest/v10.04/system/interfaces/1"
-                }
-            or a
-            string: "/rest/v1/system/interfaces/1"
-        :return: Interface object
-
+            connection to the device.
+        :param response_data: The response must be a dictionary of the form:
+            { "<interface_name>": URL }, with URL:
+            "/rest/v10.04/system/interfaces/<interface_name>"
+        :return: Interface object.
         """
         interfaces_id_arr = session.api.get_keys(
             response_data, Interface.resource_uri_name)
@@ -386,14 +380,13 @@ class Interface(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create an Interface object given a interface URI
-        :param cls: Object's class
+        Create an Interface object given a interface URI.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
-
+            connection to the device.
+        :param uri: a String with a URI.
         :return name, interface_obj: tuple containing both the Interface's name
-            and an Interface object
+            and an Interface object.
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)/(?P<index>.+)")
@@ -409,7 +402,7 @@ class Interface(PyaoscxModule):
     @classmethod
     def get_facts(cls, session):
         """
-        Perform a GET call to retrieve all Interfaces and their respective data
+        Perform a GET call to retrieve all Interfaces and their data.
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -442,11 +435,9 @@ class Interface(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a Port table entry
-        and a Interface table entry for Interface Object.
-        Only returns if an exception is not raise
-
-        :return True if entry was created inside Device
+        Perform a POST call to create an Interface Object. Only returns if no
+            exception is raised.
+        :return True if entry was created inside Device.
         """
         interface_data = utils.get_attrs(self, self.config_attrs)
 
@@ -479,12 +470,10 @@ class Interface(PyaoscxModule):
     def apply(self):
         """
         Main method used to update or create a Interface or Port table entry.
-        Checks whether the Interface exists in the switch
-        Calls self.update() if Interface is being updated
-        Calls self.create() if a Interface table entry is being created
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
-
+            Checks whether the Interface exists in the switch. Calls
+            self.update() if Interface is being updated. Calls self.create() if
+            a Interface table entry is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         modified = False
         if self.materialized:
@@ -499,7 +488,6 @@ class Interface(PyaoscxModule):
     def delete(self):
         """
         Perform DELETE call to delete Interface table entry.
-
         """
         if not self.__is_special_type:
             self.initialize_interface_entry()
@@ -531,9 +519,9 @@ class Interface(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing Interface or Port
-            table entry
+            table entry.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise.
+            made.
         """
         # Variable returned
         modified = False
@@ -688,13 +676,10 @@ class Interface(PyaoscxModule):
     @PyaoscxModule.connected
     def __add_member_to_lag(self, lag):
         """
-        Perform PUT calls to configure a Port as a LAG member,
-        and also enable the port
-
+        Perform PUT calls to configure a Port as a LAG member, and enable it.
         :param lag: pyaoscx.Interface object, to which the current port is
-            being assigned to
+            being assigned to.
         """
-
         if not lag.materialized:
             raise VerificationError(
                 "LAG {0}".format(lag.name),
@@ -721,13 +706,10 @@ class Interface(PyaoscxModule):
     @PyaoscxModule.connected
     def __delete_lag(self, lag):
         """
-        Perform PUT calls to update Interface, deleting the LAG
-        reference inside of the Port that was assigned to that
-        LAG
-
-        :param lag: pyaoscx.Interface object
+        Perform PUT calls to update Interface, deleting the LAG reference
+            inside of the Port that was assigned to that LAG.
+        :param lag: pyaoscx.Interface object.
         """
-
         if not lag.materialized:
             raise VerificationError(
                 "LAG {0}".format(lag.name),
@@ -747,8 +729,8 @@ class Interface(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific Interface URI
-        return: Object's URI
+        Method used to obtain the specific Interface URI.
+        return: Object's URI.
         """
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
@@ -763,22 +745,22 @@ class Interface(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-            other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
     def __str__(self):
         """
-        String containing the Interface name
-        :return: String
+        String containing the Interface name.
+        :return: This class' string representation.
         """
         return "Interface Object, name: '{0}'".format(self.name)
 
     def __set_to_default(self):
         """
-        Perform a PUT call to set Interface to default settings
-        :return: True if object was changed
+        Perform a PUT call to set Interface to default settings.
+        :return: True if object was changed.
         """
         # Check for IPv6 addresses and delete them
         for address in self.ip6_addresses:
@@ -829,9 +811,8 @@ class Interface(PyaoscxModule):
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False
-            otherwise.
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -855,24 +836,20 @@ class Interface(PyaoscxModule):
         native_vlan_tag=True
     ):
         """
-        Configure an Interface object, set the attributes to a L2 LAG
-        and apply() changes inside Switch
-
+        Configure an Interface object, set the attributes to a L2 LAG and
+            apply() changes inside Switch.
         :param phys_ports: List of physical ports to aggregate (e.g. ["1/1/1",
             "1/1/2", "1/1/3"]) or list of Interface Objects.
-        :param ipv4: Optional list of IPv4 address to assign
-            to the interface. If more than one is specified,
-            all addresses except for the first are added as secondary_ip4
-            Defaults to nothing if not specified.
-            Example:
-                ['1.1.1.1', '2.2.2.2']
-        :param vlan_ids_list: Optional list of integer VLAN IDs or VLAN
-            objects to add as trunk VLANS. Defaults to empty list if not
-            specified.
+        :param ipv4: Optional list of IPv4 address to assign to the interface.
+            If more than one is specified, all addresses except for the first
+            are added as secondary_ip4. Defaults to nothing if not specified.
+            Example: ['1.1.1.1', '2.2.2.2']
+        :param vlan_ids_list: Optional list of integer VLAN IDs or VLAN objects
+            to add as trunk VLANS. Defaults to empty list if not specified.
         :param vlan_tag: Optional VLAN ID or Vlan object to be added as
             vlan_tag. Defaults to VLAN 1.
         :param lacp: Should be either "passive" or "active." Defaults to
-            "passive" if not specified
+            "passive" if not specified.
         :param description: Optional description for the interface. Defaults
             to nothing if not specified.
         :param fallback_enabled: Boolean to determine if the LAG uses LACP
@@ -880,14 +857,12 @@ class Interface(PyaoscxModule):
         :param mc_lag: Boolean to determine if the LAG is multi-chassis.
             Defaults to False if not specified.
         :param vlan_mode: Vlan mode on Interface, should be access or trunk
-            Defaults to 'native-untagged'
+            Defaults to 'native-untagged'.
         :param trunk_allowed_all: Flag for vlan trunk allowed all on L2
             interface, vlan_mode must be set to trunk.
         :param native_vlan_tag: Flag for accepting only tagged packets on
             VLAN trunk native, vlan_mode must be set to trunk.
-
-        :return: True if object was changed
-
+        :return: True if object was changed.
         """
         # Set Physical Ports
         if phys_ports is not None:
@@ -983,18 +958,15 @@ class Interface(PyaoscxModule):
         :param phys_ports: List of physical ports to aggregate (e.g. ["1/1/1",
             "1/1/2", "1/1/3"]) or list of Interface Objects.
         :param ipv4: Optional list of IPv4 address to assign
-            to the interface. If more than one is specified,
-            all addresses except for the first are added as secondary_ip4
-            Defaults to nothing if not specified.
-            Example:
-                ['1.1.1.1', '2.2.2.2']
+            to the interface. If more than one is specified, all addresses
+            except for the first are added as secondary_ip4. Defaults to
+            nothing if not specified. Example: ['1.1.1.1', '2.2.2.2']
         :param ipv6: String list of IPv6 addresses to assign to the interface.
-            Defaults to nothing if not specified.
-            List of A Ipv6 objects is accepted
-            Example:
-                ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
+            Defaults to nothing if not specified. List of A Ipv6 objects is
+            accepted. Example:
+            ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
         :param vrf: VRF to attach the SVI to. Defaults to "default" if not
-            specified. A Vrf object is also accepted
+            specified. A Vrf object is also accepted.
         :param lacp: Should be either "passive" or "active." Defaults to
             "passive" if not specified.
         :param description: Optional description for the interface. Defaults to
@@ -1003,9 +975,8 @@ class Interface(PyaoscxModule):
             fallback. Defaults to False if not specified.
         :param mc_lag: Boolean to determine if the LAG is multi-chassis.
             Defaults to False if not specified.
-        :return: True if object was changed
+        :return: True if object was changed.
         """
-
         # Set Physical Ports
         if phys_ports is not None:
             self.interfaces = []
@@ -1086,31 +1057,24 @@ class Interface(PyaoscxModule):
             user_config="up"):
         """
         Configure a Interface table entry for a VLAN.
-
         :param vlan: Numeric ID of VLAN
             A Vlan object is also accepted
-        :param ipv4: Optional list of IPv4 address to assign
-            to the interface. If more than one is specified,
-            all addresses except for the first are added as secondary_ip4
-            Defaults to nothing if not specified.
-            Example:
-                ['1.1.1.1']
+        :param ipv4: Optional list of IPv4 address to assign to the interface.
+            If more than one is specified, all addresses except for the first
+            are added as secondary_ip4. Defaults to nothing if not specified.
+            Example: ['1.1.1.1'].
         :param ipv6: String list of IPv6 addresses to assign to the interface.
-            Defaults to nothing if not specified.
-            A Ipv6 object is also accepted
-            Example:
-                ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
+            Defaults to nothing if not specified. A Ipv6 object is also
+            accepted. Example:
+            ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
         :param vrf: VRF to attach the SVI to. Defaults to "default" if not
-            specified.
-            A Vrf object is also accepted
+            specified. A Vrf object is also accepted.
         :param description: Optional description for the interface. Defaults
             to nothing if not specified.
         :param int_type: Type of interface; generally should be "vlan" for
-            SVI's. Defaults to vlan
-        :return: True if object was changed
-
+            SVI's. Defaults to vlan.
+        :return: True if object was changed.
         """
-
         if not self.materialized:
             raise VerificationError(
                 "Interface {0}".format(self.name), "Object not materialized"
@@ -1193,11 +1157,10 @@ class Interface(PyaoscxModule):
     def add_ipv4_address(self, ip_address):
         """
         Configure a Interface object to add a new IPv4 address to it and
-            calls apply(), applying changes inside Switch
+            calls apply(), applying changes inside Switch.
         :param ip_address: IPv4 address to assign to the interface.
-            Example:
-                "1.1.1.1"
-        :return: True if object was changed
+            Example: "1.1.1.1"
+        :return: True if object was changed.
         """
         # Set incoming IPv4 address
         self.ip4_address = ip_address
@@ -1209,14 +1172,11 @@ class Interface(PyaoscxModule):
     def add_ipv6_address(self, ip_address, address_type="global-unicast"):
         """
         Configure a Interface object to append a IPv6 address to its
-            ip6_addresses list and apply changes
-
+            ip6_addresses list and apply changes.
         :param ip_address: IPv6 address to assign to the interface.
-            A Ipv6 object is also accepted.
-            Example of String:
-                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
-        :param address_type: Type of Address.
-            Defaults to global-unicast
+            A Ipv6 object is also accepted. Example:
+            '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+        :param address_type: Type of Address. Defaults to global-unicast.
         :return: Ipv6 object.
         """
         # Verify if incoming address is a string
@@ -1245,15 +1205,11 @@ class Interface(PyaoscxModule):
 
     def delete_ipv6_address(self, ip_address):
         """
-        Given a IPv6 address, delete that address from the current
-        Interface object.
-        :param ip_address: IPv6 address to assign to the interface.
-            A Ipv6 object is also accepted
-            Example:
-                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
-
+        Given a IPv6 address, delete that address from the current Interface.
+        :param ip_address: IPv6 address to assign to the interface. A Ipv6
+            object is also accepted. Example:
+            '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'.
         """
-
         if not self.materialized:
             raise VerificationError(
                 "Interface {0}".format(self.name), "Object not materialized"
@@ -1272,23 +1228,18 @@ class Interface(PyaoscxModule):
 
     def configure_loopback(self, vrf, ipv4=None, description=None):
         """
-        Configure a Interface object to create a Loopback Interface table
-        entry for a logical L3 Interface. If the Loopback Interface already
-        exists and an IPv4 address is given, the function will update the
-        IPv4 address.
-
+        Configure an Interface object to create a Loopback Interface for a
+            logical L3 Interface. If the Loopback Interface already exists and
+            an IPv4 address is given, this function will update the IPv4
+            address.
         :param vrf: VRF to attach the Loopback to. Defaults to "default"
-            if not specified
+            if not specified.
         :param ipv4: IPv4 address to assign to the interface. Defaults to
-            nothing if not specified.
-            Example:
-                '1.1.1.1'
+            nothing if not specified. Example: '1.1.1.1'
         :param description: Optional description for the interface. Defaults
-            to nothing if not specified.
-        :return: True if object was changed
-
+            to nothing if not specified..
+        :return: True if object was changed.
         """
-
         if not self.materialized:
             raise VerificationError(
                 "Interface {0}".format(self.name), "Object not materialized"
@@ -1332,18 +1283,17 @@ class Interface(PyaoscxModule):
     def configure_vxlan(self, source_ipv4=None, description=None,
                         dest_udp_port=4789):
         """
-        Configure VXLAN table entry for a logical L3
-            Interface. If the VXLAN Interface already exists and an IPv4
-            address is given, the function will update the IPv4 address.
-        :param source_ipv4: Optional source IPv4 address to assign to the
-            VXLAN interface. Defaults to nothing if not specified.
-            Example:
-                '1.1.1.1'
+        Configure VXLAN table entry for a logical L3 Interface. If the VXLAN
+            Interface already exists and an IPv4 address is given, the function
+            will update the IPv4 address.
+        :param source_ipv4: Optional source IPv4 address to assign to the VXLAN
+            interface. Defaults to nothing if not specified. Example:
+            '1.1.1.1'.
         :param description: Optional description for the interface. Defaults
             to nothing if not specified.
         :param dest_udp_port: Optional Destination UDP Port that the VXLAN
-            will use.  Default is set to 4789
-        :return: True if object was changed
+            will use. Default is set to 4789.
+        :return: True if object was changed.
         """
         # Set Values
         self.options["local_ip"] = source_ipv4
@@ -1361,14 +1311,12 @@ class Interface(PyaoscxModule):
 
     def set_vlan_mode(self, vlan_mode):
         """
-        Set an L2 interface's VLAN mode (native-tagged,
-        native-untagged, or access)
-
+        Set an L2 interface's VLAN mode. The options are 'native-tagged',
+            'native-untagged', or 'access'.
         :param vlan_mode: A string, either 'native-tagged', 'native-untagged',
-            or 'access', specifying the desired VLAN mode
-        :return: True if object was changed
+            or 'access', specifying the desired VLAN mode.
+        :return: True if object was changed.
         """
-
         if not self.materialized:
             raise VerificationError(
                 "Interface {0}".format(self.name), "Object not materialized"
@@ -1383,13 +1331,11 @@ class Interface(PyaoscxModule):
 
     def set_untagged_vlan(self, vlan):
         """
-        Set the untagged VLAN on an access port
-
-        :param vlan: Numeric ID of VLAN to set on access port
-            A Vlan object is also accepted
-        :return: True if object was changed
+        Set the untagged VLAN on an access port.
+        :param vlan: Numeric ID of VLAN to set on access port. A Vlan object is
+            also accepted.
+        :return: True if object was changed.
         """
-
         if not self.materialized:
             raise VerificationError(
                 "Interface {0}".format(self.name), "Object not materialized"
@@ -1418,15 +1364,13 @@ class Interface(PyaoscxModule):
     def add_vlan_trunks(self, vlan_trunk_ids):
         """
         Add specified VLANs to a trunk port. By default, this will also set
-        the port to have 'no routing' and if there is not a native VLAN,
-        will set the native VLAN to VLAN 1.
-
+            the port to have 'no routing' and if there is not a native VLAN,
+            will set the native VLAN to VLAN 1.
         :param vlan_trunk_ids: Dictionary of VLANs to specify
             as allowed on the trunk port.  If empty, the interface
             will allow all VLANs on the trunk.
-        :return: True if object was changed
+        :return: True if object was changed.
         """
-
         # Set vlan Trunks
         if vlan_trunk_ids is not None:
             self.vlan_trunks = []
@@ -1456,18 +1400,15 @@ class Interface(PyaoscxModule):
 
     def set_native_vlan(self, vlan, tagged=True):
         """
-        Set a VLAN to be the native VLAN on the trunk.
-        Also gives the option to set the VLAN as tagged.
-
-        :param vlan: Numeric ID of VLAN to add to trunk port.
-            A Vlan object is also accepted
-        :param tagged: Boolean to determine if the native VLAN
-            will be set as the tagged VLAN.  If False, the VLAN
-            will be set as the native untagged VLAN
-            Defaults to True
-        :return: True if object was changed
+        Set a VLAN to be the native VLAN on the trunk. Also gives the option to
+            set the VLAN as tagged.
+        :param vlan: Numeric ID of VLAN to add to trunk port. A Vlan object is
+            also accepted
+        :param tagged: Boolean to determine if True, the native VLAN will be
+            set as the tagged VLAN. If False, the VLAN will be set as the
+            native untagged VLAN. Defaults to True.
+        :return: True if object was changed.
         """
-
         if tagged:
             self.vlan_mode = "native-tagged"
         else:
@@ -1504,10 +1445,9 @@ class Interface(PyaoscxModule):
     def delete_vlan(self, vlan):
         """
         Delete a VLAN from a trunk port.
-
         :param vlan: Numeric ID of VLAN to delete from the trunk port.
-            A Vlan object is also accepted
-        : return: True if successfully deleted, False otherwise
+            A Vlan object is also accepted.
+        :return: True if successfully deleted.
         """
         # Import VLAN to  identify object type
         from pyaoscx.vlan import Vlan
@@ -1530,14 +1470,12 @@ class Interface(PyaoscxModule):
 
     def add_port_to_lag(self, interface):
         """
-        Configure a Port as a LAG member, and also enable the port.
-        Add port to list of interfaces inside Interface object
-
-        :param interface: Alphanumeric name of the interface
-            A Interface object is also accepted
-        :return: True if object was changed
+        Configure a Port as a LAG member, and also enable the port. Add port
+            to list of interfaces inside Interface object.
+        :param interface: Alphanumeric name of the interface. A Interface
+            object is also accepted.
+        :return: True if object was changed.
         """
-
         # Identify interface variable type
         if isinstance(interface, str):
             # Create Interface Object
@@ -1563,12 +1501,11 @@ class Interface(PyaoscxModule):
 
     def remove_port_from_lag(self, interface):
         """
-        Remove a Port from LAG, and also disable the port.
-        Remove port from list of interfaces inside Interface object
-
-        :param interface: Alphanumeric name of the interface
-            A Interface object is also accepted
-        :return: True if object was changed
+        Remove a Port from LAG, and also disable the port. Remove port from
+            list of interfaces inside Interface object.
+        :param interface: Alphanumeric name of the interface. A Interface
+            object is also accepted
+        :return: True if object was changed.
         """
         if not self.__is_special_type:
             raise VerificationError(
@@ -1593,11 +1530,10 @@ class Interface(PyaoscxModule):
 
     def clear_acl(self, acl_type):
         """
-        Clear an interface's ACL
-
+        Clear an interface's ACL.
         :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in',
-            'aclv6_in', or 'aclv6_out'
-        :return: True if object was changed
+            'aclv6_in', or 'aclv6_out'.
+        :return: True if object was changed.
         """
         if acl_type == "ipv6":
             self.aclv6_in_cfg = None
@@ -1615,7 +1551,7 @@ class Interface(PyaoscxModule):
     def initialize_interface_entry(self):
         """
         Initialize Interface to its default state.
-        :return: True if object was changed
+        :return: True if object was changed.
         """
         # Set interface to default settings
         return self.__set_to_default()
@@ -1629,7 +1565,7 @@ class Interface(PyaoscxModule):
         """
         Set the admin state. This will power the interface on or off
         :param state: new power state, "up" to turn interface on, "down" to
-            turn it off
+            turn it off.
         """
         self.admin = state
         if (
@@ -1643,22 +1579,17 @@ class Interface(PyaoscxModule):
                       act_gw_ip):
         """
         Configure VSX IPv4 settings on a VLAN Interface.
-
         :param active_forwarding: True or False Boolean to set VSX active
-            forwarding
+            forwarding.
         :param vsx_sync: List of alphanumeric values to enable VSX
             configuration synchronization.  The options are
-            any combination of 'active-gateways', 'irdp', and 'policies'.
-            VSX Sync is mainly used in the Primary.
+            any combination of 'active-gateways', 'irdp', and 'policies'. VSX
+            Sync is mainly used in the Primary.
         :param act_gw_mac: Alphanumeric value of the Virtual MAC address for
-            the interface active gateway
-            Example:
-                '01:02:03:04:05:06'
+            the interface active gateway. Example: '01:02:03:04:05:06'
         :param act_gw_ip: Alphanumeric value of the Virtual IP address for the
-            interface active gateway.
-            Example:
-                '1.1.1.1'
-        :return: True if object was changed
+            interface active gateway. Example: '1.1.1.1'
+        :return: True if object was changed.
         """
         # Set values
         vsx_sync_list = []
@@ -1680,8 +1611,7 @@ class Interface(PyaoscxModule):
     def delete_vsx_configuration(self):
         """
         Delete VSX IPv4 settings on a VLAN Interface.
-        :return: True if object was changed
-
+        :return: True if object was changed.
         """
         # Set values
         self.vsx_active_forwarding_enable = False
@@ -1699,14 +1629,12 @@ class Interface(PyaoscxModule):
         Function will enable routing on the port and update the IPv4 address
             if given.
         :param ip_address: IPv4 address to assign to the interface. Defaults
-            to nothing if not specified.
-            Example:
-                '1.1.1.1'
+            to nothing if not specified. Example: '1.1.1.1'
         :param port_desc: Optional description for the interface. Defaults to
             nothing if not specified.
         :param vrf: Name of the VRF to which the Port belongs. Defaults to
             "default" if not specified.
-        :return: True if object was changed
+        :return: True if object was changed.
         """
         # Set IPv4
 
@@ -1734,19 +1662,17 @@ class Interface(PyaoscxModule):
                                              digest_key, auth_pass):
         """
         Perform PUT calls to update an Interface with OSPF to have
-        authentication
-
-        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to
+            authentication.
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
         :param auth_type: Alphanumeric type of authentication, chosen between
-            'md5', 'null', and 'text'
+            'md5', 'null', and 'text'.
         :param digest_key: Integer between 1-255 that functions as the digest
-            key for the authentication method
+            key for the authentication method.
         :param auth_pass: Alphanumeric text for the authentication password.
-            Note that this will be translated to a
-            base64 String in the configuration and json.
-        :return: True if object was changed
+            Note that this will be translated to a base64 String in the
+            configuration and json.
+        :return: True if object was changed.
         """
-
         # Configure Port/Interface
         self.configure_l3_ipv4_port(vrf=vrf)
 
@@ -1766,15 +1692,14 @@ class Interface(PyaoscxModule):
     def update_ospf_interface_type(self, vrf,
                                    interface_type="pointtopoint"):
         """
-        Update the Interface's OSPFv2 type,
-        as well as enable routing on the interface
-
-        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to
+        Update the Interface's OSPFv2 type, as well as enable routing on the
+            interface.
+        :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
         :param interface_type: Alphanumeric type of OSPF interface.
-            The options are 'broadcast', 'loopback', 'nbma',
-            'none', 'pointomultipoint', 'pointopoint', and 'virtuallink'
-            Defaults to pointtopoint
-        :return: True if object was changed
+            The options are 'broadcast', 'loopback', 'nbma', 'none',
+            'pointomultipoint', 'pointopoint', and 'virtuallink'. Defaults to
+            'pointtopoint'.
+        :return: True if object was changed.
         """
         _valid_interface_types = [
             "broadcast",
@@ -1808,16 +1733,12 @@ class Interface(PyaoscxModule):
 
     def set_active_gateway(self, ip_address, gateway_mac):
         """
-        Update Active Gateway of a Interface
-
-        :param ip_address: IPv4 address to assign to the interface.
-            Example:
-                '1.1.1.1'
+        Update Active Gateway of a Interface.
+        :param ip_address: IPv4 address to assign to the interface. Example:
+            '1.1.1.1'.
         :param gateway_mac: Active Gateway MAC address to assign to the
-            interface. Example:
-                '01:02:03:04:05:06'
-        :return: True if object was changed
-
+            interface. Example: '01:02:03:04:05:06'.
+        :return: True if object was changed.
         """
         # Configure Active Gateaway IP
         self.vsx_virtual_ip4 = ip_address
@@ -1830,11 +1751,10 @@ class Interface(PyaoscxModule):
     @PyaoscxModule.materialized
     def update_interface_qos(self, qos):
         """
-        Update QoS attached to this Interface
-
+        Update QoS attached to this Interface.
         :param qos: string to define a QoS to operate on this interface. Use
             None to remove the Qos attached to this interface.
-        :return: True if object was changed
+        :return: True if object was changed.
         """
         # Verify argument type and value
         if not isinstance(qos, str) and qos is not None:
@@ -1854,7 +1774,6 @@ class Interface(PyaoscxModule):
             None is used to remove an existing Queue Profile.
         :return: True if object was changed.
         """
-
         if queue_profile is not None and not isinstance(queue_profile, str):
             raise ParameterError(
                 "ERROR: queue_profile must be a string or None"
@@ -1880,10 +1799,9 @@ class Interface(PyaoscxModule):
             with the interface instead of automatic values. In range [0,7]
         :param dscp_override: integer with the DSCP entry id to associate
             with the interface instead of the automatic values. In the
-            range [0,63]
+            range [0,63].
         :return: True if object was changed.
         """
-
         # Verify argument type and value
         if not isinstance(qos_trust_mode, str):
             raise ParameterError(
@@ -1919,16 +1837,15 @@ class Interface(PyaoscxModule):
     def update_interface_qos_rate(self, qos_rate):
         """
         Update the rate limit values configured for
-        broadcast/multicast/unknown unicast traffic.
-
+            broadcast/multicast/unknown unicast traffic.
         :param qos_rate: dict of the rate limit values; should have the
             format ['<type of traffic>'] = <value><unit> e.g.
             {
-                'unknown-unicast': 100pps,
-                'broadcast': 200pps, 'multicast': 200pps
-            }"
-        :return: True if object was changed
-
+                'unknown-unicast': '100pps',
+                'broadcast': 200pps,
+                'multicast': '200pps'
+            }.
+        :return: True if object was changed.
         """
         rate_limits = {}
         if qos_rate is not None:
@@ -1950,14 +1867,12 @@ class Interface(PyaoscxModule):
     def update_acl_in(self, acl_name, list_type):
         """
         Perform GET and PUT calls to apply ACL on an interface. This function
-        specifically applies an ACL to Ingress traffic of the interface
-
+            specifically applies an ACL to Ingress traffic of the interface.
         :param acl_name: Alphanumeric String that is the name of the ACL
         :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify
-            the type of ACL
-        :return: True if object was changed
+            the type of ACL.
+        :return: True if object was changed.
         """
-
         # Create Acl object
         acl_obj = self.session.api.get_module(
             self.session, "ACL", index_id=acl_name, list_type=list_type)
@@ -1991,18 +1906,14 @@ class Interface(PyaoscxModule):
 
     def update_acl_out(self, acl_name, list_type):
         """
-        Perform GET and PUT calls to apply ACL on an interface.
-        This function specifically applies an ACL
-        to Egress traffic of the interface, which must be a routing
-        interface
-
-        :param acl_name: Alphanumeric String that is the name of the ACL
+        Perform GET and PUT calls to apply ACL on an interface. This function
+            specifically applies an ACL to Egress traffic of the interface,
+            which must be a routing interface.
+        :param acl_name: Alphanumeric String that is the name of the ACL.
         :param list_type: Alphanumeric String of IPv4, IPv6 or MAC to specify
-            the type of ACL
-        :return: True if object was changed
-
+            the type of ACL.
+        :return: True if object was changed.
         """
-
         # Create Acl object
         acl_obj = self.session.api.get_module(
             self.session, "ACL", index_id=acl_name, list_type=list_type)
@@ -2045,13 +1956,14 @@ class Interface(PyaoscxModule):
             violation_action="notify",
             violation_recovery_time=10,
             violation_shutdown_recovery_enable=True):
-        """Enable port security on an specified Interface
+        """
+        Enable port security on an specified Interface.
         :param client_limit: Integer with the maximum amount of MAC
-            addresses that can connect to the port. I
+            addresses that can connect to the port.
         :param sticky_mac_learning: Boolean, If sticky MAC learning
-            should be enabled
+            should be enabled.
         :param allowed_mac_addr: The list of allowed MAC addresses,
-            each MAC address is a string, or a netaddr.EUI object
+            each MAC address is a string, or a netaddr.EUI object.
         :param allowed_sticky_mac_addr: A dictionary where each key is
             a MAC address (string or netaddr.EUI), and item is an
             integer.
@@ -2061,9 +1973,8 @@ class Interface(PyaoscxModule):
             to wait for recovery.
         :param violation_shutdown_recovery_enable: Enable recovering
             from violation shut down.
-        :return: True if the object was changed
+        :return: True if the object was changed.
         """
-
         mac_format = mac_eui48
         mac_format.word_sep = ":"
 
@@ -2112,8 +2023,8 @@ class Interface(PyaoscxModule):
 
     def port_security_disable(self) -> bool:
         """
-        Disable port security on the specified interface
-        :return: True if the object was changed
+        Disable port security on the specified interface.
+        :return: True if the object was changed.
         """
         if not self.materialized:
             raise VerificationError(
@@ -2139,10 +2050,10 @@ class Interface(PyaoscxModule):
     ):
         """
         Configure the Interface speed and duplex mode.
-        :param speed: List of allowed Interface speeds
-        :param duplex_enable: "full" for full duplex or "half" for half duplex
-        :param autonegotiation: switch autonegotiation "on" or "off"
-        :return: True if object changed
+        :param speed: List of allowed Interface speeds.
+        :param duplex_enable: "full" for full duplex or "half" for half duplex.
+        :param autonegotiation: switch autonegotiation "on" or "off".
+        :return: True if object changed.
         """
         self.user_config["autoneg"] = autonegotiation
         self.user_config["duplex"] = duplex

@@ -7,9 +7,7 @@ from pyaoscx.exceptions.verification_error import VerificationError
 class ParameterError(VerificationError):
     """
     Exception class for Verification fails of function of method parameters.
-
-    Raised mainly when wrong parameters are passed to functions from user
-    code
+        Raised when wrong parameters are passed to functions from user code.
     """
 
     def __init__(self, *args):

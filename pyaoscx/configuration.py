@@ -18,7 +18,7 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 class Configuration():
     """
     Represents a Device's Configuration and all of its attributes.
-    Keeping all configuration information
+    Keeping all configuration information.
     """
 
     base_uri = "system"
@@ -34,8 +34,7 @@ class Configuration():
     @PyaoscxModule.connected
     def get(self):
         """
-        Perform a GET call to retrieve system attributes
-
+        Perform a GET call to retrieve system attributes.
         """
         logging.info("Retrieving the switch attributes and capabilities")
         depth = self.session.api.default_depth
@@ -87,11 +86,10 @@ class Configuration():
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to update System Attributes
-        Checks whether the System is materialized
-        Calls self.update() if the configuration is being updated
-
-        :return modified: Boolean, True if object was modified
+        Main method used to update System Attributes. Checks whether the System
+            is materialized. Calls self.update() if the configuration is being
+            updated.
+        :return modified: Boolean, True if object was modified.
         """
         modified = False
         if self.materialized:
@@ -103,8 +101,8 @@ class Configuration():
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to a Device Configuration
-        :return modified: Boolean, True if object was modified
+        Perform a PUT call to apply changes to a Device Configuration.
+        :return modified: Boolean, True if object was modified.
         """
         system_data = utils.get_attrs(self, self.config_attrs)
 
@@ -146,10 +144,10 @@ class Configuration():
 
     def get_full_config(self, config_name="running-config"):
         """
-        Perform a GET request to obtain the device's full config
-        :param config_name: String with the local-config name wanted
-            Defaults to running-config
-        :return config_data: Data containing the full configuration
+        Perform a GET request to obtain the device's full config.
+        :param config_name: String with the local-config name wanted.
+            Defaults to 'running-config'.
+        :return config_data: Data containing the full configuration.
         """
         uri = "fullconfigs/{0}".format(config_name)
         try:
@@ -200,19 +198,17 @@ class Configuration():
     def copy_switch_config_to_remote_location(self, config_name, config_type,
                                               destination, vrf):
         """
-        Copy TFTP switch config to TFTP server using a PUT request
-
+        Copy TFTP switch config to TFTP server using a PUT request.
         :param config_name:  String with the config file or checkpoint to be
-            downloaded. When using TFTP
-            only running-config or startup-config can be used
+            downloaded. When using TFTP only 'running-config' or
+            'startup-config' can be used.
         :param config_type: Configuration type to be downloaded, JSON or CLI
-            version of the config. 'json' or 'cli'
-        :param destination: TFTP server address and path for
-            copying off configuration, must be reachable through provided vrf
-        :param vrf: VRF to be used to contact TFTP server
-        :return True if completed
+            version of the config. 'json' or 'cli'.
+        :param destination: TFTP server address and path for copying
+            configuration, must be reachable through provided vrf.
+        :param vrf: VRF to be used to contact TFTP server.
+        :return: True if completed.
         """
-
         uri = "fullconfigs/{0}?to={1}&type={2}&vrf={3}".format(
             config_name, destination, config_type, vrf
         )
@@ -233,21 +229,19 @@ class Configuration():
                              remote_file_tftp_path=None):
         """
         Obtains the switch's full config in json format and saves it to
-        a local file or a remote location over TFTP
+            a local file or a remote location over TFTP.
         :param config_name:  String with the config file or checkpoint to be
-            downloaded. When using TFTP
-            only running-config or startup-config can be used
+            downloaded. When using TFTP only 'running-config' or
+            'startup-config' can be used.
         :param output_file: String with the File name and path for locally
             downloading configuration, only JSON version of configuration will
-            be downloaded
-        :param vrf: VRF to be used to contact TFTP server
+            be downloaded.
+        :param vrf: VRF to be used to contact TFTP server.
         :param config_type: Configuration type to be downloaded, JSON or CLI
-            version of the config. 'json' or 'cli'
-            Defaults to json
+            version of the config. 'json' or 'cli'. Defaults to 'json'.
         :param remote_file_tftp_path: TFTP server address and path for
-            copying off configuration, must be reachable through provided vrf
-        :return bool: True if success
-
+            copying off configuration, must be reachable through provided vrf.
+        :return bool: True if success.
         """
         success = False
 
@@ -282,15 +276,13 @@ class Configuration():
 
     def create_checkpoint(self, source_config, destination_config):
         """
-        Perform a PUT request to create a new checkpoint or copy an
-            existing checkpoint to AOS-CX switch config.
-
-        :param source_config: Name of the source configuration
-            from which checkpoint needs to be created or copied.
-        :param destination_config: Name of the destination configuration
-            or name of checkpoint.
-        :return bool: True if success
-
+        Perform a PUT request to create a new checkpoint or copy an existing
+              checkpoint to AOS-CX switch config.
+        :param source_config: Name of the source configuration from which
+            checkpoint needs to be created or copied.
+        :param destination_config: Name of the destination configuration or
+            name of checkpoint.
+        :return bool: True if success.
         """
         success = False
 
@@ -314,20 +306,13 @@ class Configuration():
 
     def setup_mgmt_nameservers_dns(self, primary=None, secondary=None):
         """
-        Setup primary and secondary name servers on a mgmt interface
-
-        :param primary: Primary nameservers on mgmt interface,
-            a IPv4 address.
-            Example:
-                "10.10.2.10"
+        Setup primary and secondary name servers on a mgmt interface.
+        :param primary: Primary nameservers on mgmt interface, a IPv4 address.
+            Example: "10.10.2.10".
         :param secondary: Secondary nameservers on mgmt interface,
-            a IP address.
-            Example:
-                "10.10.2.10"
-
-        :return modified: Return True if coinfig was modified
+            a IP address. Example: "10.10.2.10".
+        :return modified: Return True if coinfig was modified.
         """
-
         if "mode" in self.mgmt_intf:
             mgmt_if_mode = self.mgmt_intf["mode"]
         else:
@@ -347,11 +332,9 @@ class Configuration():
 
     def delete_mgmt_nameservers_dns(self):
         """
-        Delete primary and secondary name servers on a mgmt interface
-
-        :return modified: Return True if coinfig was modified
+        Delete primary and secondary name servers on a mgmt interface.
+        :return modified: Return True if coinfig was modified.
         """
-
         if "dns_server_1" in self.mgmt_intf:
             self.mgmt_intf.pop("dns_server_1")
 
@@ -368,29 +351,22 @@ class Configuration():
                              remote_file_tftp_path=None):
         """
         Uploads configuration from a configuration file.
-        :param config_name:  String with the Config file or checkpoint
-            to be uploaded to.
-            When using TFTP only running-config or startup-config can be used.
-            Default: None.
-        :param config_file: String with the File name and path for locally
-            downloading configuration, only JSON version of configuration
-            will be downloaded.
-            Default: None.
-        :param config_json: String with the JSON file name and path for
-            locally uploading configuration, only JSON version of configuration
-            can be uploaded.
-            Default: None.
+        :param config_name:  String with the Config file or checkpoint to be
+            uploaded to. When using TFTP only 'running-config' or
+            'startup-config' can be used. Defaults to None.
+        :param config_file: File name for locally downloading configuration,
+            only JSON version of configuration will be downloaded. Defaults to
+            None.
+        :param config_json: String with the JSON file name and path for locally
+            uploading configuration, only JSON version of configuration can be
+            uploaded. Defaults to None.
         :param vrf: String for VRF to be used to contact TFTP server, required
-            if remote_output_file_tftp_path is provided.
-            Default: None.
+            if remote_output_file_tftp_path is provided. Defaults to None.
         :param remote_file_tftp_path: String for TFTP server address and path
             for copying off configuration, must be reachable through provided
-            vrf.
-            Default: None.
-        :return success: Return boolean True if response is successful or False
-            if it was not.
+            vrf. Defaults to None.
+        :return success: Return boolean True if response is successful.
         """
-
         success = False
 
         if remote_file_tftp_path is not None:
@@ -427,19 +403,15 @@ class Configuration():
         """
         Uploads configuration from a configuration file.
         :param config_name:  String with the Config file or checkpoint
-            to be uploaded to. When using TFTP only running-config or
-            startup-config can be used.
-            Default: None.
+            to be uploaded to. When using TFTP only 'running-config' or
+            'startup-config' can be used. Defaults to None.
         :param config_file: String with the File name and path for
             locally downloading configuration, only JSON version of
-            configuration will be downloaded.
-            Default: None.
+            configuration will be downloaded. Defaults to None.
         :param config_json: String with the JSON file name and path for
             locally uploading configuration, only JSON version of
-            configuration can be uploaded.
-            Default: None.
-        :return success: Return boolean True if response is successful
-            or False if it was not.
+            configuration can be uploaded. Defaults to None.
+        :return success: Return boolean True if response is successful.
         """
         success = False
 

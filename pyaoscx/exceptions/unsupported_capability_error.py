@@ -1,4 +1,4 @@
-# (C) Copyright 2021 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.exceptions.pyaoscx_error import PyaoscxError
@@ -6,7 +6,7 @@ from pyaoscx.exceptions.pyaoscx_error import PyaoscxError
 
 class UnsupportedCapabilityError(PyaoscxError):
     """
-    Exception class for an Unsupported Capability Error inside PYAOSCX
+    Exception class for an PYAOSCX Unsupported Capability Error.
     """
 
     def __init__(self, *args):

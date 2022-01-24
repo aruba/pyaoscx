@@ -41,12 +41,12 @@ class Vsx(PyaoscxModule):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a VSX table entry and fill the
-            class with the incoming attributes
+            class with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
         # this is common for all PyaoscxModule derived classes
@@ -84,18 +84,18 @@ class Vsx(PyaoscxModule):
     @classmethod
     def get_all(cls, session):
         """
-        Not applicable for VSX
+        Not applicable for VSX.
         """
 
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create a Vsx object given a VSX URI
-        :param cls: Object's class
+        Create a Vsx object given a VSX URI.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
-        :return Vsx object
+            connection to the device.
+        :param uri: a String with a URI.
+        :return Vsx object.
         """
         return cls(session, uri=uri)
 
@@ -103,12 +103,10 @@ class Vsx(PyaoscxModule):
     def apply(self):
         """
         Main method used to either create or update an existing VSX
-            configuration.
-            Checks whether the VSX configuration exists in the switch
-            Calls self.update() if VSX configuration being updated
-            Calls self.create() if a new VSX configuration is being created
-        :return modified: True if object was created or modified
-            False otherwise
+            configuration. Checks whether the VSX configuration exists in the
+            switch. Calls self.update() if VSX configuration being updated.
+            Calls self.create() if a new VSX configuration is being created.
+        :return modified: True if object was created or modified.
         """
         if self.materialized:
             return self.update()
@@ -117,7 +115,7 @@ class Vsx(PyaoscxModule):
     def _set_isl_port_for_requests(self):
         """
         Set the correct data for the isl_port attribute to use in POST and PUT
-        requests
+            requests.
         """
         if isinstance(self.isl_port, str):
             # if it's a string, it's an interface name, so here it gets changed
@@ -135,9 +133,9 @@ class Vsx(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing VSX inside switch
-        :return modified: True if Object was modified and a PUT request
-            was made. False otherwise
+        Perform a PUT call to apply changes to an existing VSX inside switch.
+        :return modified: True if Object was modified and a PUT request was
+            made.
         """
         put_data = utils.get_attrs(self, self.config_attrs)
         if hasattr(self, "keepalive_vrf") and self.keepalive_vrf:
@@ -155,9 +153,9 @@ class Vsx(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new VSX
-            Only returns if an exception is not raised
-        return: True if entry was created
+        Perform a POST call to create a new VSX. Only returns if no exception
+            is raised.
+        return: True if entry was created.
         """
         post_data = utils.get_attrs(self, self.config_attrs)
         if hasattr(self, "keepalive_vrf") and self.keepalive_vrf:
@@ -203,21 +201,21 @@ class Vsx(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific VSX URI
-        return: Object's URI
+        Method used to obtain the specific VSX URI.
+        return: Object's URI.
         """
         return self.path
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
         """
-        Not applicable for VSX
+        Not applicable for VSX.
         """
 
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: True if the object was recently modified, False otherwise.
+        Getter method for the __modified attribute.
+        :return: True if the object was recently modified.
         """
         return self.modified

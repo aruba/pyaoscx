@@ -12,15 +12,12 @@ from pyaoscx.exceptions.parameter_error import ParameterError
 
 def create_attrs(obj, data_dictionary):
     """
-    Given a dictionary object creates class attributes.
-    The methods implements setattr() which sets the value of the specified
-    attribute of the specified object.
-    If the attribute is already created within the object. It's state changes
-    only if the current value is not None. Otherwise it keeps the previous
-    value.
-
-    :param data_dictionary: dictionary containing the keys being used as
-        attributes
+    Given a dictionary object creates class attributes. The methods implements
+        setattr() which sets the value of the specified attribute of the
+        specified object. If the attribute is already created within the
+        object. It's state changes only if the current value is not None.
+        Otherwise it keeps the previous value.
+    :param data_dictionary: dictionary containing the attributes.
     """
     import copy
     # Used to create a deep copy of the dictionary
@@ -35,12 +32,10 @@ def create_attrs(obj, data_dictionary):
 
 def get_dict_keys(dict):
     """
-    Function used to get a list of all the keys of the respective dictionary
-
-    :param dict: Dictionary object used to obtain the keys
-    :return: List containing the keys of the given dictionary
+    Function used to get a list of all the keys of the respective dictionary.
+    :param dict: Dictionary object used to obtain the keys.
+    :return: List containing the keys of the given dictionary.
     """
-
     list = []
     for key in dict.keys():
         list.append(key)
@@ -51,15 +46,11 @@ def get_dict_keys(dict):
 def check_args(obj, **kwargs):
     """
     Given a object determines if the coming arguments are not already inside
-        the object
-    If attribute is inside the config_attrs, it is ignored
-
-    :param obj: object in which the attributes are being set to
-    :param **kwargs list of arguments used to create the attributes
-
-    :return correct: True if all arguments are correct, False otherwise
+        the object. If attribute is inside the config_attrs, it is ignored.
+    :param obj: object in which the attributes are being set to.
+    :param **kwargs list of arguments used to create the attributes.
+    :return correct: True if all arguments are correct.
     """
-
     arguments = get_dict_keys(kwargs)
     correct = True
     for argument in arguments:
@@ -71,10 +62,9 @@ def check_args(obj, **kwargs):
 def delete_attrs(obj, attr_list):
     """
     Given an object and a list of strings, delete attributes with the same name
-        as the one inside the list
+        as the one inside the list.
     :param attr_list: List of attribute names that will be deleted from object
     """
-
     for attr in attr_list:
         if hasattr(obj, attr):
             delattr(obj, attr)
@@ -82,8 +72,8 @@ def delete_attrs(obj, attr_list):
 
 def get_attrs(obj, config_attrs):
     """
-    Given an object obtains the attributes different to None
-    :param obj: object containing the attributes
+    Given an object obtains the attributes different to None.
+    :param obj: object containing the attributes.
     :param config_attrs: a list of all the configurable attributes within the
         object.
     :return attr_data_dict: A dictionary containing all the attributes of the
@@ -97,15 +87,13 @@ def get_attrs(obj, config_attrs):
 
 def set_creation_attrs(obj, **kwargs):
     """
-    Used when instantiating the class with new attributes.
-    Sets the configuration attributes list, for proper management of
-    attributes related to configuration.
-
-    :param obj: Python object in which attributes are being set
+    Used when instantiating the class with new attributes. Sets the
+        configuration attributes list, for proper management of attributes
+        related to configuration.
+    :param obj: Python object in which attributes are being set.
     :param **kwargs: a dictionary containing the possible future arguments for
-        the object
+        the object.
     """
-
     if check_args(obj, **kwargs):
         obj.__dict__.update(kwargs)
         set_config_attrs(obj, kwargs)
@@ -120,7 +108,7 @@ def set_config_attrs(obj, config_dict, config_attrs="config_attrs",
     """
     Add a list of strings inside the object to represent each attribute for
         config purposes.
-    :param config_dict: Dictionary where each key represents an attribute
+    :param config_dict: Dictionary where each key represents an attribute.
     :param config_attrs: String containing the name of the attribute referring
         to a list.
     :param unwanted_attrs: Attributes that should be deleted, since they can't
@@ -147,10 +135,9 @@ def set_config_attrs(obj, config_dict, config_attrs="config_attrs",
 def _response_ok(response, call_type):
     """
     Checks whether API HTTP response contains the associated OK code.
-
-    :param response: Response object
-    :param call_type: String containing the HTTP request type
-    :return: True if response was OK, False otherwise
+    :param response: Response object.
+    :param call_type: String containing the HTTP request type.
+    :return: True if response was OK.
     """
     ok_codes = {
         "GET": [200],
@@ -167,14 +154,12 @@ def file_upload(session, file_path, complete_uri):
     Upload any file given a URI and the path to a file located on the local
         machine.
     :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-    :param file_path: File name and path for local file uploading
-    :param complete_uri: Complete URI to perform the POST Request
-        And upload the file
-        Example:
-            https://172.25.0.2/rest/v10.04/firmware?image=primary
-
-    :return True if successful
+            connection to the device.
+    :param file_path: File name and path for local file uploading.
+    :param complete_uri: Complete URI to perform the POST Request and upload
+        the file. Example:
+            "https://172.25.0.2/rest/v10.04/firmware?image=primary".
+    :return True if successful.
     """
     with open(file_path, "rb") as file:
         file_param = {"fileupload": file}

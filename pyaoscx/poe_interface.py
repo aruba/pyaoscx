@@ -28,14 +28,11 @@ class PoEInterface(Interface):
 
     def __init__(self, session, parent_interface, uri=None, **kwargs):
         """
-        Create an instance of PoEInterface Class
+        Create an instance of PoEInterface Class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_interface: parent Inferface object where PoE is stored
-        :param uri: String with the PoE URI
-        :param kwargs:
-            keyword s: requests.session object with loaded cookie jar
-            keyword url: URL in main() function
+            connection to the device.
+        :param parent_interface: parent Inferface object where PoE is stored.
+        :param uri: String with the PoE URI.
         """
         super(PoEInterface, self).__init__(session, parent_interface.name)
 
@@ -57,15 +54,13 @@ class PoEInterface(Interface):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a PoE Interface table entry and
-            fill the object with the incoming attributes
-
+            fill the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
-
         device = Device(self.session)
         if device.is_capable("quick_poe"):
             raise UnsupportedCapabilityError("This device is not PoE capable.")
@@ -129,10 +124,8 @@ class PoEInterface(Interface):
     def apply(self):
         """
         Apply an update of values of this PoE Interface.
-        Calls self.update() to apply changes to an existing PoE Interface
-        table entry.
+        Calls self.update() to apply changes to an existing PoE Interface.
         """
-
         modified = False
         if self.materialized:
             modified = self.update()
@@ -144,11 +137,9 @@ class PoEInterface(Interface):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing PoE Interface
-        table entry
-
-        :return modified: True if Object was modified and a PUT request
-            was made. False otherwise.
+        Perform a PUT call to apply changes to an existing PoE Interface.
+        :return modified: True if Object was modified and a PUT request was
+            made.
         """
         # Variable returned
         modified = False
@@ -208,8 +199,8 @@ class PoEInterface(Interface):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific PoE Interface URI
-        return: Object's URI
+        Method used to obtain the specific PoE Interface URI.
+        return: Object's URI.
         """
         if self._uri is None:
             self._uri = "{0}/{1}/{2}".format(
@@ -227,16 +218,15 @@ class PoEInterface(Interface):
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -248,13 +238,11 @@ class PoEInterface(Interface):
     def set_criticality(self, level):
         """
         Set the criticality level for the PoE Interface.
-
         :param level: String containing criticality level for the related
             PoE Interface. Valid criticality levels: 'low', 'high', and
             'critical'.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
-
         valid_criticalities = ["low", "high", "critical"]
         if level not in valid_criticalities:
             raise ValueError(
@@ -273,13 +261,11 @@ class PoEInterface(Interface):
     def set_power(self, state):
         """
         Perform a PUT call to set a configurable flag to control PoE power
-        delivery on this Interface. A value of True would enable PoE power
-        delivery on this Interface, and a value of False would disable PoE
-        power delivery on this Interface.
-
+            delivery on this Interface. A value of True would enable PoE power
+            delivery on this Interface, and a value of False would disable PoE
+            power delivery on this Interface.
         :return: True if Object was modified and a PUT request was made.
         """
-
         # Switches the state to a coherent value for the API documentation
         self.config["admin_disable"] = not state
 

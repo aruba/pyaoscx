@@ -22,11 +22,10 @@ UNAUTHORIZED = 401
 
 class Session:
     """
-    Represents a logical connection to the device. It keeps all the information
-    needed to login/logout to an AOS-CX device, including parameters like the
-    proxy, device's IP address (both IPv4 and IPv6 are supported), and the API
-    version.
-    IP address should be:
+    Represents a connection to an AOS-CX device. It keeps all information
+        needed to login/logout to it, including parameters like proxy, IP
+        address (both IPv4 and IPv6 are supported), and API version. The IP
+        address should be similar to:
         '1.1.1.1'
         or
         '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
@@ -55,7 +54,7 @@ class Session:
 
     def cookies(self):
         """
-        Return the cookie stored in the requests' session
+        Return the cookie stored in the requests' session.
         """
         return self.s.cookies._cookies
 
@@ -63,16 +62,16 @@ class Session:
     def from_session(cls, req_session, base_url, credentials=None):
         """
         Create a session from an existing request Session. It allows to create
-        an internal session from an already-authenticated and serialized
-            session
-        :param req_session: Existing Request Session object
-        :param base_url: Url needed to create Session Object
-        :param credentials: Dictionary with user and password credentials
+            an internal session from an already-authenticated and serialized
+            session.
+        :param req_session: Existing Request Session object.
+        :param base_url: Url needed to create Session Object.
+        :param credentials: Dictionary with user and password credentials.
             Example: {
                 username: <username>,
                 password: <password>
             }
-        :return session: Request Session Object
+        :return session: Request Session Object.
         """
         ip_address = version = ""
 
@@ -109,10 +108,9 @@ class Session:
 
     def open(self, username=None, password=None):
         """
-        Perform a POST call to login and gain access to other API calls.
-        If either username or password is not specified, user will be prompted
-        to enter the missing credential(s).
-
+        Perform a POST call to login and gain access to other API calls. If
+            either username or password is not specified, user will be prompted
+            to enter the missing credential(s).
         :param username: username
         :param password: password
         """
@@ -165,9 +163,9 @@ class Session:
 
     def close(self):
         """
-        Perform a POST call to logout and end the session.
-        Given all the required information to perform the operation is already
-        stored within the session, no parameters are required.
+        Perform a POST call to logout and end the session. Given all the
+            required information to perform the operation is already stored
+            within the session, no parameters are required.
         """
         if self.connected:
             logout_uri = "{0}{1}".format(self.base_url, "logout")
@@ -198,18 +196,16 @@ class Session:
     def login(cls, base_url, username=None, password=None, use_proxy=True,
               handle_zeroized_device=False):
         """
-
-        Perform a POST call to login and gain access to other API calls.
-        If either username or password is not specified, user will be
-        prompted to enter the missing credential(s).
-
+        Perform a POST call to login and gain access to other API calls. If
+            either username or password is not specified, user will be prompted
+            to enter the missing credential(s).
         :param base_url: URL in main() function
         :param username: username
         :param password: password
-        :param use_proxy: Whether the system proxy should be used, defaults
-            to True.
-        :param handle_zeroized_device: Whether a zeroized device should
-            be initialized, if so sets the admin password to the provided one,
+        :param use_proxy: Whether the system proxy should be used, defaults to
+            True.
+        :param handle_zeroized_device: Whether a zeroized device should be
+            initialized, if so sets the admin password to the provided one,
             defaults to False.
         :return: requests.session object with loaded cookie jar
         """
@@ -279,11 +275,10 @@ class Session:
     def logout(cls, **kwargs):
         """
         Perform a POST call to logout and end session.
-
         :param kwargs:
             keyword s: requests.session object with loaded cookie jar
             keyword url: URL in main() function
-        :return: True if successful, False otherwise
+        :return: True if successful.
         """
         response = kwargs["s"].post(
             kwargs["url"] + "logout", verify=False,
@@ -303,23 +298,22 @@ class Session:
 
     def username(self):
         """
-        Get username
-        :return username
+        Get username.
+        :return username.
         """
         return self.__username
 
     def password(self):
         """
-        Get password
-        :return password
+        Get password.
+        :return password.
         """
         return self.__password
 
     def _build_uri(self, resource_path):
         """
-        Build a URI representing a resource
-        :param resource_path: Resource path before adding
-            version prefix
+        Build a URI representing a resource.
+        :param resource_path: Resource path before adding version prefix.
         :return: String of the uri
         """
         complete_path = self.version_path + resource_path
@@ -330,16 +324,14 @@ class Session:
 
     def request(self, operation, path, params=None, data=None, verify=False):
         """
-        Perform a Request to the switch
-
-        :param operation: type of operation: PUT, GET, POST, DELETE
-        :param path: Path to the resource
-        :param params: Extra request parameters
-        :param data: Data to send in the resquest
-        :param verify: If session should verify
-        :return: response object from the request
+        Perform a Request to the switch.
+        :param operation: type of operation: PUT, GET, POST, DELETE.
+        :param path: Path to the resource.
+        :param params: Extra request parameters.
+        :param data: Data to send in the resquest.
+        :param verify: If session should verify.
+        :return: response object from the request.
         """
-
         operations = {
             "PUT": self.s.put,
             "GET": self.s.get,

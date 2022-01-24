@@ -28,7 +28,7 @@ class Queue(PyaoscxModule):
     def __init__(self, session, qos_name, queue_number, **kwargs):
         """
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param qos_name: String with a user-defined name for a Qos object.
         :param queue_number: Integer representing a queue priority, which are
             numbered in priority order, with zero being the lowest priority.
@@ -119,7 +119,7 @@ class Queue(PyaoscxModule):
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -144,11 +144,11 @@ class Queue(PyaoscxModule):
     @classmethod
     def get_all(cls, session, qos_name):
         """
-        Perform a GET call to retrieve all system Queues for given Qos from a
-            switch.
+        Perform a GET call to retrieve all system Queues for given Schedule
+            Profile from a switch.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :return: Dictionary containing all system Qos' Queues.
+        :return: Dictionary containing all system Schedule Profile's Queues.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -179,13 +179,11 @@ class Queue(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-            Queue table entry.
-        Checks whether the Queue exists in the switch.
-        Calls self.update() if object is being updated.
+        Main method used to either create or update an existing Queue. Checks
+            whether the Queue exists in the switch. Calls self.update() if
+            object is being updated.
         Calls self.create() if a new object is being created.
-        :return modified: Boolean, True if object was created or modified
-            False otherwise.
+        :return modified: Boolean, True if object was created or modified.
         """
         if self.materialized:
             self.__modified = self.update()
@@ -198,7 +196,7 @@ class Queue(PyaoscxModule):
         """
         Perform a PUT call to apply changes to an existing Queue table entry.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise.
+            made.
         """
         queue_data = utils.get_attrs(self, self.config_attrs)
         return self._put_data(queue_data)
@@ -221,7 +219,6 @@ class Queue(PyaoscxModule):
         """
         Perform a DELETE call to delete Queue table entry.
         """
-
         self._send_data(self.path, None, "DELETE", "delete")
 
     @classmethod
@@ -230,13 +227,11 @@ class Queue(PyaoscxModule):
         Create a Queue object given a related response_data.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :param response_data: The response can be either a
-            dictionary: {
+        :param response_data: The response must be a dictionary of the form:
+            {
                 "strict": "/rest/v10.08/system/qos/"<Qos name>/queues/7"
-                }
-            or a
-            string: "/rest/v10.08/system/qos/"<Qos name>/queues/7"
-        :return: Queue Object
+            }
+        :return: Queue Object.
         """
         # Check if response is a dictionary, if so, get its value
         if isinstance(response_data, dict):
@@ -272,7 +267,7 @@ class Queue(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain this instance's URI
+        Method used to obtain this instance's URI.
         :return: Object's URI.
         """
         return self.path
@@ -280,7 +275,7 @@ class Queue(PyaoscxModule):
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 

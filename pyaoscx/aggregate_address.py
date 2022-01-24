@@ -30,7 +30,7 @@ class AggregateAddress(PyaoscxModule):
         self.address_family = address_family
         self.__set_name(ip_prefix)
         # Assign parent BGP Router
-        self.__set_bgp_router(parent_bgp_router)
+        self.__set_parent_bgp_router(parent_bgp_router)
         self._uri = uri
         # List used to determine attributes related to the Aggregate Address
         # configuration
@@ -46,10 +46,9 @@ class AggregateAddress(PyaoscxModule):
 
     def __set_name(self, ip_prefix):
         """
-        Set name attribute in the proper form for references
-        :param ip_prefix: Object's IP
+        Set name attribute in the proper form for references.
+        :param ip_prefix: Object's IP.
         """
-
         # Add attributes to class
         self._is_lag = False
         self.ip_prefix = None
@@ -62,13 +61,11 @@ class AggregateAddress(PyaoscxModule):
             self.reference_ip_prefix = quote_plus(
                 self.ip_prefix)
 
-    def __set_bgp_router(self, parent_bgp_router):
+    def __set_parent_bgp_router(self, parent_bgp_router):
         """
-        Set parent BgpRouter object as an attribute for the Aggregate Address
-            class
-        :param parent_bgp_router a BgpRouter object
+        Set parent BgpRouter as an attribute for the Aggregate Address class.
+        :param parent_bgp_router a BgpRouter object.
         """
-
         # Set parent BGP Router
         self.__parent_bgp_router = parent_bgp_router
 
@@ -93,13 +90,12 @@ class AggregateAddress(PyaoscxModule):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a Aggregate Address table entry
-        and fill the object with the incoming attributes
-
+            and fill the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -163,15 +159,14 @@ class AggregateAddress(PyaoscxModule):
     def get_all(cls, session, parent_bgp_router):
         """
         Perform a GET call to retrieve all system Aggregate Addresses inside a
-        BGP Router,
-        and create a dictionary containing them
-        :param cls: Object's class
+            BGP Router, and create a dictionary containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param parent_bgp_router: parent bgp_router object where Aggregate
-            Address is stored
+            Address is stored.
         :return: Dictionary containing Aggregate Addresses IDs as keys and a
-            AggregateAddress objects as values
+            AggregateAddress objects as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -204,15 +199,11 @@ class AggregateAddress(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-        Aggregate Address table entry.
-        Checks whether the Aggregate Addresses exists in the switch
-        Calls self.update() if Aggregate Address is being updated
-        Calls self.create() if a new Aggregate Address is being created
-
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
-
+        Main method to either create or update an existing Aggregate Address.
+            Checks whether the Aggregate Addresses exists in the switch. Calls
+            self.update() if Aggregate Address is being updated. Calls
+            self.create() if a new Aggregate Address is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         if not self.__parent_bgp_router.materialized:
             self.__parent_bgp_router.apply()
@@ -229,12 +220,9 @@ class AggregateAddress(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing Aggregate
-        Address table entry
-
-        :return modified: True if Object was modified and a PUT
-            request was made. False otherwise
-
+        Perform a PUT call to apply changes to an existing Aggregate Address.
+        :return modified: True if Object was modified and a PUT request was
+            made.
         """
         # Variable returned
         modified = False
@@ -276,11 +264,9 @@ class AggregateAddress(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new Aggregate Address table entry
-        Only returns if an exception is not raise
-
+        Perform a POST call to create a new Aggregate Address table entry. Only
+            returns if no exception is raised.
         :return modified: True if entry was created.
-
         """
         ag_address_data = utils.get_attrs(self, self.config_attrs)
         ag_address_data["address-family"] = self.address_family
@@ -310,9 +296,7 @@ class AggregateAddress(PyaoscxModule):
     def delete(self):
         """
         Perform DELETE call to delete Aggregate Address.
-
         """
-
         uri = "{0}/{1}{2}{3}".format(
             self.base_uri,
             self.address_family,
@@ -346,21 +330,18 @@ class AggregateAddress(PyaoscxModule):
     def from_response(cls, session, parent_bgp_router, response_data):
         """
         Create a AggregateAddress object given a response_data related to the
-            Aggregate Address ID object
-        :param cls: Object's class
+            Aggregate Address ID object.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param parent_bgp_router: parent BGP Router class where Aggregate
-            Address is stored
-        :param response_data: The response can be either a
-            dictionary: {
-                    id: "/rest/v10.04/system/vrfs/bgp_routers/asn
-                        /aggregate_addresses/id"
-                }
-            or a
-            string: "/rest/v10.04/system/vrfs/bgp_routers/asn
-                    /aggregate_addresses/address_family/ip_prefix"
-        :return: AggregateAddress object
+            Address is stored.
+        :param response_data: The response must be a dictionary of the form:
+            {id: URL}, with the URL being of the form:
+            "bgp_routers/<asn>/aggregate_addresses/<id>"
+            under the path:
+            "/rest/v10.04/system/vrfs/<vrf_name>/"
+        :return: AggregateAddress object.
         """
         aggr_address_arr = session.api.get_keys(
             response_data, cls.resource_uri_name)
@@ -373,15 +354,14 @@ class AggregateAddress(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, parent_bgp_router, uri):
         """
-        Create a AggregateAddress object
+        Create a AggregateAddress object.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param parent_bgp_router: parent BGP Router class where Aggregate
-            Address is stored
-        :param uri: a String with a URI
-
+            Address is stored.
+        :param uri: a String with a URI.
         :return indices, aggr_address: tuple containing both the Aggregate
-            Address object and the Aggregate Address' ID
+            Address object and the Aggregate Address' ID.
         """
         # Obtain ID from URI
         index_pattern = re.compile(
@@ -404,10 +384,9 @@ class AggregateAddress(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific Aggregate Address URI
-        return: Object's URI
+        Method used to obtain the specific Aggregate Address URI.
+        return: Object's URI.
         """
-
         if self._uri is None:
             self._uri = "{0}{1}/{2}{3}{4}".format(
                 self.session.resource_prefix,
@@ -423,23 +402,22 @@ class AggregateAddress(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified

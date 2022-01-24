@@ -77,13 +77,12 @@ class Interface(AbstractInterface):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a Port table entry, a Interface
-        table entry and fill the object with the incoming attributes
-
+            table entry and fill the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.  The options are 'configuration', 'status', or 'statistics.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -342,13 +341,13 @@ class Interface(AbstractInterface):
     @classmethod
     def get_all(cls, session):
         """
-        Perform a GET call to retrieve all system Ports and return a list
-        of them
-        :param cls: Object's class
+        Perform a GET call to retrieve all system Ports and return a list of
+            them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :return: Dictionary containing ports IDs as keys and a port objects
-            as values
+            as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -377,14 +376,13 @@ class Interface(AbstractInterface):
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create an Interface object given a interface URI
-        :param cls: Object's class
+        Create an Interface object given a interface URI.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
-
+            connection to the device.
+        :param uri: a String with a URI.
         :return name, Interface: tuple containing both the interface's name
-            and an Interface object
+            and an Interface object.
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)/(?P<index>.+)")
@@ -398,7 +396,8 @@ class Interface(AbstractInterface):
     @classmethod
     def get_facts(cls, session):
         """
-        Perform a GET call to retrieve all Interfaces and their respective data
+        Perform a GET call to retrieve all Interfaces and their respective
+            data.
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -469,14 +468,16 @@ class Interface(AbstractInterface):
     def from_response(cls, session, response_data):
         """
         Create an Interface object given a response_data related to the
-            Interface object
+            Interface object.
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param response_data: The response can be either a
-            string: "/rest/v1/system/interfaces/1"
-        :return: Interface object
-
+        :param response_data: The response must be a dictionary of the form:
+            {id: URL}, with the URL being of the form:
+            "/rest/v1/system/interfaces/1"
+            or
+            "/rest/v1/system/ports/1"
+        :return: Interface object.
         """
         try:
             # Try using interfaces
@@ -495,7 +496,6 @@ class Interface(AbstractInterface):
     def delete(self):
         """
         Perform DELETE call to delete Interface.
-
         """
         if not self.__is_special_type:
             raise VerificationError("Interface", "Can't be deleted")
@@ -542,9 +542,9 @@ class Interface(AbstractInterface):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to update data for a Port and Interface table entry
+        Perform a PUT call to update data for a Port and Interface table entry.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise.
+            made.
         """
         # Flag used to determine if Object was modified
         modified_port = True
@@ -763,10 +763,9 @@ class Interface(AbstractInterface):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a Port table entry for Interface.
-        Only returns if an exception is not raise
-
-        :return True if entry was created inside Device
+        Perform a POST call to create a Port table entry for Interface. Only
+            returns if no exception is raised.
+        :return True if entry was created inside Device.
         """
         port_data = utils.get_attrs(self, self.config_attrs)
         port_data["name"] = self.name
@@ -819,10 +818,10 @@ class Interface(AbstractInterface):
     @PyaoscxModule.deprecated
     def get_uri(self, interface=False):
         """
-        Method used to obtain the specific Interface URI
+        Method used to obtain the specific Interface URI.
         :param interface: Boolean, if true URI would contain
             a /interfaces/interface_name instead of
-            /ports/interface_name
+            /ports/interface_name.
         """
         uri = ""
         if not interface:
@@ -843,9 +842,9 @@ class Interface(AbstractInterface):
     @PyaoscxModule.deprecated
     def get_info_format(self):
         """
-        Method used to obtain correct object format for referencing
-        inside other objects
-        return: Object format depending on the API Version
+        Method used to obtain correct object format for referencing inside
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
@@ -854,10 +853,9 @@ class Interface(AbstractInterface):
 
     def __set_to_default(self):
         """
-        Perform a PUT call to set Interface to default settings
-        :return: True if object was changed
+        Perform a PUT call to set Interface to default settings.
+        :return: True if object was changed.
         """
-
         uri_ports = "{0}/{1}".format(
             Interface.base_uri_ports, self.percents_name
         )

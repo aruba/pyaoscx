@@ -10,8 +10,8 @@ from pyaoscx.api import API
 
 class v1(API):
     """
-    Represents a REST API Version 1. It keeps all the information
-    needed for the version and methods related to it.
+    Represents a REST API Version 1. It keeps all the information needed for
+        the version and methods related to it.
     """
 
     def __init__(self):
@@ -29,24 +29,19 @@ class v1(API):
     def get_index(self, obj):
         """
         Method used to obtain the correct format of the objects information
-        which depends on the Current API version
-        Example:
-
-        1) "keepalive_vrf" : "Resource uri"
-        :param obj: PyaoscxModule object
-        :return: Resource URI
+            which depends on the Current API version.
+        :param obj: PyaoscxModule object.
+        :return: Resource URI.
         """
         # use object indices
         return obj.get_uri()
 
     def get_keys(self, response_data, module_name):
         """
-        Given a response_data String obtain the keys
-        of said String and return them
-        :param response_data: a String in the form of
-            "/rest/v1/system/<module>/<key_1>/<key_2>"
-
-        :return name_arr: List of keys
+        Given a string obtain the keys in it and return them.
+        :param response_data: a string of the form:
+            "/rest/v1/system/<module>/<key_1>/<key_2>".
+        :return name_arr: List of keys.
         """
         # Create regex string
         regex_str = r"(.*)/" + re.escape(module_name) + r"/(?P<ids>.+)"
@@ -62,11 +57,10 @@ class v1(API):
     def get_uri_from_data(self, data):
         """
         Given a response data, create a list of URI items. In this Version the
-        data is a list, string or dict.
-        :param data: String, List or Dictionary containing URI items
-        :return uri_list: Return the list of URIs
+            data is a list, string or dict.
+        :param data: String, List or Dictionary containing URI items.
+        :return uri_list: Return the list of URIs.
         """
-
         if isinstance(data, list):
             return data
         elif isinstance(data, str):

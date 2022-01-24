@@ -74,8 +74,7 @@ class QosDscp(PyaoscxModule):
             the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
-        :param selector: Alphanumeric option to select specific information
-            return.
+        :param selector: Alphanumeric option to query specific information.
         :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
@@ -142,11 +141,10 @@ class QosDscp(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to update an existing QoS table entry.
-        Checks whether the QoS DSCP entry exists in the switch.
-        Calls self.update if object is being updated.
-        :return modified: Boolean, True if object was modified,
-            False otherwise.
+        Main method used to update an existing QoS table entry. Checks whether
+            the QoS DSCP entry exists in the switch. Calls self.update if
+            object is being updated.
+        :return modified: Boolean, True if object was modified.
         """
         self.__modified = self.update()
         return self.__modified
@@ -154,10 +152,9 @@ class QosDscp(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT request to apply changes to an existing QoS DSCP table
-            entry.
+        Perform a PUT request to update an existing QoS DSCP object.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise.
+            made.
         """
         qos_dscp_data = utils.get_attrs(self, self.config_attrs)
 
@@ -180,12 +177,10 @@ class QosDscp(PyaoscxModule):
             the QoS DSCP trust mode object.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :param response_data: The response can be either a
-            dictionary:{
+        :param response_data: The response must be a dictionary of the form:
+            {
                 "3" : "/rest/v10.08/system/qos_dscp_map_entries/3"
             }
-            or a
-            string: "/rest/v10.08/system/qos_dscp_map_entries/3"
         :return: QoS DSCP trust mode object.
         """
         code_points_arr = session.api.get_keys(
@@ -202,7 +197,7 @@ class QosDscp(PyaoscxModule):
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param uri: s String with a URI.
-        :return: returns identifier and object
+        :return: returns identifier and object.
         """
         # Separate values from URI
         if cls.base_uri not in uri:
@@ -228,7 +223,7 @@ class QosDscp(PyaoscxModule):
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
@@ -320,7 +315,7 @@ class QosDscp(PyaoscxModule):
     @property
     def description(self):
         """
-        Getter method for the description property
+        Getter method for the description property.
         """
         return self.__description
 
@@ -328,7 +323,7 @@ class QosDscp(PyaoscxModule):
     def description(self, description):
         """
         Updates the description of this QoS DSCP instance.
-        :param description: String used for customer documentation
+        :param description: String used for customer documentation.
         """
         # Verify data type
         if not isinstance(description, str):
@@ -338,7 +333,7 @@ class QosDscp(PyaoscxModule):
     @property
     def local_priority(self):
         """
-        Getter method for the local_priority
+        Getter method for the local_priority.
         """
         return self.__local_priority
 

@@ -63,13 +63,12 @@ class Vrf(PyaoscxModule):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a VRF table entry and fill the
-        class with the incoming attributes
-
+            class with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information
             to return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -207,12 +206,12 @@ class Vrf(PyaoscxModule):
     def get_all(cls, session):
         """
         Perform a GET call to retrieve all system VRFs and create a dictionary
-            containing them
-        :param cls: Object's class
+            containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :return: Dictionary containing VRF names as keys and a Vrf objects as
-            values
+            values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -242,13 +241,10 @@ class Vrf(PyaoscxModule):
     def apply(self):
         """
         Main method used to either create or update an existing VRF table
-            entry.
-        Checks whether the VRF exists in the switch
-        Calls self.update() if VRF is being updated
-        Calls self.create() if a new VRF is being created
-
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
+            entry. Checks whether the VRF exists in the switch. Calls
+            self.update() if VRF is being updated. Calls self.create() if a new
+            VRF is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         modified = False
         if self.materialized:
@@ -262,10 +258,9 @@ class Vrf(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing VRF table entry
-
+        Perform a PUT call to apply changes to an existing VRF table entry.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise.
+            made.
         """
         vrf_data = utils.get_attrs(self, self.config_attrs)
 
@@ -303,9 +298,7 @@ class Vrf(PyaoscxModule):
     def create(self):
         """
         Perform a POST call to create a new VRF using the object's attributes
-        as POST body
-        Only returns if an exception is not raise
-
+            as POST body. Only returns if no exception is raised.
         :return modified: Boolean, True if entry was created
         """
         vrf_data = utils.get_attrs(self, self.config_attrs)
@@ -336,9 +329,7 @@ class Vrf(PyaoscxModule):
     def delete(self):
         """
         Perform DELETE call to delete VRF table entry.
-
         """
-
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
 
@@ -358,17 +349,14 @@ class Vrf(PyaoscxModule):
     @classmethod
     def from_response(cls, session, response_data):
         """
-        Create a Vrf object given a response_data related to the Vrf object
-        :param cls: Object's class
+        Create a Vrf object given a response_data related to the Vrf object.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param response_data: The response can be either a
-            dictionary:
-                {
-                    "test_vrf": "/rest/v10.04/system/vrfs/test_vrf"
-                }
-            or a
-            string: "/rest/v1/system/vrfs/test_vrf"
+            connection to the device.
+        :param response_data: The response must be a dictionary of the form:
+            {
+                "test_vrf": "/rest/v10.04/system/vrfs/test_vrf"
+            }
         :return: Vrf object
         """
         # An interfaces's VRF is returned with an empty index in some
@@ -393,13 +381,12 @@ class Vrf(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create a Vrf object given a VRF URI
+        Create a Vrf object given a VRF URI.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
-
+            connection to the device.
+        :param uri: a String with a URI.
         :return name, vrf_obj: tuple containing both the VRF's name and a Vrf
-            object
+            object.
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)vrfs/(?P<index>.+)")
@@ -417,7 +404,6 @@ class Vrf(PyaoscxModule):
         :param cls: Class reference.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-
         :return facts: Dictionary containing VRF IDs as keys and VRF objects as
             values.
         """
@@ -446,8 +432,8 @@ class Vrf(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific VRF URI
-        return: Object's URI
+        Method used to obtain the specific VRF URI.
+        return: Object's URI.
         """
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
@@ -460,8 +446,8 @@ class Vrf(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
@@ -471,16 +457,15 @@ class Vrf(PyaoscxModule):
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified, False
-            otherwise.
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -491,17 +476,14 @@ class Vrf(PyaoscxModule):
     def add_address_family(self, family_type="ipv4_unicast", export_target=[],
                            import_targets=[]):
         """
-        Add a VRF Address Family to the current Vrf object
-
+        Add a VRF Address Family to the current Vrf object.
         :param family_type: Alphanumeric type of the Address Family.
             The options are 'ipv4_unicast' and 'ipv6_unicast'.
             The default value is set to 'ipv4_unicast'.
         :param export_target: Optional list of export route targets.
         :param import_targets: Optional list of import route targets
-
         :return address_family: VrfAddressFamily Object
         """
-
         if not self.materialized:
             raise VerificationError(
                 "VRF {0}".format(self.name), "Object not materialized"
@@ -533,8 +515,7 @@ class Vrf(PyaoscxModule):
 
     def delete_address_family(self, family_type="ipv4_unicast"):
         """
-        Given an address family type, delete that address from the current
-            Vrf object.
+        Given an address family type, delete that address from the current Vrf.
         :param family_type: Alphanumeric type of the Address Family.
             The options are 'ipv4_unicast' and 'ipv6_unicast'.
             A VrfAddressFamily object is accepted.
@@ -562,38 +543,34 @@ class Vrf(PyaoscxModule):
                   host_v6_address_mapping=None):
         """
         Setup DNS client configuration within a VRF.
-
-        :param domain_name: Domain name used for name resolution by
-            the DNS client, if 'dns_domain_list' is not configured
+        :param domain_name: Domain name used for name resolution by the DNS
+            client, if 'dns_domain_list' is not configured.
         :param domain_list: dict of DNS Domain list names to be used for
-            address resolution, keyed by the resolution priority order
+            address resolution, keyed by the resolution priority order.
             Example:
                 {
                     0: "hpe.com"
                     1: "arubanetworks.com"
                 }
         :param domain_servers: dict of DNS Name servers to be used for address
-            resolution, keyed by the resolution priority order
-            Example:
+            resolution, keyed by the resolution priority order. Example:
                 {
                     0: "4.4.4.10"
                     1: "4.4.4.12"
                 }
         :param host_v4_address_mapping: dict of static host
-            address configurations and the IPv4 address associated with them
+            address configurations and the IPv4 address associated with them.
             Example:
                 {
                     "host1": "5.5.44.5"
                     "host2": "2.2.44.2"
                 }
-        :param host_v6_address_mapping: dict of static host
-            address configurations and the IPv6 address associated with them
-            Example:
+        :param host_v6_address_mapping: dict of static host address
+            configurations and the IPv6 address associated with them. Example:
                 {
                     "host1": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
                 }
-        :return modified: Returns True if modified, False
-            otherwise
+        :return modified: Returns True if modified.
         """
         # Update Values
 
@@ -619,15 +596,12 @@ class Vrf(PyaoscxModule):
                    host_v6_address_mapping=None):
         """
         Delete DNS client configuration within a Vrf object.
-
         :param domain_name: If value is not None, it is deleted
         :param domain_list: If value is not None, it is deleted
         :param domain_servers: If value is not None, it is deleted
         :param host_v4_address_mapping: If value is not None, it is deleted
         :param host_v6_address_mapping: If value is not None, it is deleted
-
-        :return modified: Returns True if modified, False
-            otherwise
+        :return modified: Returns True if modified.
         """
         # Update Values
 
@@ -652,7 +626,7 @@ class Vrf(PyaoscxModule):
         """
         Update references to OSPF Routers. If a Router with the same instance
             tag is found, update the reference to the new router, otherwise,
-            add reference to the new router
+            add reference to the new router.
         """
         routers = getattr(self, router.resource_uri_name)
         for r in routers:
@@ -666,7 +640,7 @@ class Vrf(PyaoscxModule):
     def remove_ospf_router(self, router):
         """
         Update references to OSPF Routers. If a Router with the same instance
-            tag is found, delete the reference to it
+            tag is found, delete the reference to it.
         """
         routers = getattr(self, router.resource_uri_name)
         for r in routers:

@@ -69,7 +69,7 @@ class Qos(PyaoscxModule):
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -92,9 +92,8 @@ class Qos(PyaoscxModule):
     @classmethod
     def get_all(cls, session):
         """
-        Perfom GET request to retrieve all system QoS configurations of a
-            switch.
-        :param session: pyaoscx.Session object used to represent a logical
+        Perfom GET request to retrieve all Schedule Profiles in a switch.
+        :param session: pyaoscx.Session object used to represent a logical.
         :return: Dictionary containing all system QoS configurations.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
@@ -120,13 +119,11 @@ class Qos(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-            QoS table entry.
-        Checks whether the QoS configuration exists in the switch.
-        Calls self.update() if object is being updated.
-        Calls self.create() if a new object is being created.
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
+        Main method used to either create or update an existing Schedule
+            Profile. Checks whether the QoS configuration exists in the switch.
+            Calls self.update() if object is being updated. Calls self.create()
+            if a new object is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         if self.materialized:
             self.__modified = self.update()
@@ -137,9 +134,9 @@ class Qos(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing QoS table entry.
+        Perform a PUT call to apply changes to an existing Schedule Profile.
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise.
+            made.
         """
         qos_data = utils.get_attrs(self, self.config_attrs)
         return self._put_data(qos_data)
@@ -170,13 +167,11 @@ class Qos(PyaoscxModule):
         Create a Qos object given a response_data related to it.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :param response_data: The response can be either a
-            dictionary: {
-                "strict": "/rest/v10.08/system/qos/<QoS name>"
-                }
-            or a
-            string: "/rest/v10.08/system/qos/<QoS name>"
-        :return: Qos Object
+        :param response_data: The response must be a dictionary of the form:
+            {
+                "<QoS name>": "/rest/v10.08/system/qos/<QoS name>"
+            }
+        :return: Qos Object.
         """
         qos_name_arr = session.api.get_keys(
             response_data,
@@ -217,7 +212,7 @@ class Qos(PyaoscxModule):
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
@@ -241,7 +236,7 @@ class Qos(PyaoscxModule):
         :param trust_mode: A string to set the global trust mode, which can be
             one of the following: "cos", "dscp", "none", or "default".
             Use the default option to use the switch's default trust mode.
-        :return: Returns True if configuration was modified, False otherwise.
+        :return: Returns True if configuration was modified.
         """
         logging.info("Setting %s as global Qos trust mode.", trust_mode)
 
@@ -284,7 +279,7 @@ class Qos(PyaoscxModule):
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param profile: Name of a schedule profile (the name of a Qos object)
-            to set as the global schedule profile
+            to set as the global schedule profile.
         """
         logging.info("Setting global schedule profile to: %s", profile)
         device = Device(session)

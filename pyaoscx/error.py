@@ -2,9 +2,8 @@
 # Apache License 2.0
 
 class LoginError(Exception):
-    """Exception raised for errors during login.
-    Attributes:
-        message -- explanation of the error
+    """
+    Exception raised for errors during login.
     """
 
     def __init__(self, message, status_code=None):

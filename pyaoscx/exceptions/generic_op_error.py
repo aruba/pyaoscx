@@ -6,7 +6,7 @@ from pyaoscx.exceptions.pyaoscx_error import PyaoscxError
 
 class GenericOperationError(PyaoscxError):
     """
-    PYAOSCX Generic Operation Error Exception
+    PYAOSCX Generic Operation Error Exception.
     """
 
     def __init__(self, *args):

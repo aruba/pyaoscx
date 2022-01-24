@@ -58,14 +58,13 @@ class Vlan(PyaoscxModule):
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
-        Perform a GET call to retrieve data for a VLAN table entry and fill
-        the object with the incoming attributes
-
+        Perform a GET call to retrieve data for a VLAN table entry and fill the
+            object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -136,12 +135,12 @@ class Vlan(PyaoscxModule):
     def get_all(cls, session):
         """
         Perform a GET call to retrieve all system VLAN and create a dictionary
-        containing each respective VLAN
-        :param cls: Object's class
+            containing each respective VLAN.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :return: Dictionary containing VLAN IDs as keys and a Vlan object as
-            value
+            value.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -170,14 +169,11 @@ class Vlan(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-        VLAN table entry.
-        Checks whether the VLAN exists in the switch
-        Calls self.update() if VLAN is being updated
-        Calls self.create() if a new VLAN is being created
-
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
+        Main method used to either create a VLAN, or update an existing one.
+            Checks whether the VLAN exists in the switch. Calls self.update()
+            if VLAN is being updated. Calls self.create() if the VLAN doesn't
+            exist in the switch.
+        :return modified: Boolean, True if object was created or modified.
         """
         modified = False
         if self.materialized:
@@ -191,8 +187,7 @@ class Vlan(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing VLAN table entry
-
+        Perform a PUT call to apply changes to an existing VLAN table entry.
         :return modified: True if Object was modified and a PUT request was
             made.
         """
@@ -217,11 +212,10 @@ class Vlan(PyaoscxModule):
     def create(self):
         """
         Perform a POST call to create a new VLAN using the object's attributes
-        as POST body. Exception is raised if object is unable to be created
-
-        :return modified: Boolean, True if entry was created
+            as POST body. Exception is raised if object is unable to be
+            created.
+        :return modified: Boolean, True if VLAN was created.
         """
-
         vlan_data = {}
 
         # Get all VLAN data given by the user
@@ -236,9 +230,7 @@ class Vlan(PyaoscxModule):
     def delete(self):
         """
         Perform DELETE call to delete VLAN table entry.
-
         """
-
         self._send_data(self.path, None, "DELETE", "Delete")
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
@@ -246,17 +238,15 @@ class Vlan(PyaoscxModule):
     @classmethod
     def from_response(cls, session, response_data):
         """
-        Create a Vlan object given a response_data related to the Vlan object
-        :param cls: Object's class
+        Create a Vlan object given a response_data related to the Vlan object.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param response_data: The response can be either a
-            dictionary: {
-                    1: "/rest/v10.04/system/vlans/1"
-                }
-            or a
-            string: "/rest/v1/system/vlans/1"
-        :return: Vlan Object
+            connection to the device.
+        :param response_data: The response must be a dictionary of the form:
+            {
+                1: "/rest/v10.04/system/vlans/1"
+            }
+        :return: Vlan Object.
         """
         vlan_id_arr = session.api.get_keys(
             response_data, Vlan.resource_uri_name)
@@ -266,13 +256,12 @@ class Vlan(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create a Vlan object given a VLAN URI
-        :param cls: Object's class
+        Create a Vlan object given a VLAN URI.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param uri: a String with a URI
-
-        :return vlan_id, vlan: tuple with the Vlan object its ID
+            connection to the device.
+        :param uri: a String with a URI.
+        :return vlan_id, vlan: tuple with the Vlan object its ID.
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)vlans/(?P<index>.+)")
@@ -339,10 +328,9 @@ class Vlan(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific VLAN URI
-        return: Object's URI
+        Method used to obtain the specific VLAN URI.
+        return: Object's URI.
         """
-
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix, Vlan.base_uri, self.id
@@ -354,23 +342,23 @@ class Vlan(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -381,17 +369,15 @@ class Vlan(PyaoscxModule):
     def modify(self, vlan_name=None, vlan_desc=None, admin_conf_state=None):
         """
         Perform a PUT calls to modify an existing VLAN.
-
-        :param vlan_name: Optional Alphanumeric name of VLAN. Won't be
-            modified if not specified.
+        :param vlan_name: Optional Alphanumeric name of VLAN. Won't be modified
+            if not specified.
         :param vlan_desc: Optional description to add to VLAN. Won't be
             modified if not specified.
         :param admin_conf_state: Optional administratively-configured state of
-            VLAN. Won't be modified if not specified.
-            Only configurable for static VLANs.
-        :return: True if object was changed, False otherwise
+            VLAN. Won't be modified if not specified. Only configurable for
+            static VLANs.
+        :return: True if object was changed.
         """
-
         if vlan_name is not None:
             self.name = vlan_name
 
@@ -407,13 +393,11 @@ class Vlan(PyaoscxModule):
 
     def attach_acl_in(self, acl_name, list_type):
         """
-        Update ACL IN values inside a Vlan object
-
-        :param acl_name: Alphanumeric String that is the name of the ACL
-        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to
-            specify the type of ACL
-        :return: True if object was changed, False otherwise
-
+        Update ACL IN values inside a Vlan object.
+        :param acl_name: Alphanumeric String that is the name of the ACL.
+        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to specify
+            the type of ACL.
+        :return: True if object was changed.
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
@@ -440,13 +424,11 @@ class Vlan(PyaoscxModule):
 
     def attach_acl_out(self, acl_name, list_type):
         """
-        Update ACL OUT values inside a Vlan object
-
-        :param acl_name: Alphanumeric String that is the name of the ACL
-        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to
-            specify the type of ACL
-        :return: True if object was changed, False otherwise
-
+        Update ACL OUT values inside a Vlan object.
+        :param acl_name: Alphanumeric String that is the name of the ACL.
+        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to specify
+            the type of ACL.
+        :return: True if object was changed.
         """
         # Create Acl object
         acl_obj = self.session.api.get_module(
@@ -473,15 +455,12 @@ class Vlan(PyaoscxModule):
 
     def detach_acl_in(self, acl_name, list_type):
         """
-        Detach an ACL from a VLAN
-
-        :param acl_name: Alphanumeric String that is the name of the ACL
-        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to
-            specify the type of ACL
-        :return: True if object was changed, False otherwise
-
+        Detach an ACL from a VLAN.
+        :param acl_name: Alphanumeric String that is the name of the ACL.
+        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to specify
+            the type of ACL.
+        :return: True if object was changed.
         """
-
         if list_type == "ipv6":
             self.aclv6_in_cfg = None
             self.aclv6_in_cfg_version = None
@@ -497,15 +476,12 @@ class Vlan(PyaoscxModule):
 
     def detach_acl_out(self, acl_name, list_type):
         """
-        Detach an ACL from a VLAN
-
-        :param acl_name: Alphanumeric String that is the name of the ACL
-        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to
-            specify the type of ACL
-        :return: True if object was changed, False otherwise
-
+        Detach an ACL from a VLAN.
+        :param acl_name: Alphanumeric String that is the name of the ACL.
+        :param list_type: Alphanumeric String of ipv4, ipv6, or mac to specify
+            the type of ACL.
+        :return: True if object was changed.
         """
-
         if list_type == "ipv6":
             self.aclv6_out_cfg = None
             self.aclv6_out_cfg_version = None
@@ -522,15 +498,11 @@ class Vlan(PyaoscxModule):
     def get_mac(self, from_id, mac_address):
         """
         Create an Mac object.
-        :param from_id: String source of the MAC address.
-            Must be "dynamic", "VSX", "static", "VRRP",
-            "port-access-security", "evpn", or "hsc"
-        :param mac_address: String MAC address.
-            Example:
-                '01:02:03:04:05:06'
-        :return: Mac object
+        :param from_id: String source of the MAC address. Must be "dynamic",
+            "VSX", "static", "VRRP", "port-access-security", "evpn", or "hsc".
+        :param mac_address: String MAC address. Example: '01:02:03:04:05:06'
+        :return: Mac object.
         """
-
         mac_obj = self.session.api.get_module(
             self.session, "Mac",
             from_id,
@@ -545,15 +517,10 @@ class Vlan(PyaoscxModule):
     def add_static_mac(self, port, mac_address):
         """
         Create an StaticMac object.
-        :param port: String for the Port's name:
-            Example:
-                1/1/1
-        :param mac_address: String MAC address.
-            Example:
-                '01:02:03:04:05:06'
+        :param port: String for the Port's name. Example: 1/1/1
+        :param mac_address: String MAC address. Example: '01:02:03:04:05:06'
         :return: StaticMac object
         """
-
         if isinstance(port, str):
             # Make Interface into an object
             port = self.session.api.get_module(

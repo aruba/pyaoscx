@@ -20,7 +20,7 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 class Device(PyaoscxFactory, metaclass=Singleton):
     """
     Represents a Device and all of its attributes. Keeping all the important
-    information inside one class.
+        information inside one class.
     """
 
     base_uri = "system"
@@ -38,10 +38,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     @PyaoscxModule.connected
     def get(self):
         """
-        Perform a GET call to retrieve device attributes
-        After data from response, Device class attributes
-        are generated using create_attrs()
-
+        Perform a GET call to retrieve device attributes. After data from
+            response, Device class attributes are generated using
+            create_attrs().
         """
         logging.info("Retrieving the switch attributes and capabilities")
 
@@ -116,7 +115,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def get_subsystems(self):
         """
          Perform GET call to retrieve subsystem attributes and create a
-             dictionary containing them
+             dictionary containing them.
         """
         logging.info(
             "Retrieving the switch subsystem attributes and capabilities"
@@ -159,10 +158,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     @PyaoscxModule.connected
     def get_firmware_version(self):
         """
-        Perform a GET call to retrieve device firmware version
-        :return: firmware_version: The firmware version
+        Perform a GET call to retrieve device firmware version.
+        :return: firmware_version: The firmware version.
         """
-
         try:
             response = self.session.request("GET", "firmware")
 
@@ -182,8 +180,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def apply(self):
         """
         Main method to update an existing Device object.
-        :return modified: Boolean, True if object was created or modified
-            False otherwise.
+        :return modified: Boolean, True if object was created or modified.
         """
         return self.update()
 
@@ -191,8 +188,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def update(self):
         """
         Perform a PUT call to apply changes to a Device object.
-        :return modified: Boolean, True if object was created or modified
-            False otherwise.
+        :return modified: Boolean, True if object was created or modified.
         """
         if not self.modified:
             return False
@@ -222,12 +218,11 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
     def update_banner(self, banner_info, banner_type="banner"):
         """
-        Perform a PUT request to modify a Device's Banner
+        Perform a PUT request to modify a Device's Banner.
         :param banner_info: String to be configured as the banner.
         :param banner_type: Type of banner being configured on the switch.
-            Either banner or banner_exec
+            Either banner or banner_exec.
         :return modified: Returns True if Banner was modified.
-            False otherwise
         """
         modified = False
 
@@ -290,11 +285,10 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
     def delete_banner(self, banner_type="banner"):
         """
-        Perform a DELETE request to delete a device's Banner
+        Perform a DELETE request to delete a device's Banner.
         :param banner_type: Type of banner being removed on the switch.
-            Either banner or banner_exec
+            Either banner or banner_exec.
         :return modified: Returns True if Banner was modified.
-            False otherwise
         """
         logging.info("Removing Banner")
         depth = self.session.api.default_depth
@@ -349,9 +343,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def boot_firmware(self, partition_name="primary"):
         """
         Perform a POST request to Boot the AOS-CX switch with image present
-            to the specified partition
+            to the specified partition.
         :param partition_name: Name of the partition for device to boot to.
-        :return bool: True if success
+        :return bool: True if success.
         """
         # Lower case for partition name
         partition_name = partition_name.lower()
@@ -376,17 +370,15 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                              vrf,
                              partition_name="primary"):
         """
-        Perform a PUT request to upload a firmware image given
-        a http_request
-
+        Perform a PUT request to upload a firmware image given a http_request.
         :param remote_firmware_file_path: "HTTP server address and path for
             uploading firmware image, must be reachable through provided vrf
-            ex: http://192.168.1.2:8000/TL_10_04_0030A.swi"
+            ex: http://192.168.1.2:8000/TL_10_04_0030A.swi".
         :param vrf: VRF to be used to contact HTTP server, required if
-            remote_firmware_file_path is provided
-        :param partition_name: Name of the partition for the
-            image to be uploaded to.
-        :return bool: True if success
+            remote_firmware_file_path is provided.
+        :param partition_name: Name of the partition for the image to be
+            uploaded to.
+        :return bool: True if success.
         """
         http_path = remote_firmware_file_path
         unsupported_versions = [
@@ -435,15 +427,13 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def upload_firmware_local(self, partition_name="primary",
                               firmware_file_path=None):
         """
-        Perform a POST request to upload a firmware image from a local file
-
-        :param partition_name: Name of the partition for the
-            image to be uploaded to.
+        Perform a POST request to upload a firmware image from a local file.
+        :param partition_name: Name of the partition for the image to be
+            uploaded to.
         :param firmware_file_path: File name and path for local file uploading
-            firmware image
-        :return success: True if success
+            firmware image.
+        :return success: True if success.
         """
-
         uri = "firmware?image={0}".format(partition_name)
 
         success = utils.file_upload(self.session, firmware_file_path, uri)
@@ -455,20 +445,19 @@ class Device(PyaoscxFactory, metaclass=Singleton):
                         remote_firmware_file_path=None,
                         vrf=None):
         """
-        Upload a firmware image from a local file OR from a remote location
-
-        :param partition_name: Name of the partition for the
-            image to be uploaded to.
+        Upload a firmware image from a local file OR from a remote location.
+        :param partition_name: Name of the partition for the image to be
+            uploaded to.
         :param firmware_file_path: File name and path for local file uploading
             firmware image.
             IMPORTANT: For this to be used, the remote_firmware_file_path
-            parameter must be left as NONE
+            parameter must be None.
         :param remote_firmware_file_path: HTTP server address and path for
             uploading firmware image, must be reachable through provided vrf
-            ex: http://192.168.1.2:8000/TL_10_04_0030A.swi
+            ex: 'http://192.168.1.2:8000/TL_10_04_0030A.swi'.
         :param vrf: VRF to be used to contact HTTP server, required if
-            remote_firmware_file_path is provided
-        :return bool: True if success
+            remote_firmware_file_path is provided.
+        :return bool: True if success.
         """
         result = None
         if partition_name is None:
@@ -492,8 +481,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
     def vsx_capable(self):
         """
-        Return whether this device supports the VSX functionality
-        :return: True if device supports VSX
+        Return whether this device supports the VSX functionality.
+        :return: True if device supports VSX.
         """
         return hasattr(self, "capabilities") and "vsx" in self.capabilities
 
@@ -501,7 +490,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         """
         Check if the current Device has the given capability.
         :param capability: String name of a Device capability.
-        :return: True if Device is capable; False otherwise.
+        :return: True if Device is capable.
         """
         if not self.materialized:
             self.get()

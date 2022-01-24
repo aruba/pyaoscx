@@ -3,7 +3,9 @@
 
 
 class PyaoscxError(Exception):
-    """Base class for other PYAOSCX related exceptions"""
+    """
+    Base class for other PYAOSCX exceptions.
+    """
 
     def __init__(self, message):
         self.message = message

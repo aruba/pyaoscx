@@ -44,9 +44,8 @@ class Ipv6(PyaoscxModule):
 
     def __set_name(self, address):
         """
-        Set name attribute in the proper form for IPv6
+        Set name attribute in the proper form for IPv6.
         """
-
         # Add attributes to class
         self.address = None
         self.reference_address = None
@@ -61,10 +60,9 @@ class Ipv6(PyaoscxModule):
 
     def __set_interface(self, parent_int):
         """
-        Set parent interface as an attribute for the Ipv6 object
-        :param parent_int a Interface object
+        Set parent interface as an attribute for the Ipv6 object.
+        :param parent_int a Interface object.
         """
-
         # Set Parent Interface
         self.__parent_int = parent_int
         # Set Name for URI purposes
@@ -88,14 +86,13 @@ class Ipv6(PyaoscxModule):
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
-        Perform a GET call to retrieve data for a IPv6 table entry and fill
-        the object with the incoming attributes
-
+        Perform a GET call to retrieve data for a IPv6 table entry and fill the
+            object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -159,13 +156,13 @@ class Ipv6(PyaoscxModule):
     def get_all(cls, session, parent_int):
         """
         Perform a GET call to retrieve all system IPv6 addresses inside an
-        Interface, and create a dictionary containing them
-        :param cls: Object's class
+            Interface, and create a dictionary containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param parent_int: parent Interface object where IPv6 is stored
         :return: Dictionary containing IPv6 IDs as keys and a Ipv6 object as
-            value
+            value.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -199,12 +196,10 @@ class Ipv6(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-        IPv6.
-        Checks whether the IPv6 exists in the switch
-        Calls self.update() if IPv6 is being updated
-        Calls self.create() if a new IPv6 is being created
-
+        Main method used to either create or update an existing IPv6. Checks
+            whether the IPv6 exists in the switch. Calls self.update() if IPv6
+            is being updated. Calls self.create() if a new IPv6 is being
+            created.
         """
         if not self.__parent_int.materialized:
             if self.__parent_int.__is_special_type:
@@ -226,9 +221,8 @@ class Ipv6(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing IPv6 table entry
-
         :return modified: True if Object was modified and a PUT request was
-            made. False otherwise
+            made.
         """
         # Variable returned
         modified = False
@@ -274,9 +268,8 @@ class Ipv6(PyaoscxModule):
     def create(self):
         """
         Perform a POST call to create a new IPv6 using the object's attributes
-        as POST body. Only returns if an exception is not raised
-
-        :return modified: Boolean, True if entry was created
+            as POST body. Only returns if an exception is not raised.
+        :return modified: Boolean, True if entry was created.
         """
         ipv6_data = utils.get_attrs(self, self.config_attrs)
         ipv6_data["address"] = self.address
@@ -305,10 +298,8 @@ class Ipv6(PyaoscxModule):
     def delete(self):
         """
         Perform DELETE call to delete IPv6 address from interface on the
-        switch.
-
+            switch.
         """
-
         uri = "{0}/{1}".format(self.base_uri, self.reference_address)
 
         try:
@@ -333,19 +324,16 @@ class Ipv6(PyaoscxModule):
     @classmethod
     def from_response(cls, session, parent_int, response_data):
         """
-        Create a IPv6 object given a response_data related to the IP6
-        address object
-        :param cls: Object's class
+        Create a IPv6 object given a response_data related to the IP6 address.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
+            connection to the device.
         :param parent_int: parent Interface object where IPv6 is stored
-        :param response_data: The response can be either a
-            dictionary: {
-                    address: "/rest/v10.04/interface/ip6_addresses/address"
-                }
-            or a
-            string: "/rest/v10.04/interface/ip6_addresses/address"
-        :return: IPv6 object
+        :param response_data: The response must be a dictionary of the form:
+            {
+                <address>: "/rest/v10.04/interface/ip6_addresses/<address>"
+            }
+        :return: IPv6 object.
         """
         ipv6_arr = session.api.get_keys(
             response_data, Ipv6.resource_uri_name)
@@ -355,15 +343,14 @@ class Ipv6(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, parent_int, uri):
         """
-        Create a Ipv6 object given a URI
-        :param cls: Object's class
+        Create a Ipv6 object given a URI.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_int: Parent Interface class where IPv6 is stored
-        :param uri: a String with a URI
-
+            connection to the device.
+        :param parent_int: Parent Interface class where IPv6 is stored.
+        :param uri: a String with a URI.
         :return index, ipv6_obj: tuple containing both the Ipv6 Object and
-            the ipv6's address
+            the ipv6's address.
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)ip6_addresses/(?P<index>.+)")
@@ -380,8 +367,8 @@ class Ipv6(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific IPv6 URI
-        return: Object's URI
+        Method used to obtain the specific IPv6 URI.
+        return: Object's URI.
         """
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
@@ -396,15 +383,15 @@ class Ipv6(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
@@ -412,7 +399,6 @@ class Ipv6(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified

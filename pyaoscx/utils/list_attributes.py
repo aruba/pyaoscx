@@ -7,8 +7,8 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 class ListDescriptor(list):
     """
     Attribute descriptor class to keep track of a list that contains
-        pyaoscx_module objects simulating a Reference to a resource.
-    If the list changes, then every pyaoscx_module object has to be changed.
+        pyaoscx_module objects simulating a Reference to a resource. If the
+        list changes, then every pyaoscx_module object has to be changed.
     """
 
     def __init__(self, name,):
@@ -24,8 +24,8 @@ class ListDescriptor(list):
     def __set__(self, instance, new_list):
         """
         Method called when current attribute is set.
-        :param instance: Instance of the current Object
-        :param new_list: new list being set to current attribute object
+        :param instance: Instance of the current Object.
+        :param new_list: new list being set to current attribute object.
         """
         new_list = ReferenceList(new_list)
         prev_list = instance.__dict__[
@@ -51,8 +51,8 @@ class ListDescriptor(list):
 class ReferenceList(list):
     """
     Wrapper class for a Python List object.
-    Modifies remove() method to use the pyaoscx.pyaoscx_module.delete() method
-    when using remove on this special type list.
+        Modifies remove() method to use the pyaoscx.pyaoscx_module.delete()
+        method when using remove on this special type list.
     """
 
     def __init__(self, value):
@@ -72,7 +72,7 @@ class ReferenceList(list):
 
     def __delitem__(self, key):
         """
-        Delete self.key
+        Delete self.key.
         """
         _ = list.__getitem__(self, key)
         list.__delitem__(self, key)
@@ -86,19 +86,19 @@ class ReferenceList(list):
 
     def extend(self, newvalue):
         """
-        Extend list by appending elements from iterable
+        Extend list by appending elements from iterable.
         """
         list.extend(self, newvalue)
 
     def insert(self, i, element):
         """
-        Insert object before index
+        Insert object before index.
         """
         list.insert(self, i, element)
 
     def remove(self, element):
         """
-        Remove first occurrence of value
+        Remove first occurrence of value.
         """
         _ = list.index(self, element)
         list.remove(self, element)
@@ -115,13 +115,13 @@ class ReferenceList(list):
 
     def reverse(self):
         """
-        Reverse *IN PLACE*
+        Reverse *IN PLACE*.
         """
         list.reverse(self)
 
     def sort(self, cmpfunc=None):
         """
-        Stable sort *IN PLACE*
+        Stable sort *IN PLACE*.
         """
         _ = self[:]
         list.sort(self, cmpfunc)

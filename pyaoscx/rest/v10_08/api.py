@@ -8,8 +8,8 @@ from pyaoscx.api import API
 
 class v10_08(API):
     """
-    Represents a REST API Version 10.08. It keeps all the information
-    needed for the version and methods related to it.
+    Represents a REST API Version 10.08. It keeps all the information needed
+        for the version and methods related to it.
     """
 
     def __init__(self):

@@ -189,15 +189,11 @@ class BgpNeighbor(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-        BGP Neighbor table entry.
-        Checks whether the BGP Neighbor exists in the switch
-        Calls self.update() if BGP Neighbor is being updated
-        Calls self.create() if a new BGP Neighbor is being created
-
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
-
+        Main method used to either create or update an existing BGP Neighbor.
+            Checks whether the BGP Neighbor exists in the switch. Calls
+            self.update() if BGP Neighbor is being updated. Calls self.create()
+            if a new BGP Neighbor is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         if not self.__parent_bgp_router.materialized:
             self.__parent_bgp_router.apply()
@@ -214,11 +210,9 @@ class BgpNeighbor(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing  BGP Neighbor
-        table entry
-
+        Perform a PUT call to apply changes to an existing BGP Neighbor.
         :return modified: True if Object was modified and a PUT request
-            was made. False otherwise
+            was made.
         """
         # Variable returned
         modified = False
@@ -424,7 +418,6 @@ class BgpNeighbor(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified

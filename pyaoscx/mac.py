@@ -31,14 +31,12 @@ class Mac(PyaoscxModule):
         """
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
-        :param from_id: String source of the MAC address.
-            Must be "dynamic", "VSX", "static", "VRRP",
-            "port-access-security", "evpn", or "hsc"
-        :param mac_addr: String MAC address, or netaddr EUI object.
-            Example:
-                '01:02:03:04:05:06'
-        :param parent_vlan: Vlan object to which this MAC belongs
-        :param uri: Optional string containing the uri of the MAC object
+        :param from_id: String source of the MAC address. Must be "dynamic",
+            "VSX", "static", "VRRP", "port-access-security", "evpn", or "hsc"
+        :param mac_addr: String MAC address, or netaddr EUI object. Example:
+            '01:02:03:04:05:06'.
+        :param parent_vlan: Vlan object to which this MAC belongs.
+        :param uri: Optional string containing the uri of the MAC object.
         """
         self.session = session
 
@@ -67,13 +65,11 @@ class Mac(PyaoscxModule):
 
     def _set_vlan(self, parent_vlan):
         """
-        Set parent Vlan object as an attribute for the MAC class. It is
-        a private method because the user shouldn't be able to change
-        the parent vlan.
-
-        :param parent_vlan a Vlan object
+        Set parent Vlan object as an attribute for the MAC class. It is a
+            private method because the user shouldn't be able to change the
+            parent vlan.
+        :param parent_vlan a Vlan object.
         """
-
         # Set parent VLAN
         self._parent_vlan = parent_vlan
 
@@ -96,7 +92,7 @@ class Mac(PyaoscxModule):
 
     def _mac_path(self):
         """
-        Get the path for internal purposes
+        Get the path for internal purposes.
         """
         return "{0}/{1}{2}{3}".format(
             self.base_uri,
@@ -115,13 +111,12 @@ class Mac(PyaoscxModule):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a MAC table entry and fill
-        the object with the incoming attributes
-
+            the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if no exception is raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -161,15 +156,14 @@ class Mac(PyaoscxModule):
     @classmethod
     def get_all(cls, session, parent_vlan):
         """
-        Perform a GET call to retrieve all system MACs inside a
-        BGP Router,
-        and create a dictionary containing them
-        :param cls: Object's class
+        Perform a GET call to retrieve all system MACs inside a BGP Router, and
+            create a dictionary containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vlan: parent bgp_router object where MAC is stored
-        :return: Dictionary containing MACs IDs as keys and a
-            Mac objects as values
+            connection to the device.
+        :param parent_vlan: parent bgp_router object where MAC is stored.
+        :return: Dictionary containing MACs IDs as keys and a Mac objects as
+            values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -203,8 +197,7 @@ class Mac(PyaoscxModule):
     def apply(self):
         """
         Not applicable for MAC.
-        As HTTP Request method is not implemented inside REST API
-
+        As HTTP Request method is not implemented inside REST API.
         """
         pass
 
@@ -212,8 +205,7 @@ class Mac(PyaoscxModule):
     def update(self):
         """
         Not applicable for MAC.
-        As HTTP Request method is not implemented inside REST API
-
+        As HTTP Request method is not implemented inside REST API.
         """
         pass
 
@@ -221,8 +213,7 @@ class Mac(PyaoscxModule):
     def create(self):
         """
         Not applicable for MAC.
-        As HTTP Request method is not implemented inside REST API
-
+        As HTTP Request method is not implemented inside REST API.
         """
         pass
 
@@ -230,29 +221,23 @@ class Mac(PyaoscxModule):
     def delete(self):
         """
         Not applicable for MAC.
-        As HTTP Request method is not implemented inside REST API
-
+        As HTTP Request method is not implemented inside REST API.
         """
         pass
 
     @classmethod
     def from_response(cls, session, parent_vlan, response_data):
         """
-        Create a Mac object given a response_data related to the MAC
-            ID object
-        :param cls: Object's class
+        Create a Mac object given a response_data related to the MAC ID object.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vlan: parent VLAN class where MAC is stored
-        :param response_data: The response can be either a
-            dictionary: {
-                    id: "/rest/v10.04/system/vlans/id
-                        /macs/id1,id2"
-                }
-            or a
-            string: "/rest/v10.04/system/vlans/id/macs
-                    /from_id/from/mac_addr"
-        :return: Mac object
+            connection to the device.
+        :param parent_vlan: parent VLAN class where MAC is stored.
+        :param response_data: The response must be a dictionary of the form:
+            {
+                "<id1>,<id2>": "/rest/v10.04/system/vlans/id/macs/id1,id2"
+            }
+        :return: Mac object.
         """
         mac_format = mac_eui48
         mac_format.word_sep = ":"
@@ -270,14 +255,13 @@ class Mac(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, parent_vlan, uri):
         """
-        Create a Mac object
+        Create a Mac object.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vlan: parent VLAN class where MAC is stored
-        :param uri: a String with a URI
-
+            connection to the device.
+        :param parent_vlan: parent VLAN class where MAC is stored.
+        :param uri: a String with a URI.
         :return indices, mac: tuple containing both the Mac object and
-            the MAC' ID
+            the MAC' ID.
         """
         mac_format = mac_eui48
         mac_format.word_sep = ":"
@@ -306,8 +290,8 @@ class Mac(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific MAC URI
-        return: Object's URI
+        Method used to obtain the specific MAC URI.
+        return: Object's URI.
         """
         # TODO: remove this method in favor of uri_path once all
         # modules have been translated to the 'properties' style
@@ -316,8 +300,8 @@ class Mac(PyaoscxModule):
     @property
     def uri_path(self):
         """
-        Method used to obtain the specific MAC URI
-        return: Object's URI
+        Method used to obtain the specific MAC URI.
+        return: Object's URI.
         """
         if self._uri is None:
             self._uri = "{0}{1}/{2}{3}{4}".format(
@@ -334,8 +318,8 @@ class Mac(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         # TODO: remove in favor of info_format when all modules are translated
         # to 'properties' style
@@ -345,16 +329,15 @@ class Mac(PyaoscxModule):
     def info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
+            other objects.
         return: Object format depending on the API Version
         """
-
         return self.session.api.get_index(self)
 
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
@@ -372,11 +355,10 @@ class Mac(PyaoscxModule):
 
     def get_info(self):
         """
-        Perform a GET call to retrieve data for a MAC table entry and
-        return info as a dictionary. Do not apply the configuration
-
-        :return info_dict: Returns a dictionary containing the current
-            MAC Address information
+        Perform a GET call to retrieve data for a MAC table entry and return
+            info as a dictionary. Do not apply the configuration.
+        :return info_dict: Returns a dictionary containing the current MAC
+            Address information.
         """
         logging.info("Retrieving the switch MAC info")
 

@@ -16,8 +16,8 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 class QueueProfileEntry(PyaoscxModule):
     """
-    Provide configuration management for Queue Profile Entries on
-    AOS-CX devices
+    Provide configuration management for Queue Profile Entries on AOS-CX
+        devices.
     """
 
     collection_uri = "system/q_profiles/{name}/q_profile_entries"
@@ -64,12 +64,12 @@ class QueueProfileEntry(PyaoscxModule):
     def get(self, depth=None, selector=None):
         """
         Perform a GET call to retrieve data for a Queue Profile Entry and fill
-            the object with the incoming attributes
+            the object with the incoming attributes.
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information
             to return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -95,7 +95,7 @@ class QueueProfileEntry(PyaoscxModule):
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param queue_profile_name: Name of the profile to which the entries
-            belong
+            belong.
         :return: Dictionary containing Queue Profile Entry names as keys
             and a Queue Profile Entry object as value.
         """
@@ -128,8 +128,8 @@ class QueueProfileEntry(PyaoscxModule):
         """
         Main method used to either create or update an existing Queue
             Profile Entry. Checks whether the Queue Profile exists in the
-            switch and calls self.update() or self.create() accordingly
-        :return modified: True if the object was modified
+            switch and calls self.update() or self.create() accordingly.
+        :return modified: True if the object was modified.
         """
         if self.materialized:
             return self.update()
@@ -139,10 +139,9 @@ class QueueProfileEntry(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing Queue Profile
-            Entry.
-        :return modified: True if the object was modified and a PUT
-            request was made
+        Perform a PUT call to apply changes to an existing Queue Profile Entry.
+        :return modified: True if the object was modified and a PUT request was
+            made.
         """
         data = utils.get_attrs(self, self.config_attrs)
         # Manually remove the queue_number
@@ -154,9 +153,8 @@ class QueueProfileEntry(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new Queue Profile Entry in the
-            switch.
-        :return modified: True if the object was modified
+        Perform a POST call to create a new Queue Profile Entry in the switch.
+        :return modified: True if the object was modified.
         """
         data = utils.get_attrs(self, self.config_attrs)
         # Manually add the queue_number
@@ -167,8 +165,7 @@ class QueueProfileEntry(PyaoscxModule):
     @PyaoscxModule.connected
     def delete(self):
         """
-        Perform a DELETE call to remove a Queue Profile Entry from the
-            switch
+        Perform a DELETE call to remove a Queue Profile Entry from the switch.
         """
         self._send_data(self.path, None, "DELETE", "Delete")
         utils.delete_attrs(self, self.config_attrs)
@@ -176,12 +173,12 @@ class QueueProfileEntry(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create a Queue profile object given an URI
-        :param cls: Object's class
+        Create a Queue profile object given an URI.
+        :param cls: Object's class.
         :param session: Pyaoscx.Session objec used to represent a logical
-            connection to the device
-        :param uri: a string with the URI
-        :return id, object: tuple with the name and the Profile
+            connection to the device.
+        :param uri: a string with the URI.
+        :return id, object: tuple with the name and the Profile.
         """
         # Obtain the ID from URI
         # URI format is /system/q_profile/{name}/q_entry/{queue_number}
@@ -195,14 +192,13 @@ class QueueProfileEntry(PyaoscxModule):
     @classmethod
     def get_facts(cls, session, queue_profile_name):
         """
-        Retrieve the information of all Queue profiles
-        :param cls: Class reference
+        Retrieve the information of all Queue profiles.
+        :param cls: Class reference.
         :param session: Pyaoscx.Session object used to represent a logical
             connection to the device.
         :param queue_profile_name: Name of the profile to which the entries
-            belong
-        :return: Dictionary containing the name as key and the facts as
-            value
+            belong.
+        :return: Dictionary containing the name as key and the facts as value.
         """
         logging.info("Retrieving Queue Profiles facts")
 

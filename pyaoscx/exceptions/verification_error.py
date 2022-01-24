@@ -6,7 +6,7 @@ from pyaoscx.exceptions.pyaoscx_error import PyaoscxError
 
 class VerificationError(PyaoscxError):
     """
-    Exception class for a Verification Error inside PYAOSCX
+    Exception class for a PYAOSCX Verification Error.
     """
 
     def __init__(self, *args):

@@ -6,7 +6,7 @@ from pyaoscx.exceptions.pyaoscx_error import PyaoscxError
 
 class HttpRequestError(PyaoscxError):
     """
-    Exception class for a Request Error inside PYAOSCX
+    Exception class for a PYAOSCX Request Error.
     """
 
     def __init__(self, *args):

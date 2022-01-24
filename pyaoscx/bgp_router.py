@@ -55,10 +55,9 @@ class BgpRouter(PyaoscxModule):
 
     def __set_vrf(self, parent_vrf):
         """
-        Set parent Vrf object as an attribute for the BGP class
-        :param parent_vrf: a Vrf object
+        Set parent Vrf object as an attribute for the BGP class.
+        :param parent_vrf: a Vrf object.
         """
-
         # Set parent Vrf object
         self.__parent_vrf = parent_vrf
 
@@ -82,12 +81,11 @@ class BgpRouter(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a BGP Router table entry and
             fill the object with the incoming attributes
-
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
             return.
-        :return: Returns True if there is not an exception raised
+        :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
 
@@ -164,14 +162,14 @@ class BgpRouter(PyaoscxModule):
     @classmethod
     def get_all(cls, session, parent_vrf):
         """
-        Perform a GET call to retrieve all system BGP inside a VRF,
-        and create a dictionary containing them
-        :param cls: Object's class
+        Perform a GET call to retrieve all system BGP inside a VRF, and create
+            a dictionary containing them.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vrf: parent Vrf object where VRF is stored
+            connection to the device.
+        :param parent_vrf: parent Vrf object where VRF is stored.
         :return: Dictionary containing BGP Router IDs as keys and a BGP Router
-            objects as values
+            objects as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -205,15 +203,11 @@ class BgpRouter(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an existing
-        BGP Router table entry.
-        Checks whether the BGP Router exists in the switch
-        Calls self.update() if BGP Router is being updated
-        Calls self.create() if a new BGP Router is being created
-
-        :return modified: Boolean, True if object was created or modified
-            False otherwise
-
+        Main method used to either create or update an existing BGP Router.
+            Checks whether the BGP Router exists in the switch. Calls
+            self.update() if BGP Router is being updated. Calls self.create()
+            if a new BGP Router is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
         if not self.__parent_vrf.materialized:
             self.__parent_vrf.apply()
@@ -230,11 +224,9 @@ class BgpRouter(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing BGP Router
-        table entry
-
+        Perform a PUT call to apply changes to an existing BGP Router.
         :return modified: True if Object was modified and a PUT request
-            was made. False otherwise
+            was made.
         """
         # Variable returned
         modified = False
@@ -273,10 +265,9 @@ class BgpRouter(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new BGP Router table entry
-        Only returns if an exception is not raise
-
-        :return modified: Boolean, True if entry was created
+        Perform a POST call to create a new BGP Router table entry. Only
+            returns if no exception is raised.
+        :return modified: Boolean, True if entry was created.
         """
         bgp_data = utils.get_attrs(self, self.config_attrs)
         bgp_data["asn"] = self.asn
@@ -304,10 +295,8 @@ class BgpRouter(PyaoscxModule):
     @PyaoscxModule.connected
     def delete(self):
         """
-        Perform DELETE call to delete BGP Router table entry.
-
+        Perform DELETE call to delete BGP Router.
         """
-
         uri = "{0}/{1}".format(self.base_uri, self.asn)
 
         try:
@@ -332,19 +321,16 @@ class BgpRouter(PyaoscxModule):
     @classmethod
     def from_response(cls, session, parent_vrf, response_data):
         """
-        Create a BgpRouter object given a response_data related to the
-        BGP asn object
-        :param cls: Object's class
+        Create a BgpRouter object given a response_data related to it.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vrf: parent Vrf object where VRF is stored
-        :param response_data: The response can be either a
-            dictionary: {
-                    asn: "/rest/v10.04/system/vrfs/bgp_routers/asn"
-                }
-            or a
-            string: "/rest/v10.04/system/vrfs/bgp_routers/asn"
-        :return: BgpRouter object
+            connection to the device.
+        :param parent_vrf: parent Vrf object where VRF is stored.
+        :param response_data: The response must be a dictionary of the form:
+            {
+                <asn>: "/rest/v10.04/system/vrfs/<name>/bgp_routers/<asn>"
+            }
+        :return: BgpRouter object.
         """
         bgp_arr = session.api.get_keys(
             response_data, BgpRouter.resource_uri_name
@@ -355,15 +341,14 @@ class BgpRouter(PyaoscxModule):
     @classmethod
     def from_uri(cls, session, parent_vrf, uri):
         """
-        Create a BgpRouter object given a URI
-        :param cls: Object's class
+        Create a BgpRouter object given a URI.
+        :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
-            connection to the device
-        :param parent_vrf: parent Vrf object where BGP Router is stored
-        :param uri: a String with a URI
-
+            connection to the device.
+        :param parent_vrf: parent Vrf object where BGP Router is stored.
+        :param uri: a String with a URI.
         :return index, bgp_obj: tuple containing both the BgpRouter object
-            and the BGP's asn
+            and the BGP's asn.
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)bgp_routers/(?P<index>.+)")
@@ -380,10 +365,9 @@ class BgpRouter(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific BGP Router URI
-        return: Object's URI
+        Method used to obtain the specific BGP Router URI.
+        return: Object's URI.
         """
-
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix,
@@ -397,24 +381,23 @@ class BgpRouter(PyaoscxModule):
     def get_info_format(self):
         """
         Method used to obtain correct object format for referencing inside
-        other objects
-        return: Object format depending on the API Version
+            other objects.
+        return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
     @property
     def modified(self):
         """
-        Return boolean with whether this object has been modified
+        Return boolean with whether this object has been modified.
         """
         return self.__modified
 
     @PyaoscxModule.deprecated
     def was_modified(self):
         """
-        Getter method for the __modified attribute
-        :return: Boolean True if the object was recently modified,
-            False otherwise.
+        Getter method for the __modified attribute.
+        :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
@@ -430,30 +413,24 @@ class BgpRouter(PyaoscxModule):
                              local_interface=""):
         """
         Perform a POST call to create BGP Neighbors to the associated current
-        BGP Router - ASN.
-        With l2vpn_evpn being True, this will also apply EVPN settings to the
-        BGP neighbor configurations.
-
+            BGP Router. With l2vpn_evpn being True, this will also apply EVPN
+            settings to the BGP neighbor configurations.
         :param group_ip: IPv4 address or name of group of the neighbors that
-            functions as the BGP Router link.
-            Example IPv4:
-                10.10.12.11/255.255.255.255
+            functions as the BGP Router link. Example IPv4:
+            10.10.12.11/255.255.255.255
         :param family_type: Alphanumeric to specify what type of neighbor
             settings to configure. The options are 'l2vpn-evpn',
             'ipv4-unicast', or 'ipv6-unicast'. When setting to l2vpn-evpn,
-            the neighbor configurations also will add
-            route-reflector-client and send-community settings.
-            Defaults to "l2vpn_evpn"
+            the neighbor configurations also will add route-reflector-client
+            and send-community settings. Defaults to "l2vpn_evpn".
         :param reflector: Boolean value to determine whether this neighbor has
-            route reflector enabled.  Default is False.
-        :param send_community: Boolean value to determine whether this
-            neighbor has send-community enabled.  Default is False.
+            route reflector enabled. Defaults to False.
+        :param send_community: Boolean value to determine whether this neighbor
+            has send-community enabled. Defaults to False.
         :param local_interface: Optional alphanumeric to specify which
-            interface the neighbor will apply to.
-            Defaults to ""
-        :return bgp_neighbor_obj: BgpRouter object
+            interface the neighbor will apply to. Defaults to the empty string.
+        :return bgp_neighbor_obj: BgpRouter object.
         """
-
         if not self.materialized:
             raise VerificationError(
                 "VRF {0}".format(self.name), "Object not materialized"

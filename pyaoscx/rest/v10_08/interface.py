@@ -7,7 +7,7 @@ from pyaoscx.interface import Interface as AbstractInterface
 
 class Interface(AbstractInterface):
     """
-    Provide configuration management for Interface for Version 10.08
+    Provide configuration management for Interface for Version 10.08.
     """
 
     pass
