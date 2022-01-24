@@ -6,20 +6,27 @@ from pyaoscx.exceptions.pyaoscx_error import PyaoscxError
 
 class VerificationError(PyaoscxError):
     """
-    Exception class for a PYAOSCX Verification Error.
+    PYAOSCX Verification Error Exception.
     """
 
     def __init__(self, *args):
+        self.message = None
+        self.module = None
         if args:
-            super().__init__(args[1])
-            self.module = args[0]
-        else:
-            self.message = None
+            if len(args) >= 1:
+                self.module = args[0]
+            if len(args) > 1:
+                message = ", ".join(str(a) for a in args[1:])
+                super().__init__(message)
 
     def __str__(self):
-        if self.message:
-            return "VERIFICATION ERROR: {0} DETAIL: {1}".format(
-                self.module, self.message
-            )
-        else:
-            return "VERIFICATION ERROR"
+        base_msg = "VERIFICATION ERROR"
+        msg_parts = [base_msg]
+        if self.module:
+            if self.message:
+                msg_parts.append("{0} DETAIL".format(self.module))
+                msg_parts.append(self.message)
+            else:
+                msg_parts.append(self.module)
+        msg = ": ".join(msg_parts)
+        return msg
