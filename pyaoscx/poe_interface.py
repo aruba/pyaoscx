@@ -91,17 +91,13 @@ class PoEInterface(Interface):
         }
 
         # Set URI
-        uri = "{0}{1}/{2}/{3}".format(
-            self.session.base_url,
-            self.base_uri,
-            self.percents_name,
-            self.resource_uri_name
+        uri = "{0}/{1}/{2}".format(
+            self.base_uri, self.percents_name, self.resource_uri_name
         )
 
         # Try to get a response to use its data
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -159,11 +155,8 @@ class PoEInterface(Interface):
         poe_interface_data = utils.get_attrs(self, self.config_attrs)
 
         # Set URI
-        uri = "{0}{1}/{2}/{3}".format(
-            self.session.base_url,
-            self.base_uri,
-            self.percents_name,
-            self.resource_uri_name
+        uri = "{0}/{1}/{2}".format(
+            self.base_uri, self.percents_name, self.resource_uri_name
         )
 
         # Compare dictionaries
@@ -174,9 +167,7 @@ class PoEInterface(Interface):
         else:
             post_data = json.dumps(poe_interface_data)
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data,
-                    proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -220,8 +211,7 @@ class PoEInterface(Interface):
         return: Object's URI
         """
         if self._uri is None:
-            self._uri = "{0}{1}/{2}/{3}".format(
-                self.session.base_url,
+            self._uri = "{0}/{1}/{2}".format(
                 self.base_uri,
                 self.percents_name,
                 self.resource_uri_name

@@ -72,9 +72,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         all_attributes = list(set(non_configurable_attrs + configurable_attrs))
 
         attributes_list = ",".join(all_attributes)
-        uri = "system?attributes={}&depth={}".format(
-            attributes_list,
-            self.session.api.default_depth
+        uri = "system?attributes={0}&depth={1}".format(
+            attributes_list, self.session.api.default_depth
         )
 
         try:
@@ -136,14 +135,13 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         attributes_list = ",".join(attributes)
 
         # Build URI
-        uri = "{}system/subsystems?attributes={}&depth={}".format(
-            self.session.base_url, attributes_list,
-            self.session.api.default_subsystem_facts_depth)
+        uri = "system/subsystems?attributes={0}&depth={1}".format(
+            attributes_list, self.session.api.default_subsystem_facts_depth
+        )
 
         try:
             # Try to perform a GET call and retrieve the data
-            response = self.session.s.get(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("GET", uri)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -165,11 +163,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         :return: firmware_version: The firmware version
         """
 
-        uri = "{}firmware".format(self.session.base_url)
-
         try:
-            response = self.session.s.get(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("GET", "firmware")
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -245,15 +240,10 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             "depth": depth,
             "selector": selector
         }
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Device.base_uri
-        )
         try:
-            response = self.session.s.get(
-                uri, verify=False,
-                proxies=self.session.proxy,
-                params=payload)
+            response = self.session.request(
+                "GET", Device.base_uri, params=payload
+            )
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -278,20 +268,13 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             config_data["other_config"][banner_type] = banner_info
 
             # UPDATE Banner
-            put_uri = "{base_url}{class_uri}".format(
-                base_url=self.session.base_url,
-                class_uri=Device.base_uri
-            )
+            put_uri = Device.base_uri
             # Set data to be used inside PUT
             put_data = json.dumps(config_data)
 
             try:
-                response = self.session.s.put(
-                    put_uri,
-                    verify=False,
-                    data=put_data,
-                    proxies=self.session.proxy
-                )
+                response = self.session.request("PUT", put_uri, data=put_data)
+
             except Exception as e:
                 raise ResponseError("PUT", e)
 
@@ -322,15 +305,10 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             "depth": depth,
             "selector": selector
         }
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Device.base_uri
-        )
         try:
-            response = self.session.s.get(
-                uri, verify=False,
-                proxies=self.session.proxy,
-                params=payload)
+            response = self.session.request(
+                "GET", Device.base_uri, params=payload
+            )
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -349,21 +327,13 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             # Delete Banner
             config_data["other_config"].pop(banner_type)
 
-            # UPDATE Banner
-            uri = "{base_url}{class_uri}".format(
-                base_url=self.session.base_url,
-                class_uri=Device.base_uri
-            )
-
             put_data = json.dumps(config_data)
 
             try:
-                response = self.session.s.put(
-                    uri,
-                    verify=False,
-                    data=put_data,
-                    proxies=self.session.proxy
+                response = self.session.request(
+                    "PUT", Device.base_uri, data=put_data
                 )
+
             except Exception as e:
                 raise ResponseError("PUT", e)
 
@@ -389,14 +359,10 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             raise VerificationError("Boot Firmware", "Bad partition name")
 
         success = False
-        uri = "{base_url}boot?image={part}".format(
-            base_url=self.session.base_url,
-            part=partition_name)
+        uri = "boot?image={0}".format(partition_name)
 
         try:
-            self.session.s.post(
-                uri, verify=False,
-                proxies=self.session.proxy)
+            self.session.request("POST", uri)
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -446,18 +412,13 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         http_path_encoded = quote_plus(http_path)
 
         # Build URI
-        uri = "{base_url}firmware?image={part}&from={path}&vrf={vrf}".format(
-            base_url=self.session.base_url,
-            part=partition_name,
-            path=http_path_encoded,
-            vrf=vrf,
+        uri = "firmware?image={0}&from={1}&vrf={2}".format(
+            partition_name, http_path_encoded, vrf
         )
 
         # PUT for a HTTP Request
         try:
-            response = self.session.s.put(
-                uri, verify=False,
-                proxies=self.session.proxy)
+            response = self.session.request("PUT", uri)
 
         except Exception as e:
             raise ResponseError("PUT", e)
@@ -481,11 +442,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         :return success: True if success
         """
 
-        uri = "{base_url}firmware?image={part}".format(
-            base_url=self.session.base_url,
-            part=partition_name)
+        uri = "firmware?image={0}".format(partition_name)
 
-        # Upload file
         success = utils.file_upload(self.session, firmware_file_path, uri)
         # If no errors detected
         return success

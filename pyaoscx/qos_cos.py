@@ -104,13 +104,8 @@ class QosCos(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{0}{1}".format(
-            session.base_url,
-            cls.base_uri
-        )
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", cls.base_uri)
         except Exception as e:
             raise ResponseError("GET", e)
 

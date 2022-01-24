@@ -39,15 +39,10 @@ class Configuration():
         """
         logging.info("Retrieving the switch attributes and capabilities")
         depth = self.session.api.default_depth
-        uri = "{base_url}{class_uri}?depth={depth}".format(
-            base_url=self.session.base_url,
-            class_uri=Configuration.base_uri,
-            depth=depth
-        )
+        uri = "{0}?depth={1}".format(Configuration.base_uri, depth)
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("GET", uri)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -66,15 +61,10 @@ class Configuration():
             "depth": depth,
             "selector": selector
         }
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Configuration.base_uri,
-        )
         try:
-            response = self.session.s.get(
-                uri, verify=False,
-                proxies=self.session.proxy,
-                params=payload)
+            response = self.session.request(
+                "GET", Configuration.base_uri, params=payload
+            )
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -118,11 +108,6 @@ class Configuration():
         """
         system_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Configuration.base_uri
-        )
-
         # Compare dictionaries
         if system_data == self.__original_attributes:
             # Object was not modified
@@ -133,9 +118,9 @@ class Configuration():
             put_data = json.dumps(system_data)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=put_data,
-                    proxies=self.session.proxy)
+                response = self.session.request(
+                    "PUT", Configuration.base_uri, data=put_data
+                )
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -166,14 +151,9 @@ class Configuration():
             Defaults to running-config
         :return config_data: Data containing the full configuration
         """
-        uri = "{base_url}fullconfigs/{cfg}".format(
-            base_url=self.session.base_url,
-            cfg=config_name
-        )
+        uri = "fullconfigs/{0}".format(config_name)
         try:
-            response = self.session.s.get(
-                uri, verify=False,
-                proxies=self.session.proxy)
+            response = self.session.request("GET", uri)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -200,16 +180,12 @@ class Configuration():
             it was not.
         """
         success = False
-        uri = "{base_url}fullconfigs/{cfg}?from={dest}&vrf={vrf}".format(
-                  base_url=self.session.base_url,
-                  cfg=config_name,
-                  dest=config_file_location,
-                  vrf=vrf)
+        uri = "fullconfigs/{0}?from={1}&vrf={2}".format(
+            config_name, config_file_location, vrf
+        )
 
         try:
-            response = self.session.s.put(
-                uri, verify=False,
-                proxies=self.session.proxy)
+            response = self.session.request("PUT", uri)
 
             success = True
 
@@ -237,13 +213,11 @@ class Configuration():
         :return True if completed
         """
 
-        uri = "{0}fullconfigs/{1}?to={2}&type={3}&vrf={4}".format(
-            self.session.base_url, config_name, destination, config_type, vrf
+        uri = "fullconfigs/{0}?to={1}&type={2}&vrf={3}".format(
+            config_name, destination, config_type, vrf
         )
         try:
-            response = self.session.s.get(
-                uri, verify=False,
-                proxies=self.session.proxy)
+            response = self.session.request("GET", uri)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -320,18 +294,12 @@ class Configuration():
         """
         success = False
 
-        uri = (
-            "{base_url}fullconfigs/{dest}?from={prefix}fullconfigs/{src}"
-        ).format(
-            base_url=self.session.base_url,
-            prefix=self.session.resource_prefix,
-            dest=destination_config,
-            src=source_config)
+        uri = "fullconfigs/{0}?from={1}fullconfigs/{2}".format(
+            self.session.resource_prefix, destination_config, source_config
+        )
 
         try:
-            response = self.session.s.put(
-                uri, verify=False,
-                proxies=self.session.proxy)
+            response = self.session.request("PUT", uri)
 
         except Exception as e:
             raise ResponseError("PUT", e)
@@ -486,17 +454,10 @@ class Configuration():
         config_json = json.dumps(config_json)
 
         # Create URI from the session base url and the configuration name
-        uri = "{base_url}fullconfigs/{cfg}".format(
-            base_url=self.session.base_url,
-            cfg=config_name
-        )
+        uri = "fullconfigs/{0}".format(config_name)
         try:
             # Put (REST) configuration file
-            response = self.session.s.put(
-                url=uri,
-                verify=False,
-                proxies=self.session.proxy,
-                data=config_json)
+            response = self.session.request("PUT", uri, data=config_json)
 
             success = True
 

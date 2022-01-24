@@ -106,14 +106,9 @@ class StaticRoute(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{prefix}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            prefix=self.reference_address
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.reference_address)
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -171,16 +166,12 @@ class StaticRoute(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        base_uri = "{base_vrf_uri}/{vrf_name}/static_routes".format(
-            base_vrf_uri=parent_vrf.base_uri,
-            vrf_name=parent_vrf.name)
-
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=base_uri)
+        uri = "{0}/{1}/static_routes".format(
+            parent_vrf.base_uri, parent_vrf.name
+        )
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -241,11 +232,7 @@ class StaticRoute(PyaoscxModule):
 
         static_route_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{prefix}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            prefix=self.reference_address
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.reference_address)
 
         # Compare dictionaries
         if static_route_data == self.__original_attributes:
@@ -256,9 +243,7 @@ class StaticRoute(PyaoscxModule):
             post_data = json.dumps(static_route_data)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False,
-                    data=post_data, proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -292,16 +277,12 @@ class StaticRoute(PyaoscxModule):
         static_route_data["prefix"] = self.prefix
         static_route_data["vrf"] = self.__parent_vrf.get_uri()
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
         post_data = json.dumps(static_route_data)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data,
-                proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -323,15 +304,10 @@ class StaticRoute(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{prefix}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            prefix=self.reference_address
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.reference_address)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)

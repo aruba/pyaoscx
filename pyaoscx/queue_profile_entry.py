@@ -1,4 +1,4 @@
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -101,15 +101,10 @@ class QueueProfileEntry(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "".join(
-            (
-                session.base_url,
-                cls.collection_uri.format(name=queue_profile_name)
-            )
-        )
+        uri = cls.collection_uri.format(name=queue_profile_name)
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as exc:
             raise ResponseError("GET", exc)
 
@@ -213,20 +208,10 @@ class QueueProfileEntry(PyaoscxModule):
 
         depth = session.api.default_facts_depth
 
-        entries_uri = cls.collection_uri.format(name=queue_profile_name)
-
-        uri = "{0}{1}".format(
-            session.base_url,
-            entries_uri
-        )
+        uri = cls.collection_uri.format(name=queue_profile_name)
 
         try:
-            response = session.s.get(
-                uri,
-                verify=False,
-                proxies=session.proxy,
-                params={"depth": depth}
-            )
+            response = session.request("GET", uri, params={"depth": depth})
         except Exception as exc:
             raise ResponseError("GET", exc)
 

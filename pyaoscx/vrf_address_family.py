@@ -97,15 +97,10 @@ class VrfAddressFamily(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{address_family}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            address_family=self.address_family
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.address_family)
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -150,16 +145,12 @@ class VrfAddressFamily(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        base_uri = "{base_vrf_uri}/{vrf_name}/vrf_address_families".format(
-            base_vrf_uri=parent_vrf.base_uri,
-            vrf_name=parent_vrf.name)
-
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=base_uri)
+        uri = "{0}/{1}/vrf_address_families".format(
+            parent_vrf.base_uri, parent_vrf.name
+        )
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -218,11 +209,7 @@ class VrfAddressFamily(PyaoscxModule):
         """
         vrf_address_family_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{address_family}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            address_family=self.address_family
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.address_family)
 
         # Compare dictionaries
         if vrf_address_family_data == self.__original_attributes:
@@ -233,12 +220,7 @@ class VrfAddressFamily(PyaoscxModule):
             post_data = json.dumps(vrf_address_family_data)
 
             try:
-                response = self.session.s.put(
-                    uri,
-                    verify=False,
-                    data=post_data,
-                    proxies=self.session.proxy
-                )
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -265,15 +247,12 @@ class VrfAddressFamily(PyaoscxModule):
         vrf_address_family_data = utils.get_attrs(self, self.config_attrs)
         vrf_address_family_data["address_family"] = self.address_family
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
         post_data = json.dumps(vrf_address_family_data)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -295,15 +274,10 @@ class VrfAddressFamily(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{address_family}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            address_family=self.address_family
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.address_family)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)

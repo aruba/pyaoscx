@@ -145,12 +145,8 @@ class Vlan(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=Vlan.base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", Vlan.base_uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -304,19 +300,11 @@ class Vlan(PyaoscxModule):
         vlan_depth = session.api.default_facts_depth
 
         # Build URI
-        uri = "{base_url}{class_uri}?depth={depth}".format(
-            base_url=session.base_url,
-            class_uri=Vlan.base_uri,
-            depth=vlan_depth
-        )
+        uri = "{0}?depth={1}".format(Vlan.base_uri, vlan_depth)
 
         try:
             # Try to get facts data via GET method
-            response = session.s.get(
-                uri,
-                verify=False,
-                proxies=session.proxy
-            )
+            response = session.request("GET", uri)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -356,10 +344,8 @@ class Vlan(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{id}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=Vlan.base_uri,
-                id=self.id
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix, Vlan.base_uri, self.id
             )
 
         return self._uri

@@ -90,15 +90,10 @@ class Vrf(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Vrf.base_uri,
-            name=self.name
-        )
+        uri = "{0}/{1}".format(Vrf.base_uri, self.name)
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -220,13 +215,8 @@ class Vrf(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=Vrf.base_uri
-        )
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", Vrf.base_uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -278,11 +268,7 @@ class Vrf(PyaoscxModule):
         """
         vrf_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Vrf.base_uri,
-            name=self.name
-        )
+        uri = "{0}/{1}".format(Vrf.base_uri, self.name)
 
         # Compare dictionaries
         # if vrf_data == self.__original_attributes:
@@ -297,9 +283,7 @@ class Vrf(PyaoscxModule):
             post_data = json.dumps(vrf_data)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data,
-                    proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -327,15 +311,11 @@ class Vrf(PyaoscxModule):
 
         vrf_data["name"] = self.name
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Vrf.base_uri
-        )
-
         post_data = json.dumps(vrf_data)
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", Vrf.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -361,15 +341,10 @@ class Vrf(PyaoscxModule):
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Vrf.base_uri,
-            name=self.name
-        )
+        uri = "{0}/{1}".format(Vrf.base_uri, self.name)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)
@@ -451,19 +426,11 @@ class Vrf(PyaoscxModule):
         vrf_depth = session.api.default_facts_depth
 
         # Build URI
-        uri = "{base_url}{class_uri}?depth={depth}".format(
-            base_url=session.base_url,
-            class_uri=Vrf.base_uri,
-            depth=vrf_depth
-        )
+        uri = "{0}?depth={1}".format(Vrf.base_uri, vrf_depth)
 
         try:
             # Try to get facts data via GET method
-            response = session.s.get(
-                uri,
-                verify=False,
-                proxies=session.proxy
-            )
+            response = session.request("GET", uri)
 
         except Exception as e:
             raise ResponseError("GET", e)

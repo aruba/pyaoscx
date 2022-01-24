@@ -99,16 +99,10 @@ class BgpNeighbor(PyaoscxModule):
 
         payload = {"depth": depth, "selector": selector}
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id=self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
 
         try:
-            response = self.session.s.get(uri,
-                                          verify=False,
-                                          params=payload,
-                                          proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -163,15 +157,12 @@ class BgpNeighbor(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        base_uri = "{0}/{1}/bgp_neighbors".format(
+        uri = "{0}/{1}/bgp_neighbors".format(
             parent_bgp_router.base_uri, parent_bgp_router.asn
         )
 
-        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
-                                             class_uri=base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -239,10 +230,7 @@ class BgpNeighbor(PyaoscxModule):
                 "local_interface"
             ] = self.local_interface.get_info_format()
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id=self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
 
         # Compare dictionaries
         if bgp_neighbor_data == self.__original_attributes:
@@ -253,10 +241,7 @@ class BgpNeighbor(PyaoscxModule):
             put_data = json.dumps(bgp_neighbor_data)
 
             try:
-                response = self.session.s.put(uri,
-                                              verify=False,
-                                              data=put_data,
-                                              proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=put_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -299,15 +284,12 @@ class BgpNeighbor(PyaoscxModule):
                     "local_interface"
                 ] = self.local_interface.get_info_format()
 
-        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
-                                             class_uri=self.base_uri)
         post_data = json.dumps(bgp_neighbor_data)
 
         try:
-            response = self.session.s.post(uri,
-                                           verify=False,
-                                           data=post_data,
-                                           proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -330,15 +312,10 @@ class BgpNeighbor(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id=self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
 
         try:
-            response = self.session.s.delete(uri,
-                                             verify=False,
-                                             proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)

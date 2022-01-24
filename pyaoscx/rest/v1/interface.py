@@ -104,17 +104,15 @@ class Interface(AbstractInterface):
             "selector": selector
         }
 
-        uri_ports = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri_ports,
-            name=self.percents_name
+        uri_ports = "{0}/{1}".format(
+            Interface.base_uri_ports, self.percents_name
         )
 
         # Bring Ports information
         try:
-            response_ports = self.session.s.get(
-                uri_ports, verify=False, params=payload,
-                proxies=self.session.proxy)
+            response_ports = self.session.request(
+                "GET", uri_ports, params=payload
+            )
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -162,16 +160,14 @@ class Interface(AbstractInterface):
         # Check if port is a LAG
         # If not, makes get request to system/interfaces
         if self.type != "lag":
-            uri_interfaces = "{base_url}{class_uri}/{name}".format(
-                base_url=self.session.base_url,
-                class_uri=Interface.base_uri_interface,
-                name=self.percents_name
+            uri_interfaces = "{0}/{1}".format(
+                Interface.base_uri_interface, self.percents_name
             )
             # Bring Interface information
             try:
-                response_ints = self.session.s.get(
-                    uri_interfaces, verify=False,
-                    params=payload, proxies=self.session.proxy)
+                response_ints = self.session.request(
+                    "GET", uri_interfaces, params=payload
+                )
 
             except Exception as e:
                 raise ResponseError("GET", e)
@@ -355,12 +351,8 @@ class Interface(AbstractInterface):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=Interface.base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", Interface.base_uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -420,17 +412,11 @@ class Interface(AbstractInterface):
             "depth": depth
         }
 
-        # Build ports URI
-        uri_ports = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=Interface.base_uri_ports
-        )
-
         # Get Ports information
         try:
-            response_ports = session.s.get(
-                uri_ports, verify=False, params=payload,
-                proxies=session.proxy)
+            response_ports = session.request(
+                "GET", Interface.base_uri_ports, params=payload
+            )
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -443,16 +429,15 @@ class Interface(AbstractInterface):
         ports_data = json.loads(response_ports.text)
 
         # Build interface URI
-        uri_interface = "{class_uri}?depth={depth}".format(
-            class_uri=Interface.base_uri_interface,
-            depth=depth
+        uri_interface = "{0}?depth={1}".format(
+            Interface.base_uri_interface, depth
         )
 
         # Get Interface information
         try:
-            response_interface = session.s.get(
-                uri_interface, verify=False, params=payload,
-                proxies=session.proxy)
+            response_interface = session.request(
+                "GET", uri_interface, params=payload
+            )
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -515,15 +500,10 @@ class Interface(AbstractInterface):
             raise VerificationError("Interface", "Can't be deleted")
 
         # Delete Interface via a DELETE request to Ports Table
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri_ports,
-            id=self.name
-        )
+        uri = "{0}/{1}".format(Interface.base_uri_ports, self.name)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)
@@ -535,14 +515,10 @@ class Interface(AbstractInterface):
         # Check if port is a LAG
         # If not, DELETE request to Interface Table
         if self.type != "lag":
-            uri_interfaces = "{base_url}{class_uri}".format(
-                base_url=self.session.base_url,
-                class_uri=Interface.base_uri_interface
-            )
-
             try:
-                response_ints = self.session.s.delete(
-                    uri_interfaces, verify=False, proxies=self.session.proxy)
+                response_ints = self.session.request(
+                    "DELETE", Interface.base_uri_interface
+                )
 
             except Exception as e:
                 raise ResponseError("DELETE", e)
@@ -574,10 +550,8 @@ class Interface(AbstractInterface):
         modified_int = True
         # Check if Object is a LAG
         if self.type != "lag":
-            uri_interfaces = "{base_url}{class_uri}/{name}".format(
-                base_url=self.session.base_url,
-                class_uri=Interface.base_uri_interface,
-                name=self.percents_name
+            uri_interfaces = "{0}/{1}".format(
+                Interface.base_uri_interface, self.percents_name
             )
             # get Interface data related to configuration
             int_data = utils.get_attrs(self, self.config_attrs_int)
@@ -595,9 +569,9 @@ class Interface(AbstractInterface):
             else:
                 # Bring Interface information
                 try:
-                    response_ints = self.session.s.put(
-                        uri_interfaces, verify=False,
-                        data=put_int_data, proxies=self.session.proxy)
+                    response_ints = self.session.request(
+                        "PUT", uri_interfaces, data=put_int_data
+                    )
 
                 except Exception as e:
                     raise ResponseError("PUT", e)
@@ -610,10 +584,8 @@ class Interface(AbstractInterface):
                 # Set new original attributes
                 self.__original_attributes_int = int_data
 
-        uri_ports = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri_ports,
-            name=self.percents_name
+        uri_ports = "{0}/{1}".format(
+            Interface.base_uri_ports, self.percents_name
         )
 
         # get Port data related to configuration
@@ -763,17 +735,15 @@ class Interface(AbstractInterface):
         if port_data == self.__original_attributes_port:
             # Object was not modified
             modified_int = False
-
         else:
-
             # Set put_port_data
             put_port_data = json.dumps(port_data)
 
             # Bring Port information
             try:
-                response_ports = self.session.s.put(
-                    uri_ports, verify=False,
-                    data=put_port_data, proxies=self.session.proxy)
+                response_ports = self.session.request(
+                    "PUT", uri_ports, data=put_port_data
+                )
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -798,17 +768,11 @@ class Interface(AbstractInterface):
         port_data = utils.get_attrs(self, self.config_attrs)
         port_data["name"] = self.name
 
-        # Creating in the Ports Table
-        uri_ports = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri_ports
-        )
-
         post_data_ports = json.dumps(port_data)
         try:
-            response = self.session.s.post(
-                uri_ports, verify=False, data=post_data_ports,
-                proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", Interface.base_uri_ports, data=post_data_ports
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -821,10 +785,6 @@ class Interface(AbstractInterface):
         # Check if port is a LAG
         # If not, POST Request to Interface Table
         if self.type != "lag":
-            uri_interfaces = "{base_url}{class_uri}".format(
-                base_url=self.session.base_url,
-                class_uri=Interface.base_uri_interface
-            )
 
             # Set data for Interface Table
             interface_data = utils.get_attrs(self, self.config_attrs_int)
@@ -837,9 +797,9 @@ class Interface(AbstractInterface):
 
             # Bring Interface information
             try:
-                response_ints = self.session.s.post(
-                    uri_interfaces, verify=False,
-                    data=post_int_data, proxies=self.session.proxy)
+                response_ints = self.session.request(
+                    "POST", Interface.base_uri_interface, data=post_int_data
+                )
 
             except Exception as e:
                 raise ResponseError("POST", e)
@@ -864,16 +824,16 @@ class Interface(AbstractInterface):
         """
         uri = ""
         if not interface:
-            uri = "{resource_prefix}{class_uri}/{name}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=Interface.base_uri_ports,
-                name=self.percents_name
+            uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                Interface.base_uri_ports,
+                self.percents_name
             )
         else:
-            uri = "{resource_prefix}{class_uri}/{name}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=Interface.base_uri_interface,
-                name=self.percents_name
+            uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                Interface.base_uri_interface,
+                self.percents_name
             )
 
         return uri
@@ -896,10 +856,9 @@ class Interface(AbstractInterface):
         :return: True if object was changed
         """
 
-        uri_ports = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri_ports,
-            name=self.percents_name
+        uri_ports = "{0}/{1}".format(
+            Interface.base_uri_ports,
+            self.percents_name
         )
 
         # get Port data related to configuration
@@ -926,9 +885,9 @@ class Interface(AbstractInterface):
 
         # Update Port information
         try:
-            response_ports = self.session.s.put(
-                uri_ports, verify=False,
-                data=put_port_data, proxies=self.session.proxy)
+            response_ports = self.session.request(
+                "PUT", uri_ports, data=put_port_data
+            )
 
         except Exception as e:
             raise ResponseError("PUT", e)

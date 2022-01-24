@@ -153,16 +153,10 @@ class Interface(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri,
-            name=self.percents_name
-        )
+        uri = "{0}/{1}".format(Interface.base_uri, self.percents_name)
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy
-            )
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -342,12 +336,8 @@ class Interface(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=Interface.base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", Interface.base_uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -431,18 +421,11 @@ class Interface(PyaoscxModule):
         interface_depth = session.api.default_facts_depth
 
         # Build URI
-        uri = "{class_uri}?depth={depth}".format(
-            class_uri=Interface.base_uri,
-            depth=interface_depth
-        )
+        uri = "{0}?depth={1}".format(Interface.base_uri, interface_depth)
 
         try:
             # Try to get facts via GET method
-            response = session.s.get(
-                uri,
-                verify=False,
-                proxies=session.proxy
-            )
+            response = session.request("GET", uri)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -471,16 +454,12 @@ class Interface(PyaoscxModule):
         if self.type is not None:
             interface_data["type"] = self.type
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri
-        )
-
         post_data = json.dumps(interface_data)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", Interface.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -525,15 +504,10 @@ class Interface(PyaoscxModule):
             self.initialize_interface_entry()
         else:
             # Delete Interface via a DELETE REQUEST
-            uri = "{base_url}{class_uri}/{id}".format(
-                base_url=self.session.base_url,
-                class_uri=Interface.base_uri,
-                id=self.name
-            )
+            uri = "{0}/{1}".format(Interface.base_uri, self.name)
 
             try:
-                response = self.session.s.delete(
-                    uri, verify=False, proxies=self.session.proxy)
+                response = self.session.request("DELETE", uri)
 
             except Exception as e:
                 raise ResponseError("DELETE", e)
@@ -681,11 +655,7 @@ class Interface(PyaoscxModule):
                 "aclv6_routed_out_cfg"
             ] = self.aclv6_routed_out_cfg.get_info_format()
 
-        uri = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri,
-            name=self.percents_name
-        )
+        uri = "{0}/{1}".format(Interface.base_uri, self.percents_name)
 
         # Compare dictionaries
         if iface_data == self.__original_attributes:
@@ -696,12 +666,7 @@ class Interface(PyaoscxModule):
             put_data = json.dumps(iface_data)
 
             try:
-                response = self.session.s.put(
-                    uri,
-                    verify=False,
-                    data=put_data,
-                    proxies=self.session.proxy
-                )
+                response = self.session.request("PUT", uri, data=put_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -781,10 +746,10 @@ class Interface(PyaoscxModule):
         return: Object's URI
         """
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{name}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=Interface.base_uri,
-                name=self.percents_name
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                Interface.base_uri,
+                self.percents_name
             )
 
         return self._uri
@@ -837,17 +802,12 @@ class Interface(PyaoscxModule):
             # Copies interfaces
             self.__prev_interfaces = list(self.interfaces)
 
-        uri = "{base_url}{class_uri}/{name}".format(
-            base_url=self.session.base_url,
-            class_uri=Interface.base_uri,
-            name=self.percents_name
-        )
+        uri = "{0}/{1}".format(Interface.base_uri, self.percents_name)
 
         put_data = json.dumps(interface_data)
 
         try:
-            response = self.session.s.put(
-                uri, verify=False, data=put_data, proxies=self.session.proxy)
+            response = self.session.request("PUT", uri, data=put_data)
 
         except Exception as e:
             raise ResponseError("PUT", e)

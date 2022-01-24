@@ -77,17 +77,14 @@ class ACL(PyaoscxModule):
 
         payload = {"depth": depth, "selector": selector}
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=ACL.base_uri,
-            id1=self.name,
-            separator=self.session.api.compound_index_separator,
-            id2=self.list_type)
+        uri = "{0}/{1}{2}{3}".format(
+            ACL.base_uri,
+            self.name,
+            self.session.api.compound_index_separator,
+            self.list_type
+        )
         try:
-            response = self.session.s.get(uri,
-                                          verify=False,
-                                          params=payload,
-                                          proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -144,11 +141,8 @@ class ACL(PyaoscxModule):
 
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
-                                             class_uri=ACL.base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", cls.base_uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -202,13 +196,6 @@ class ACL(PyaoscxModule):
 
         acl_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=ACL.base_uri,
-            id1=self.name,
-            separator=self.session.api.compound_index_separator,
-            id2=self.list_type)
-
         # Compare dictionaries
         if acl_data == self.__original_attributes:
             # Object was not modified
@@ -222,11 +209,14 @@ class ACL(PyaoscxModule):
 
             post_data = json.dumps(acl_data)
 
+            uri = "{0}/{1}{2}{3}".format(
+                ACL.base_uri,
+                self.name,
+                self.session.api.compound_index_separator,
+                self.list_type
+            )
             try:
-                response = self.session.s.put(uri,
-                                              verify=False,
-                                              data=post_data,
-                                              proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -254,15 +244,12 @@ class ACL(PyaoscxModule):
         acl_data["name"] = self.name
         acl_data["list_type"] = self.list_type
 
-        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
-                                             class_uri=ACL.base_uri)
         post_data = json.dumps(acl_data)
 
         try:
-            response = self.session.s.post(uri,
-                                           verify=False,
-                                           data=post_data,
-                                           proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", ACL.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -285,17 +272,15 @@ class ACL(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=ACL.base_uri,
-            id1=self.name,
-            separator=self.session.api.compound_index_separator,
-            id2=self.list_type)
+        uri = "{0}/{1}{2}{3}".format(
+            ACL.base_uri,
+            self.name,
+            self.session.api.compound_index_separator,
+            self.list_type
+        )
 
         try:
-            response = self.session.s.delete(uri,
-                                             verify=False,
-                                             proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)

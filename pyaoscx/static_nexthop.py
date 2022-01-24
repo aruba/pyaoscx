@@ -99,14 +99,9 @@ class StaticNexthop(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id=self.id
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.id)
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -165,17 +160,12 @@ class StaticNexthop(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        base_uri = "{0}/{1}/static_nexthops".format(
-            parent_static_route.base_uri,
-            parent_static_route.reference_address
+        uri = "{0}/{1}/static_nexthops".format(
+            parent_static_route.base_uri, parent_static_route.reference_address
         )
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -241,11 +231,7 @@ class StaticNexthop(PyaoscxModule):
         if hasattr(self, "port") and self.port:
             static_nexthop_data["port"] = self.port.get_info_format()
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id=self.id
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.id)
 
         # Compare dictionaries
         if static_nexthop_data == self.__original_attributes:
@@ -256,9 +242,7 @@ class StaticNexthop(PyaoscxModule):
             post_data = json.dumps(static_nexthop_data)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False,
-                    data=post_data, proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -291,16 +275,12 @@ class StaticNexthop(PyaoscxModule):
         if hasattr(self, "port") and self.port:
             static_nexthop_data["port"] = self.port.get_info_format()
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
         post_data = json.dumps(static_nexthop_data)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data,
-                proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -322,15 +302,10 @@ class StaticNexthop(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{id}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id=self.id
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.id)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)
@@ -456,17 +431,12 @@ class StaticNexthop(PyaoscxModule):
 
         logging.info("Retrieving the switch static_nexthop")
 
-        base_uri = "{0}/{1}/static_nexthops".format(
-            parent_static_route.base_uri,
-            parent_static_route.reference_address
+        uri = "{0}/{1}/static_nexthops".format(
+            parent_static_route.base_uri, parent_static_route.reference_address
         )
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 

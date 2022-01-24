@@ -72,16 +72,14 @@ class DhcpRelay(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=DhcpRelay.base_uri,
-            id1=self.vrf.name,
-            separator=self.session.api.compound_index_separator,
-            id2=self.port.percents_name
+        uri = "{0}/{1}{2}{3}".format(
+            DhcpRelay.base_uri,
+            self.vrf.name,
+            self.session.api.compound_index_separator,
+            self.port.percents_name
         )
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -133,12 +131,8 @@ class DhcpRelay(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=DhcpRelay.base_uri)
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", DhcpRelay.base_uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -194,12 +188,11 @@ class DhcpRelay(PyaoscxModule):
 
         dhcp_relay_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=DhcpRelay.base_uri,
-            id1=self.vrf.name,
-            separator=self.session.api.compound_index_separator,
-            id2=self.port.percents_name
+        uri = "{0}/{1}{2}{3}".format(
+            DhcpRelay.base_uri,
+            self.vrf.name,
+            self.session.api.compound_index_separator,
+            self.port.percents_name
         )
 
         # Compare dictionaries
@@ -212,9 +205,7 @@ class DhcpRelay(PyaoscxModule):
             post_data = json.dumps(dhcp_relay_data)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data,
-                    proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -243,15 +234,12 @@ class DhcpRelay(PyaoscxModule):
         dhcp_relay_data["vrf"] = self.vrf.get_info_format()
         dhcp_relay_data["port"] = self.port.get_info_format()
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=DhcpRelay.base_uri
-        )
         post_data = json.dumps(dhcp_relay_data)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", DhcpRelay.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -273,17 +261,15 @@ class DhcpRelay(PyaoscxModule):
         Perform DELETE call to delete DhcpRelay table entry.
         """
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=DhcpRelay.base_uri,
-            id1=self.vrf.name,
-            separator=self.session.api.compound_index_separator,
-            id2=self.port.percents_name
+        uri = "{0}/{1}{2}{3}".format(
+            DhcpRelay.base_uri,
+            self.vrf.name,
+            self.session.api.compound_index_separator,
+            self.port.percents_name
         )
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)

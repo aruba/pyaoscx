@@ -115,9 +115,9 @@ class OspfVlink(PyaoscxModule):
             "area_id": parent_ospf_area.area_id
         }
         uri_indices.update(parent_ospf_area._get_indices())
-        uri = session.base_url + cls.collection_uri.format(uri_indices)
+        uri = cls.collection_uri.format(uri_indices)
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as exc:
             raise ResponseError("GET", exc) from exc
         if not utils._response_ok(response, "GET"):

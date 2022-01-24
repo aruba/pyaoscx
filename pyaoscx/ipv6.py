@@ -115,15 +115,10 @@ class Ipv6(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{address}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            address=self.reference_address
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.reference_address)
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -172,16 +167,12 @@ class Ipv6(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        base_uri = "{base_int_uri}/{interface_name}/ip6_addresses".format(
-            base_int_uri=parent_int.base_uri,
-            interface_name=parent_int.percents_name)
-
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=base_uri)
+        uri = "{0}/{1}/ip6_addresses".format(
+            parent_int.base_uri, parent_int.percents_name
+        )
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -248,11 +239,7 @@ class Ipv6(PyaoscxModule):
         if "origin" in ip6_data:
             ip6_data.pop("origin")
 
-        uri = "{base_url}{class_uri}/{address}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            address=self.reference_address
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.reference_address)
         # Compare dictionaries
         if ip6_data == self.__original_attributes:
             # Object was not modified
@@ -263,9 +250,7 @@ class Ipv6(PyaoscxModule):
             post_data = json.dumps(ip6_data)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data,
-                    proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -294,15 +279,12 @@ class Ipv6(PyaoscxModule):
         ipv6_data = utils.get_attrs(self, self.config_attrs)
         ipv6_data["address"] = self.address
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
         post_data = json.dumps(ipv6_data)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -325,15 +307,10 @@ class Ipv6(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{address}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            address=self.reference_address
-        )
+        uri = "{0}/{1}".format(self.base_uri, self.reference_address)
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)
@@ -405,10 +382,10 @@ class Ipv6(PyaoscxModule):
         return: Object's URI
         """
         if self._uri is None:
-            self._uri = "{resource_prefix}{class_uri}/{id}".format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=self.base_uri,
-                id=self.reference_address
+            self._uri = "{0}{1}/{2}".format(
+                self.session.resource_prefix,
+                self.base_uri,
+                self.reference_address
             )
 
         return self._uri

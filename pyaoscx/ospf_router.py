@@ -134,9 +134,9 @@ class OspfRouter(PyaoscxModule):
             "name": parent_vrf.name,
             "version": cls.version
         }
-        uri = session.base_url + cls.collection_uri.format(**uri_indices)
+        uri = cls.collection_uri.format(**uri_indices)
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as exc:
             raise ResponseError("GET", exc) from exc
         if not utils._response_ok(response, "GET"):

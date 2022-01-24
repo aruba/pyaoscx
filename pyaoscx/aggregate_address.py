@@ -73,11 +73,10 @@ class AggregateAddress(PyaoscxModule):
         self.__parent_bgp_router = parent_bgp_router
 
         # Set URI
-        self.base_uri = (
-            "{base_bgp_router_uri}/{bgp_router_apn}/aggregate_addresses"
-            ).format(
-                base_bgp_router_uri=self.__parent_bgp_router.base_uri,
-                bgp_router_apn=self.__parent_bgp_router.asn)
+        self.base_uri = "{0}/{1}/aggregate_addresses".format(
+            self.__parent_bgp_router.base_uri,
+            self.__parent_bgp_router.asn
+        )
 
         for address in self.__parent_bgp_router.aggregate_addresses:
             if (
@@ -121,17 +120,15 @@ class AggregateAddress(PyaoscxModule):
             "selector": selector
         }
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id1=self.address_family,
-            separator=self.session.api.compound_index_separator,
-            id2=self.reference_ip_prefix
+        uri = "{0}/{1}{2}{3}".format(
+            self.base_uri,
+            self.address_family,
+            self.session.api.compound_index_separator,
+            self.reference_ip_prefix
         )
 
         try:
-            response = self.session.s.get(
-                uri, verify=False, params=payload, proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -177,18 +174,12 @@ class AggregateAddress(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        base_uri = (
-            "{base_bgp_router_uri}/{bgp_router_apn}/aggregate_addresses"
-        ).format(
-            base_bgp_router_uri=parent_bgp_router.base_uri,
-            bgp_router_apn=parent_bgp_router.asn)
-
-        uri = "{base_url}{class_uri}".format(
-            base_url=session.base_url,
-            class_uri=base_uri)
+        uri = "{0}/{1}/aggregate_addresses".format(
+            parent_bgp_router.base_uri, parent_bgp_router.asn
+        )
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -249,12 +240,11 @@ class AggregateAddress(PyaoscxModule):
 
         agg_address_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id1=self.address_family,
-            separator=self.session.api.compound_index_separator,
-            id2=self.reference_ip_prefix
+        uri = "{0}/{1}{2}{3}".format(
+            self.base_uri,
+            self.address_family,
+            self.session.api.compound_index_separator,
+            self.reference_ip_prefix
         )
         # Compare dictionaries
         if agg_address_data == self.__original_attributes:
@@ -265,9 +255,7 @@ class AggregateAddress(PyaoscxModule):
             post_data = json.dumps(agg_address_data)
 
             try:
-                response = self.session.s.put(
-                    uri, verify=False, data=post_data,
-                    proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -297,15 +285,12 @@ class AggregateAddress(PyaoscxModule):
         ag_address_data["address-family"] = self.address_family
         ag_address_data["ip_prefix"] = self.ip_prefix
 
-        uri = "{base_url}{class_uri}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri
-        )
         post_data = json.dumps(ag_address_data)
 
         try:
-            response = self.session.s.post(
-                uri, verify=False, data=post_data, proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -327,17 +312,15 @@ class AggregateAddress(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{id1}{separator}{id2}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            id1=self.address_family,
-            separator=self.session.api.compound_index_separator,
-            id2=self.reference_ip_prefix
+        uri = "{0}/{1}{2}{3}".format(
+            self.base_uri,
+            self.address_family,
+            self.session.api.compound_index_separator,
+            self.reference_ip_prefix
         )
 
         try:
-            response = self.session.s.delete(
-                uri, verify=False, proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)
@@ -424,14 +407,12 @@ class AggregateAddress(PyaoscxModule):
         """
 
         if self._uri is None:
-            self._uri = (
-                "{resource_prefix}{class_uri}/{id1}{separator}{id2}"
-            ).format(
-                resource_prefix=self.session.resource_prefix,
-                class_uri=self.base_uri,
-                id1=self.address_family,
-                separator=self.session.api.compound_index_separator,
-                id2=self.reference_ip_prefix
+            self._uri = "{0}{1}/{2}{3}{4}".format(
+                self.session.resource_prefix,
+                self.base_uri,
+                self.address_family,
+                self.session.api.compound_index_separator,
+                self.reference_ip_prefix
             )
 
         return self._uri

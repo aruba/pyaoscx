@@ -92,13 +92,8 @@ class QueueProfile(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{0}{1}".format(
-            session.base_url,
-            cls.collection_uri
-        )
-
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", cls.collection_uri)
         except Exception as exc:
             raise ResponseError("GET", exc)
 
@@ -195,17 +190,9 @@ class QueueProfile(PyaoscxModule):
 
         depth = session.api.default_facts_depth
 
-        uri = "{0}{1}".format(
-            session.base_url,
-            cls.collection_uri
-        )
-
         try:
-            response = session.s.get(
-                uri,
-                verify=False,
-                proxies=session.proxy,
-                params={"depth": depth}
+            response = session.request(
+                "GET", cls.collection_uri, params={"depth": depth}
             )
         except Exception as exc:
             raise ResponseError("GET", exc)

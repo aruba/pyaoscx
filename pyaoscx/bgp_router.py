@@ -104,15 +104,9 @@ class BgpRouter(PyaoscxModule):
 
         payload = {"depth": depth, "selector": selector}
 
-        uri = "{base_url}{class_uri}/{asn}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            asn=self.asn)
+        uri = "{0}/{1}".format(self.base_uri, self.asn)
         try:
-            response = self.session.s.get(uri,
-                                          verify=False,
-                                          params=payload,
-                                          proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -179,14 +173,12 @@ class BgpRouter(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        base_uri = "{base_vrf_uri}/{vrf_name}/bgp_routers".format(
-            base_vrf_uri=parent_vrf.base_uri, vrf_name=parent_vrf.name)
-
-        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
-                                             class_uri=base_uri)
+        uri = "{0}/{1}/bgp_routers".format(
+            parent_vrf.base_uri, parent_vrf.name
+        )
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -247,10 +239,7 @@ class BgpRouter(PyaoscxModule):
 
         bgp_router_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{asn}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            asn=self.asn)
+        uri = "{0}/{1}".format(self.base_uri, self.asn)
 
         # Compare dictionaries
         if bgp_router_data == self.__original_attributes:
@@ -261,10 +250,7 @@ class BgpRouter(PyaoscxModule):
             post_data = json.dumps(bgp_router_data)
 
             try:
-                response = self.session.s.put(uri,
-                                              verify=False,
-                                              data=post_data,
-                                              proxies=self.session.proxy)
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -293,15 +279,12 @@ class BgpRouter(PyaoscxModule):
         bgp_data = utils.get_attrs(self, self.config_attrs)
         bgp_data["asn"] = self.asn
 
-        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
-                                             class_uri=self.base_uri)
         post_data = json.dumps(bgp_data)
 
         try:
-            response = self.session.s.post(uri,
-                                           verify=False,
-                                           data=post_data,
-                                           proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -323,15 +306,10 @@ class BgpRouter(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{asn}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            asn=self.asn)
+        uri = "{0}/{1}".format(self.base_uri, self.asn)
 
         try:
-            response = self.session.s.delete(uri,
-                                             verify=False,
-                                             proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)

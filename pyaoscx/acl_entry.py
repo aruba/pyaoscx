@@ -162,16 +162,9 @@ class AclEntry(PyaoscxModule):
 
         payload = {"depth": depth, "selector": selector}
 
-        uri = "{base_url}{class_uri}/{sequence_number}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            sequence_number=self.sequence_number)
-
+        uri = "{0}/{1}".format(self.base_uri, self.sequence_number)
         try:
-            response = self.session.s.get(uri,
-                                          verify=False,
-                                          params=payload,
-                                          proxies=self.session.proxy)
+            response = self.session.request("GET", uri, params=payload)
 
         except Exception as e:
             raise ResponseError("GET", e)
@@ -214,18 +207,15 @@ class AclEntry(PyaoscxModule):
             and an ACL Entry objects as values
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
-        # Set URI
-        base_uri = "{base_acl_uri}/{id1}{separator}{id2}/cfg_aces".format(
-            base_acl_uri=parent_acl.base_uri,
-            id1=parent_acl.name,
-            separator=session.api.compound_index_separator,
-            id2=parent_acl.list_type)
-
-        uri = "{base_url}{class_uri}".format(base_url=session.base_url,
-                                             class_uri=base_uri)
+        uri = "{0}/{1}{2}{3}/cfg_aces".format(
+            parent_acl.base_uri,
+            parent_acl.name,
+            session.api.compound_index_separator,
+            parent_acl.list_type
+        )
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
@@ -313,10 +303,7 @@ class AclEntry(PyaoscxModule):
 
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
 
-        uri = "{base_url}{class_uri}/{sequence_number}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            sequence_number=self.sequence_number)
+        uri = "{0}/{1}".format(self.base_uri, self.sequence_number)
 
         if not self.__was_modified():
             # Object was not modified
@@ -335,12 +322,7 @@ class AclEntry(PyaoscxModule):
             post_data = json.dumps(acl_entry_data)
 
             try:
-                response = self.session.s.put(
-                    uri,
-                    verify=False,
-                    data=post_data,
-                    proxies=self.session.proxy
-                )
+                response = self.session.request("PUT", uri, data=post_data)
 
             except Exception as e:
                 raise ResponseError("PUT", e)
@@ -374,9 +356,6 @@ class AclEntry(PyaoscxModule):
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
         acl_entry_data["sequence_number"] = self.sequence_number
 
-        uri = "{base_url}{class_uri}".format(base_url=self.session.base_url,
-                                             class_uri=self.base_uri)
-
         # Try to get protocol number
         try:
             if isinstance(self.protocol, str):
@@ -392,10 +371,9 @@ class AclEntry(PyaoscxModule):
         post_data = json.dumps(acl_entry_data)
 
         try:
-            response = self.session.s.post(uri,
-                                           verify=False,
-                                           data=post_data,
-                                           proxies=self.session.proxy)
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
 
         except Exception as e:
             raise ResponseError("POST", e)
@@ -422,15 +400,10 @@ class AclEntry(PyaoscxModule):
 
         """
 
-        uri = "{base_url}{class_uri}/{sequence_number}".format(
-            base_url=self.session.base_url,
-            class_uri=self.base_uri,
-            sequence_number=self.sequence_number)
+        uri = "{0}/{1}".format(self.base_uri, self.sequence_number)
 
         try:
-            response = self.session.s.delete(uri,
-                                             verify=False,
-                                             proxies=self.session.proxy)
+            response = self.session.request("DELETE", uri)
 
         except Exception as e:
             raise ResponseError("DELETE", e)

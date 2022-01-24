@@ -128,12 +128,11 @@ class OspfArea(PyaoscxModule):
             Area objects as values
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
-        uri = session.base_url + "{0}/{1}/areas".format(
-            parent_ospf_router.base_uri,
-            parent_ospf_router.instance_tag
+        uri = "{0}/{1}/areas".format(
+            parent_ospf_router.base_uri, parent_ospf_router.instance_tag
         )
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as exc:
             raise ResponseError("GET", exc) from exc
         if not utils._response_ok(response, "GET"):

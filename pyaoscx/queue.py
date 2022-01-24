@@ -152,15 +152,14 @@ class Queue(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        uri = "{0}{1}{2}/{3}/{4}".format(
-            session.base_url,
+        uri = "{0}{1}/{2}/{3}".format(
             cls.base_uri,
             Qos.base_uri,
             qos_name,
             cls.resource_uri_name)
 
         try:
-            response = session.s.get(uri, verify=False, proxies=session.proxy)
+            response = session.request("GET", uri)
         except Exception as e:
             raise ResponseError("GET", e)
 
