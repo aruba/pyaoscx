@@ -214,8 +214,6 @@ class Vlan(PyaoscxModule):
             created.
         :return modified: Boolean, True if VLAN was created.
         """
-        vlan_data = {}
-
         # Get all VLAN data given by the user
         vlan_data = utils.get_attrs(self, self.config_attrs)
         if isinstance(self.id, str):

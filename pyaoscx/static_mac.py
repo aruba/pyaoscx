@@ -100,8 +100,6 @@ class StaticMac(Mac):
         :return modified: Boolean, True if entry was created
         """
         self.mac_addr = str(self.mac_address)
-        static_mac_data = {}
-
         static_mac_data = utils.get_attrs(self, self.config_attrs)
         # Set attributes
         static_mac_data["mac_addr"] = self.mac_addr
