@@ -71,7 +71,7 @@ class Qos(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving %s QoS configuration from switch", self.name)
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -97,7 +97,7 @@ class Qos(PyaoscxModule):
         :param session: pyaoscx.Session object used to represent a logical
         :return: Dictionary containing all system QoS configurations.
         """
-        logging.info("Retrieving all the switch QoS configurations.")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{0}{1}".format(
             session.base_url,
@@ -248,7 +248,7 @@ class Qos(PyaoscxModule):
             Use the default option to use the switch's default trust mode.
         :return: Returns True if configuration was modified, False otherwise.
         """
-        logging.info("Setting global Qos trust mode.")
+        logging.info("Setting %s as global Qos trust mode.", trust_mode)
 
         # Verify trust mode value
         allowed_trust_modes = ["cos", "dscp", "none", "default"]

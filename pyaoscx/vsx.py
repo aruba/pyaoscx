@@ -48,7 +48,7 @@ class Vsx(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch VSX configuration")
+        logging.info("Retrieving %s from switch", self)
         # this is common for all PyaoscxModule derived classes
         self._get_and_copy_data(depth, selector)
         # this is specific for this class

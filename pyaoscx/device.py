@@ -119,9 +119,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
          Perform GET call to retrieve subsystem attributes and create a
              dictionary containing them
         """
-        # Log
         logging.info(
-            "Retrieving the switch subsystem attributes and capabilities")
+            "Retrieving the switch subsystem attributes and capabilities"
+        )
 
         # Attribute list
         attributes = [

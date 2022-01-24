@@ -83,7 +83,7 @@ class BgpNeighbor(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch BGP Neighbors")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -161,8 +161,7 @@ class BgpNeighbor(PyaoscxModule):
         :return: Dictionary containing BGP Neighbors IDs as keys and a BGP
             Neighbors objects as values
         """
-
-        logging.info("Retrieving the switch BGP Neighbors")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         base_uri = "{0}/{1}/bgp_neighbors".format(
             parent_bgp_router.base_uri, parent_bgp_router.asn
@@ -266,10 +265,7 @@ class BgpNeighbor(PyaoscxModule):
                 raise GenericOperationError(response.text,
                                             response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update BGP table entry {} succeeded".format(
-                        self.ip_or_ifname_or_group_name))
+            logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
             self.__original_attributes = bgp_neighbor_data
             # Object was modified
@@ -319,9 +315,7 @@ class BgpNeighbor(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info("SUCCESS: Adding BGP table entry {} succeeded".format(
-                self.ip_or_ifname_or_group_name))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -352,9 +346,7 @@ class BgpNeighbor(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info("SUCCESS: Delete BGP table entry {} succeeded".format(
-                self.ip_or_ifname_or_group_name))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from BGP_Routers
         for neighbor in self.__parent_bgp_router.bgp_neighbors:

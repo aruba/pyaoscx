@@ -61,7 +61,7 @@ class ACL(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch ACLs")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -142,7 +142,7 @@ class ACL(PyaoscxModule):
             Acl objects as values
         """
 
-        logging.info("Retrieving the switch ACL")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{base_url}{class_uri}".format(base_url=session.base_url,
                                              class_uri=ACL.base_uri)
@@ -235,8 +235,7 @@ class ACL(PyaoscxModule):
                 raise GenericOperationError(response.text,
                                             response.status_code)
 
-            else:
-                logging.info("SUCCESS: Update ACL table entry {} succeeded")
+            logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
             self.__original_attributes = acl_data
             modified = True

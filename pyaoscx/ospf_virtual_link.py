@@ -80,7 +80,7 @@ class OspfVlink(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving an OSPF VLink from switch")
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -110,7 +110,7 @@ class OspfVlink(PyaoscxModule):
         :return: Dictionary containing OSPF Virtual Link IDs as keys and a OSPF
             Virtual Link objects as values
         """
-        logging.info("Retrieving the switch %s data", cls.__name__)
+        logging.info("Retrieving all %s data from switch", cls.__name__)
         uri_indices = {
             "area_id": parent_ospf_area.area_id
         }

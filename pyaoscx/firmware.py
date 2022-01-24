@@ -24,8 +24,11 @@ def get_firmware_version(**kwargs):
         proxies=kwargs["s"].proxies)
 
     if not utils._response_ok(response, "GET"):
-        logging.warning("FAIL: Getting firmware version %d: %s"
-                        % (response.status_code, response.text))
+        logging.warning(
+            "FAIL: Getting firmware version %d: %s",
+            response.status_code,
+            response.text
+        )
         firmware_version = None
     else:
         logging.info("SUCCESS: Getting firmware version succeeded")

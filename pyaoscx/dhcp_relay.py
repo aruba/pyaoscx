@@ -53,7 +53,7 @@ class DhcpRelay(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch DHCP Relays")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -131,8 +131,7 @@ class DhcpRelay(PyaoscxModule):
         :return: Dictionary containing DHCP Relays IDs as keys and a
             DHCP Relay objects as values
         """
-
-        logging.info("Retrieving the switch DHCP Relays")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
@@ -224,9 +223,7 @@ class DhcpRelay(PyaoscxModule):
                 raise GenericOperationError(
                     response.text, response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update DHCP Relay table entry {} succeeded")
+            logging.info("SUCCESS: Updating %s", self)
             # Set new original attributes
             self.__original_attributes = dhcp_relay_data
 
@@ -294,10 +291,7 @@ class DhcpRelay(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete DHCP Relay table entry"
-                " {} succeeded".format(self.vrf))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)

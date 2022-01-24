@@ -146,8 +146,7 @@ class Configuration():
                     response.status_code,
                     "UPDATE SYSTEM ATTRIBUTES")
 
-            else:
-                logging.info("SUCCESS: Updating System Attributes")
+            logging.info("SUCCESS: Updating System Attributes")
             # Set new original attributes
             self.__original_attributes = system_data
 

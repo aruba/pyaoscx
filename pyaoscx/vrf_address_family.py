@@ -78,7 +78,7 @@ class VrfAddressFamily(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch VRF Address families")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -148,8 +148,7 @@ class VrfAddressFamily(PyaoscxModule):
         :return: Dictionary containing VRF Address Family IDs as keys and a
             VrfAddressFamily objects as values
         """
-
-        logging.info("Retrieving the switch VRF Address Family")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         base_uri = "{base_vrf_uri}/{vrf_name}/vrf_address_families".format(
             base_vrf_uri=parent_vrf.base_uri,

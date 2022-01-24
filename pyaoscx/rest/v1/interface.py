@@ -85,7 +85,7 @@ class Interface(AbstractInterface):
             return.  The options are 'configuration', 'status', or 'statistics.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving Port")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -353,7 +353,7 @@ class Interface(AbstractInterface):
         :return: Dictionary containing ports IDs as keys and a port objects
             as values
         """
-        logging.info("Retrieving the switch Interfaces and Ports")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
@@ -412,7 +412,6 @@ class Interface(AbstractInterface):
         :return facts: Dictionary containing Interface IDs as keys and
             Interface objects as values.
         """
-        # Log
         logging.info("Retrieving the switch interfaces facts")
 
         depth = session.api.default_facts_depth
@@ -817,10 +816,7 @@ class Interface(AbstractInterface):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Adding {} Port table entry succeeded".format(
-                    self.name))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Check if port is a LAG
         # If not, POST Request to Interface Table

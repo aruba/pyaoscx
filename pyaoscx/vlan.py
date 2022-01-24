@@ -67,7 +67,7 @@ class Vlan(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch VLANs")
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -143,8 +143,7 @@ class Vlan(PyaoscxModule):
         :return: Dictionary containing VLAN IDs as keys and a Vlan object as
             value
         """
-
-        logging.info("Retrieving the switch VLANs")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
@@ -299,7 +298,6 @@ class Vlan(PyaoscxModule):
         :return facts: Dictionary containing VLAN IDs as keys and Vlan objects
             as values.
         """
-        # Log
         logging.info("Retrieving switch VLANs facts")
 
         # Set VLAN facts depth

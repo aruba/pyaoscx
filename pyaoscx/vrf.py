@@ -71,7 +71,7 @@ class Vrf(PyaoscxModule):
             to return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch VRF")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -218,7 +218,7 @@ class Vrf(PyaoscxModule):
         :return: Dictionary containing VRF names as keys and a Vrf objects as
             values
         """
-        logging.info("Retrieving the VRFs inside the switch")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
@@ -308,10 +308,7 @@ class Vrf(PyaoscxModule):
                 raise GenericOperationError(
                     response.text, response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Adding VRF table entry '%s' succeeded" %
-                    self.name)
+            logging.info("SUCCESS: Adding %s", self)
             # Set new original attributes
             self.__original_attributes = vrf_data
             modified = True
@@ -346,9 +343,7 @@ class Vrf(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Adding VRF table entry '%s' succeeded" % self.name)
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all objects data
         self.get()
@@ -382,9 +377,7 @@ class Vrf(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete VRF table entry '%s' succeeded" % self.name)
+        logging.info("SUCCESS: Deleting %s", self)
 
     @classmethod
     def from_response(cls, session, response_data):
@@ -452,7 +445,6 @@ class Vrf(PyaoscxModule):
         :return facts: Dictionary containing VRF IDs as keys and VRF objects as
             values.
         """
-        # Log
         logging.info("Retrieving switch VRF facts")
 
         # Set VRF facts depth

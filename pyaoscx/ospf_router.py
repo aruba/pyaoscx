@@ -129,7 +129,7 @@ class OspfRouter(PyaoscxModule):
         :return: Dictionary containing
             (OSPF Router ID, OspfRouter object) (key,value) pairs
         """
-        logging.info("Retrieving the switch %s data", cls.__name__)
+        logging.info("Retrieving all %s data from switch", cls.__name__)
         uri_indices = {
             "name": parent_vrf.name,
             "version": cls.version

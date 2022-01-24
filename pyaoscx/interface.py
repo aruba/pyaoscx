@@ -134,7 +134,7 @@ class Interface(PyaoscxModule):
             information to return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving Interface")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -340,8 +340,7 @@ class Interface(PyaoscxModule):
         :return: Dictionary containing Interface's name as key and a Interface
             objects as values
         """
-
-        logging.info("Retrieving the switch Interfaces")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{base_url}{class_uri}".format(
             base_url=session.base_url,
@@ -426,7 +425,6 @@ class Interface(PyaoscxModule):
         :return facts: Dictionary containing Interface IDs as keys and
             Interface objects as values.
         """
-        # Log
         logging.info("Retrieving the switch interfaces facts")
 
         # Set depth
@@ -490,9 +488,7 @@ class Interface(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info("SUCCESS: Adding {} table entry succeeded".format(
-                self.name))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all objects data
         self.get()

@@ -64,7 +64,7 @@ class QueueProfile(PyaoscxModule):
             to return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving " + str(self))
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -90,7 +90,7 @@ class QueueProfile(PyaoscxModule):
         :return: Dictionary containing Queue profile names as keys and a Queue
             profile object as value.
         """
-        logging.info("Retrieving the switch Queue profiles")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{0}{1}".format(
             session.base_url,
@@ -137,12 +137,12 @@ class QueueProfile(PyaoscxModule):
         :return modified: True if the object was modified and a PUT
             request was made
         """
-        logging.info("Updating " + str(self))
         data = utils.get_attrs(self, self.config_attrs)
         # Manually remove the name
         if "name" in data:
             del data["name"]
         self.__modified = self._put_data(data)
+        logging.info("SUCCESS: Updating %s", self)
         return self.__modified
 
     @PyaoscxModule.connected
@@ -151,11 +151,11 @@ class QueueProfile(PyaoscxModule):
         Perform a POST call to create a new Queue profile in the switch.
         :return modified: True if the object was modified
         """
-        logging.info("Creating " + str(self))
         data = utils.get_attrs(self, self.config_attrs)
         # Manually add the name
         data["name"] = self.name
         self.__modified = self._post_data(data)
+        logging.info("SUCCESS: Adding %s", self)
         return self.__modified
 
     @PyaoscxModule.connected
@@ -163,8 +163,8 @@ class QueueProfile(PyaoscxModule):
         """
         Perform a DELETE call to remove a Queue Profile from the switch
         """
-        logging.info("Deleting " + str(self))
         self._send_data(self.path, None, "DELETE", "Delete")
+        logging.info("SUCCESS: Deleting %s", self)
         utils.delete_attrs(self, self.config_attrs)
 
     @classmethod

@@ -121,7 +121,7 @@ class Queue(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch %s Queue", self.queue_number)
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -150,7 +150,7 @@ class Queue(PyaoscxModule):
             connection to the device.
         :return: Dictionary containing all system Qos' Queues.
         """
-        logging.info("Retrieving all the switch Queues for %s Qos", qos_name)
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{0}{1}{2}/{3}/{4}".format(
             session.base_url,

@@ -71,7 +71,7 @@ class QueueProfileEntry(PyaoscxModule):
             to return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving a Queue Profile Entry")
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -99,7 +99,7 @@ class QueueProfileEntry(PyaoscxModule):
         :return: Dictionary containing Queue Profile Entry names as keys
             and a Queue Profile Entry object as value.
         """
-        logging.info("Retrieving the switch Queue profiles")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "".join(
             (

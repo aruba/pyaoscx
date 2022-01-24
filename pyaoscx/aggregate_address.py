@@ -102,7 +102,7 @@ class AggregateAddress(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch Aggregate Addresses")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -175,8 +175,7 @@ class AggregateAddress(PyaoscxModule):
         :return: Dictionary containing Aggregate Addresses IDs as keys and a
             AggregateAddress objects as values
         """
-
-        logging.info("Retrieving the switch Aggregate Address")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         base_uri = (
             "{base_bgp_router_uri}/{bgp_router_apn}/aggregate_addresses"

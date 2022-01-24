@@ -70,7 +70,7 @@ class PoEInterface(Interface):
         if device.is_capable("quick_poe"):
             raise UnsupportedCapabilityError("This device is not PoE capable.")
 
-        logging.info("Retrieving the switch PoE Interface")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -184,10 +184,7 @@ class PoEInterface(Interface):
             if not utils._response_ok(response, "PUT"):
                 raise GenericOperationError(
                     response.text, response.status_code)
-            else:
-                logging.info(
-                    "SUCCESS: Update PoE Interface entry {} succeeded".format(
-                        self))
+            logging.info("SUCCESS: Updating %s", self)
 
             # Set new original attributes
             self.__original_attributes = poe_interface_data

@@ -231,8 +231,8 @@ class Session:
                 "connection attempt timed out."
             )
         except requests.exceptions.ProxyError as err:
-            logging.warning("ERROR: %s" % str(err))
-            raise LoginError("ERROR: %s" % err)
+            logging.warning("ERROR: %s", str(err))
+            raise LoginError("ERROR: {0}".format(err))
         # Response OK check needs to be passed 'PUT' since this
         # POST call returns 200 instead of conventional 201
         if not utils._response_ok(response, "PUT"):
@@ -284,8 +284,10 @@ class Session:
         # call returns 200 instead of conventional 201
         if not utils._response_ok(response, "PUT"):
             logging.warning(
-                "FAIL: Logout failed with status code %d: %s" % (
-                    response.status_code, response.text))
+                "FAIL: Logout failed with status code %d: %s",
+                response.status_code,
+                response.text
+            )
             return False
         else:
             logging.info("SUCCESS: Logout succeeded")

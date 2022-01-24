@@ -92,7 +92,7 @@ class OspfInterface(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving %s from switch", str(self))
+        logging.info("Retrieving %s from switch", self)
         selector = selector or self.session.api.default_selector
         data = self._get_data(depth, selector)
         if "port" in data:
@@ -126,7 +126,7 @@ class OspfInterface(PyaoscxModule):
         :return: Dictionary containing OSPF Interface IDs as keys and a
             OspfInterface objects as values
         """
-        logging.info("Retrieving the switch %s data", cls.__name__)
+        logging.info("Retrieving all %s data from switch", cls.__name__)
         uri = session.base_url + "{0}/{1}/ospf_interfaces".format(
             parent_ospf_area.base_uri,
             parent_ospf_area.area_id

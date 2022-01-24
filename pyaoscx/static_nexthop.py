@@ -80,7 +80,7 @@ class StaticNexthop(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch static_nexthop routers")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -163,8 +163,7 @@ class StaticNexthop(PyaoscxModule):
         :return: Dictionary containing Static Nexthop IDs as keys and a Static
             NexthopThis objects as values
         """
-
-        logging.info("Retrieving the switch static_nexthop")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         base_uri = "{0}/{1}/static_nexthops".format(
             parent_static_route.base_uri,

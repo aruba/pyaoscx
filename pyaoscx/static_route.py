@@ -87,7 +87,7 @@ class StaticRoute(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch Static Routes")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -169,8 +169,7 @@ class StaticRoute(PyaoscxModule):
         :return: Dictionary containing Static Route IDs as keys and a Static
             Route objects as values
         """
-
-        logging.info("Retrieving the switch Static Routes")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         base_uri = "{base_vrf_uri}/{vrf_name}/static_routes".format(
             base_vrf_uri=parent_vrf.base_uri,
@@ -310,10 +309,7 @@ class StaticRoute(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Adding Static Route table entry {} succeeded".format(
-                    self.prefix))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -343,10 +339,7 @@ class StaticRoute(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete static_route table entry {} succeeded".format(
-                    self.prefix))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from VRF
         for static_route in self.__parent_vrf.static_routes:

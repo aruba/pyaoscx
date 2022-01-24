@@ -78,8 +78,7 @@ class QosDscp(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised.
         """
-        logging.info(
-            "Retrieving the switch %s QoS DSCP trust mode.", self.code_point)
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -119,7 +118,7 @@ class QosDscp(PyaoscxModule):
             connection to the device.
         :return:  containing all system QoS.
         """
-        logging.info("Retrieving all the switch QoS DSCP trust mode.")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         uri = "{0}{1}".format(
             session.base_url,

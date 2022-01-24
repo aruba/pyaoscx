@@ -146,7 +146,7 @@ class AclEntry(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch ACL Entries")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -213,8 +213,7 @@ class AclEntry(PyaoscxModule):
         :return acl_entry_dict: Dictionary containing ACL Entry IDs as keys
             and an ACL Entry objects as values
         """
-
-        logging.info("Retrieving all ACL entries within switch for ACL")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
         # Set URI
         base_uri = "{base_acl_uri}/{id1}{separator}{id2}/cfg_aces".format(
             base_acl_uri=parent_acl.base_uri,
@@ -439,10 +438,7 @@ class AclEntry(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete ACL Entry table entry {} succeeded".format(
-                    self.sequence_number))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from ACL
         for acl_entry in self.__parent_acl.cfg_aces:

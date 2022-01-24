@@ -79,7 +79,7 @@ class OspfArea(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving %s from switch", str(self))
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -127,7 +127,7 @@ class OspfArea(PyaoscxModule):
         :return: Dictionary containing OSPF Area IDs as keys and a OSPF
             Area objects as values
         """
-        logging.info("Retrieving the switch %s data", cls.__name__)
+        logging.info("Retrieving all %s data from switch", cls.__name__)
         uri = session.base_url + "{0}/{1}/areas".format(
             parent_ospf_router.base_uri,
             parent_ospf_router.instance_tag

@@ -122,7 +122,7 @@ class Mac(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch {}".format(self.display_name))
+        logging.info("Retrieving %s from switch", self)
 
         selector = selector or self.session.api.default_selector
 
@@ -170,8 +170,7 @@ class Mac(PyaoscxModule):
         :return: Dictionary containing MACs IDs as keys and a
             Mac objects as values
         """
-
-        logging.info("Retrieving the switch {}".format(cls.resource_uri_name))
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         path = "{0}/{1}/{2}".format(
             parent_vlan.base_uri,

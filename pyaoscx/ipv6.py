@@ -96,7 +96,7 @@ class Ipv6(PyaoscxModule):
             return.
         :return: Returns True if there is not an exception raised
         """
-        logging.info("Retrieving the switch IPv6")
+        logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
@@ -170,8 +170,7 @@ class Ipv6(PyaoscxModule):
         :return: Dictionary containing IPv6 IDs as keys and a Ipv6 object as
             value
         """
-
-        logging.info("Retrieving the switch IPv6")
+        logging.info("Retrieving all %s data from switch", cls.__name__)
 
         base_uri = "{base_int_uri}/{interface_name}/ip6_addresses".format(
             base_int_uri=parent_int.base_uri,
@@ -275,10 +274,7 @@ class Ipv6(PyaoscxModule):
                 raise GenericOperationError(
                     response.text, response.status_code)
 
-            else:
-                logging.info(
-                    "SUCCESS: Update IPv6 table entry {} succeeded".format
-                    (self.address))
+            logging.info("SUCCESS: Updating %s", self)
 
             # Set new original attributes
             self.__original_attributes = ip6_data
@@ -314,10 +310,7 @@ class Ipv6(PyaoscxModule):
         if not utils._response_ok(response, "POST"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Adding IPv6 table entry {} succeeded".format(
-                    self.address))
+        logging.info("SUCCESS: Adding %s", self)
 
         # Get all object's data
         self.get()
@@ -348,10 +341,7 @@ class Ipv6(PyaoscxModule):
         if not utils._response_ok(response, "DELETE"):
             raise GenericOperationError(response.text, response.status_code)
 
-        else:
-            logging.info(
-                "SUCCESS: Delete IPv6 table entry {} succeeded".format(
-                    self.address))
+        logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from VRF
         for ip6 in self.__parent_int.ip6_addresses:
