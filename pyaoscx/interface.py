@@ -11,6 +11,7 @@ from warnings import warn
 
 from netaddr import mac_eui48
 from netaddr import EUI as MacAddress
+from netaddr.core import AddrFormatError
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.parameter_error import ParameterError
@@ -1956,15 +1957,16 @@ class Interface(PyaoscxModule):
         # Apply changes
         return self.apply()
 
+    @PyaoscxModule.materialized
     def port_security_enable(
         self,
-        client_limit=0,
-        sticky_mac_learning=True,
-        allowed_mac_addr=[],
-        allowed_sticky_mac_addr={},
-        violation_action="notify",
-        violation_recovery_time=10,
-        violation_shutdown_recovery_enable=True,
+        client_limit=None,
+        sticky_mac_learning=None,
+        allowed_mac_addr=None,
+        allowed_sticky_mac_addr=None,
+        violation_action=None,
+        violation_recovery_time=None,
+        violation_shutdown_recovery_enable=None,
     ):
         """
         Enable port security on an specified Interface.
@@ -1975,8 +1977,8 @@ class Interface(PyaoscxModule):
         :param allowed_mac_addr: The list of allowed MAC addresses,
             each MAC address is a string, or a netaddr.EUI object.
         :param allowed_sticky_mac_addr: A dictionary where each key is
-            a MAC address (string or netaddr.EUI), and item is an
-            integer.
+            a MAC address (string or netaddr.EUI), and the value is a list of
+            integers, where each integer is a VLAN id.
         :param violation action: Action to take when unauthorized MACs
             try to connect.
         :param violation_recovery_time: integer with Time in seconds
@@ -1985,58 +1987,141 @@ class Interface(PyaoscxModule):
             from violation shut down.
         :return: True if the object was changed.
         """
-        mac_format = mac_eui48
-        mac_format.word_sep = ":"
-
-        if not self.materialized:
-            raise VerificationError(
-                "Interface {0}".format(self.name), "Object not materialized"
-            )
-
         if not hasattr(self, "port_security"):
             raise VerificationError(
                 "Unable to configure the port's security",
                 "Interface {0} is not security capable".format(self.name),
             )
 
+        if hasattr(self, "routing") and self.routing:
+            raise VerificationError(
+                "Configuring port-security is allowed only on bridged ports."
+            )
+
         self.port_security["enable"] = True
 
-        self.port_security["client_limit"] = client_limit
-        self.port_security["sticky_mac_learning_enable"] = sticky_mac_learning
+        if client_limit is not None and (
+            1 > client_limit or client_limit > 64
+        ):
+            raise ParameterError("Can only authorize 1 to 64 clients")
 
-        # Add static MAC addresses
-        # Convert all mac addresses to netaddr.EUI to verify that they
-        # are valid. This also ensures that all will have the same format.
-        # And then back to string because that is what the API ultimately
-        # accepts
-        self.port_security_static_client_mac_addr = [
-            str(MacAddress(mac_addr, dialect=mac_format))
-            for mac_addr in allowed_mac_addr
-        ]
+        if client_limit:
+            self.port_security["client_limit"] = client_limit
 
-        # Add static sticky MAC addresses. We convert all dictionary
-        # keys to netadd.EUI to verify they are valid, and then pass them
-        # back to string because that is what the API accepts.
-        self.port_security_static_sticky_client_mac_addr = dict(
-            [
-                (
-                    str(MacAddress(addr, dialect=mac_format)),
-                    allowed_sticky_mac_addr[addr],
+        if sticky_mac_learning:
+            self.port_security[
+                "sticky_mac_learning_enable"
+            ] = sticky_mac_learning
+
+        # Use netaddr.EUI to verify that all static MAC addresses are valid,
+        # and use a colon (:) character as the separator.  Example: accept
+        # '2C:54:91:88:C9:E3', but not '2C-54-91-88-C9-E3', then re-convert to
+        # string because that is what the API accepts.
+        mac_format = mac_eui48
+        mac_format.word_sep = ":"
+        _valid_static_macs = []
+        allowed_mac_addr = allowed_mac_addr or []
+        for mac_addr in allowed_mac_addr:
+            try:
+                mac = MacAddress(mac_addr, dialect=mac_format)
+                _valid_static_macs.append(str(mac))
+            except AddrFormatError as exc:
+                raise ParameterError("Invalid static MAC address") from exc
+        self.port_security_static_client_mac_addr = _valid_static_macs
+
+        # Use netaddr.EUI to verify that all static MAC addresses are valid,
+        # and use a colon (:) character as the separator.  Example: accept
+        # '2C:54:91:88:C9:E3', but not '2C-54-91-88-C9-E3', then re-convert to
+        # string because that is what the API accepts.
+        _valid_sticky_macs = {}
+        allowed_sticky_mac_addr = allowed_sticky_mac_addr or {}
+        for mac_address, vlans in allowed_sticky_mac_addr.items():
+            try:
+                mac = MacAddress(mac_address, dialect=mac_format)
+                _valid_sticky_macs[str(mac)] = vlans
+            except AddrFormatError as exc:
+                raise ParameterError("Invalid sticky MAC address") from exc
+
+        # Verify all VLAN IDs are valid numbers
+        for mac_address, vlans in _valid_sticky_macs.items():
+            _valid_vlans = []
+            for vlan in vlans:
+                try:
+                    vlan = int(vlan)
+                except ValueError as exc:
+                    raise ParameterError("Invalid sticky MAC VLANs") from exc
+                _valid_vlans.append(vlan)
+
+            __status_int = Interface(self.session, self.name)
+            __status_int.get(selector="status")
+            # NOTE: applied_vlan_tag is NOT in the default get() path, so we
+            # get it as a dictionary here
+            _vlan_tag = None
+            _vlan_tag_present = bool(__status_int.applied_vlan_tag)
+            if _vlan_tag_present:
+                _vlan_tag = int(next(iter(__status_int.applied_vlan_tag)))
+            # NOTE: applied_vlan_trunks is NOT in the default get() path, so we
+            # get it as a dictionary here
+            _vlan_trunks = None
+            _vlan_trunks_present = bool(__status_int.applied_vlan_trunks)
+            if _vlan_trunks_present:
+                _vlan_trunks = sorted(
+                    [int(k) for k in __status_int.applied_vlan_trunks]
                 )
-                for addr in allowed_sticky_mac_addr
-            ]
-        )
+            if _valid_vlans == [] and _vlan_tag_present:
+                _valid_vlans = [_vlan_tag]
 
-        self.port_access_security_violation["action"] = violation_action
+            if not _vlan_tag_present and not _vlan_trunks_present:
+                raise VerificationError(
+                    "No VLANs are configured in this interface"
+                )
+            for vlan in _valid_vlans:
+                if not (
+                    _vlan_tag_present
+                    and vlan == _vlan_tag
+                    or _vlan_trunks_present
+                    and vlan in _vlan_trunks
+                ):
+                    _err_msg_allowed_vlans = []
+                    if _vlan_tag_present:
+                        _err_msg_allowed_vlans.append(
+                            "vlan_access: {0}".format(_vlan_tag)
+                        )
+                    if _vlan_trunks_present:
+                        _err_msg_allowed_vlans.append(
+                            "vlan_trunks: {0}".format(_vlan_trunks)
+                        )
+                    raise VerificationError(
+                        "One or more of {0} VLANs are not configured, the "
+                        "allowed VLANs for this interface are: {1}".format(
+                            _valid_vlans, ", ".join(_err_msg_allowed_vlans)
+                        )
+                    )
+                _valid_sticky_macs[mac_address] = _valid_vlans
+        self.port_security_static_sticky_client_mac_addr = _valid_sticky_macs
 
-        self.port_access_security_violation[
-            "recovery_timer"
-        ] = violation_recovery_time
-        self.port_access_security_violation[
-            "shutdown_recovery_enable"
-        ] = violation_shutdown_recovery_enable
+        if violation_action:
+            if violation_action == "notify" and violation_recovery_time:
+                raise ParameterError(
+                    "Must not specify recovery time when violation action is "
+                    "'notify'"
+                )
+            self.port_access_security_violation["action"] = violation_action
 
-        # Apply the changes
+        if violation_recovery_time:
+            if 10 > violation_recovery_time or violation_recovery_time > 600:
+                raise ParameterError(
+                    "violation_recovery_time must be between 10s and 600s"
+                )
+            self.port_access_security_violation[
+                "recovery_timer"
+            ] = violation_recovery_time
+
+        if violation_shutdown_recovery_enable:
+            self.port_access_security_violation[
+                "shutdown_recovery_enable"
+            ] = violation_shutdown_recovery_enable
+
         return self.apply()
 
     def port_security_disable(self):
