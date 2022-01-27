@@ -1,7 +1,7 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from abc import ABC, abstractclassmethod
+from abc import ABC, abstractmethod
 from importlib import import_module
 
 from pyaoscx.exceptions.parameter_error import ParameterError
@@ -37,7 +37,8 @@ class API(ABC):
 
         return api_class()
 
-    @abstractclassmethod
+    @classmethod
+    @abstractmethod
     def __init__(self):
         """
         This method must be overwritten in the derived classes to set up the
