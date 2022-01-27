@@ -2039,7 +2039,7 @@ class Interface(PyaoscxModule):
         # Apply the changes
         return self.apply()
 
-    def port_security_disable(self) -> bool:
+    def port_security_disable(self):
         """
         Disable port security on the specified interface.
         :return: True if the object was changed.
