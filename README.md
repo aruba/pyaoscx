@@ -1,12 +1,15 @@
 # pyaoscx
 
-These modules are written for AOS-CX API v1 and v10.04. These scripts are written for devices running AOS-CX firmware 
+These modules are written for AOS-CX API v10.04 and later. These scripts are written for devices running AOS-CX firmware 
 version 10.04 or greater.
 
 See the [Release Notes](RELEASE-NOTES.md) for more information.
 
 Please note that pyaoscx v2 is **not** backwards compatible for pyaoscx v1 and earlier, so please specify the correct 
 version when using pyaoscx in requirements.txt files
+
+It is also important to note that the latest code commits on the Master branch in Git are usually ahead of the official 
+releases and tags, so please be aware of this when cloning the repo versus doing a 'pip install pyaoscx'
 
 ## Structure
 Detailed information about the structure and design can be found in the [Design document](pyaoscx/DESIGN.md).

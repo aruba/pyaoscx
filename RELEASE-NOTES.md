@@ -1,3 +1,36 @@
+# 2.2.0
+
+## Notable Changes
+
+* Added support for the following modules:
+   * Queue Profile
+   * OSPF
+   * QOS DSCP
+   * VSX (in factory)
+* Added updates to Interface modules for QoS
+* Added global QoS profiles, QoS trust mode
+* Added address family verification to Static Route
+* Updated README.md with API requirements and note about Master branch
+* Various Bugfixes
+   * ACE modification
+   * Missing self parameter in API method
+   * Fixed circular import in VRF
+   * Fixed Modifying dictionary during iteration error in ACL
+   * Removed certain attributes when updating an ACL entry
+   * Fixed QoS and QoSDSCP modules and imperative methods
+   * Fixed interface for rate data type and trust mode in QoS
+   * Fixed VRF in devices with different capabilities
+   * Fixed invalid GET response for non-existing Interface
+   * Fixed Schedule Profile attributes when updating
+   * Remove call to get() in mac.py's get_all()
+   * Fixed config_attrs if calling get() without selector
+   * Shorten payloads for network requests
+   * Verification added for missing PoE capability
+   * Fixed isl_port interface instantiation
+   * Added missing import and decorator in interface module 
+   * Added missing parameter to logging call in QoS
+
+
 # 2.1.0
 
 ## Notable Changes

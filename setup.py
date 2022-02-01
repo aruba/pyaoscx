@@ -7,7 +7,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = f.read()
 
 setup(name='pyaoscx',
-      version='2.1.0',
+      version='2.2.0',
       description='AOS-CX Python Modules',
       long_description=long_description,
       long_description_content_type='text/markdown',
@@ -15,7 +15,7 @@ setup(name='pyaoscx',
       author='Aruba Automation',
       author_email='aruba-automation@hpe.com',
       license='Apache 2.0',
-      python_requires='>=3',
+      python_requires='>=3.6',
     classifiers=[
 
         'Development Status :: 5 - Production/Stable',
