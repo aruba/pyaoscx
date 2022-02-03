@@ -119,15 +119,12 @@ class API(ABC):
 
         return uri_list
 
-    def get_module(self, session, module, index_id=None, **kwargs):
+    def get_module_class(self, session, name):
         """
-        Create a module object given a response data and the module's type.
+        Get a module's class given a session, and the module's name.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :param module: Name representing the module which is about to be
-            created.
-        :param index_id: The module index_id or ID.
-        :return object: Return object same as module.
+        :param name: Name of the module's class to be imported.
         """
         module_names = {
             "Interface": "rest.v{0}.interface".format(
@@ -161,15 +158,23 @@ class API(ABC):
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
         }
-
-        try:
-            module_class = getattr(
-                import_module("pyaoscx." + module_names[module]), module
-            )
-        except KeyError:
+        if name not in module_names:
             raise ParameterError(
-                "Wrong module name. {0} doesn't exist".format(module)
+                "Wrong module name. {0} doesn't exist".format(name)
             )
+        return getattr(import_module("pyaoscx." + module_names[name]), name)
+
+    def get_module(self, session, module, index_id=None, **kwargs):
+        """
+        Create a module object given a response data and the module's type.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device
+        :param module: Name representing the module which is about to be
+            created
+        :param index_id: The module index_id or ID
+        :return object: Return object same as module
+        """
+        module_class = self.get_module_class(session, module)
 
         if module == "OspfArea":
             return self._create_ospf_area(
