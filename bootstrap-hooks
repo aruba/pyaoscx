@@ -70,7 +70,7 @@ install_tools() {
 		virtualenv -p python3.7 "$HOME/.bintools"
 		. "$HOME/.bintools/bin/activate"
 		python -m pip install flake8
-		python -m pip install autopep8
+		python -m pip install black
 		deactivate
 	) > /dev/null 2>&1
 	END_SPIN="true"
@@ -79,7 +79,7 @@ install_tools() {
 		mkdir -p "$HOME/.hookbin"
 		cd "$HOME/.hookbin"
 		ln -s "$HOME/.bintools/bin/flake8" .
-		ln -s "$HOME/.bintools/bin/autopep8" .
+		ln -s "$HOME/.bintools/bin/black" .
 	) > /dev/null 2>&1
 }
 

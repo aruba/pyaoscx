@@ -41,15 +41,15 @@ set_linter() {
 }
 
 set_formatter() {
-	FORMATTER="autopep8"
+	FORMATTER="black"
 	[ "$VERBOSE" = "true" ] && echo "formatter is: $FORMATTER"
 
 	# shortcircuit if which $FORMATTER succeeds
 	# when shortcircuit ocurs, won't run what's after ||
 	which $FORMATTER > /dev/null 2>&1 || formatter_not_installed
 
-	[ "$FORMATTER" = "autopep8" ] \
-		&& FORMATTER_CMD="$(which $FORMATTER) --in-place --aggressive --aggressive"
+	[ "$FORMATTER" = "black" ] \
+		&& FORMATTER_CMD="$(which $FORMATTER) --line-length 79"
 
 	[ "$VERBOSE" = "true" ] && echo "formatter command is: $FORMATTER_CMD"
 }
@@ -84,9 +84,7 @@ format_python_files() {
 	py_files=$(git diff --cached "$AGAINST" --name-only --diff-filter=ACMR \
 		| grep \.py$)
 
-	# formatting several files is slow (a test w/ all current files in the repo
-	# took ~40s with autopep8) when done with a single process
-	# so here procs is set to the number of available processing units
+	# here procs is set to the number of available processing units
 	# then used by parallel -j, to run $procs parallel file formatting jobs
 	local procs
 	procs=$(nproc)
