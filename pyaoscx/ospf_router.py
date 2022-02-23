@@ -43,6 +43,11 @@ class OspfRouter(PyaoscxModule):
         # Set arguments needed for correct creation
         utils.set_creation_attrs(self, **kwargs)
         self.passive_interfaces = None
+        if kwargs.get("passive_interfaces"):
+            self.passive_interfaces = [
+                self.session.api.get_module(self.session, "Interface", i)
+                for i in kwargs["passive_interfaces"]
+            ]
         # Use to manage Areas
         self.areas = []
         # Attribute used to know if object was changed recently
@@ -173,6 +178,11 @@ class OspfRouter(PyaoscxModule):
         formatted_interfaces = {}
         if self.passive_interfaces is not None:
             for iface in self.passive_interfaces:
+                if isinstance(iface, str):
+                    iface = self.session.api.get_module(
+                        self.session, "Interface", iface
+                    )
+                iface.get()
                 if not iface.materialized:
                     raise VerificationError(
                         "Interface {0}".format(iface.name),
