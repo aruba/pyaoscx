@@ -1748,7 +1748,7 @@ class Interface(PyaoscxModule):
         :return: True if object was changed.
         """
         # Configure Active Gateaway IP
-        self.vsx_virtual_ip4 = ip_address
+        self.vsx_virtual_ip4 = [ip_address]
         # Configure Gateaway mac
         self.vsx_virtual_gw_mac_v4 = gateway_mac
 
