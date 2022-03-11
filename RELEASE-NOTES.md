@@ -1,3 +1,26 @@
+# 2.2.1
+
+## Notable Changes
+
+* Fixed VLAN Interface Active Gateway setting
+* Removed type hinting for python version compliance
+* Fixed bug when instantiating static nexthops
+* Fixed port_security_enable()
+  * invalid default values
+  * MAC address validation
+* Fixed bugs in PYAOSCX Exceptions instantiation
+* Formatted python files with psf/black
+* Fixed PEP8 compliance issues
+* Added a deprecated decorator to warn about deprecated methods
+* Made consistency changes on:
+  * docstrings
+  * string literal quotes and interpolation
+  * whitespace
+  * internal use of the connection session to the switch
+  * code-formatting
+* Deleted error.py
+* Deleted exceptions/request_error.py
+
 # 2.2.0
 
 ## Notable Changes
