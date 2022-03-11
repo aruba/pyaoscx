@@ -53,7 +53,7 @@ class StaticNexthop(PyaoscxModule):
         self.__parent_static_route = parent_static_route
 
         # Set URI
-        self.base_uri = "{0}/{1}/static_nexhops".format(
+        self.base_uri = "{0}/{1}/static_nexthops".format(
             self.__parent_static_route.base_uri,
             self.__parent_static_route.reference_address,
         )
