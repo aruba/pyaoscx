@@ -2,6 +2,7 @@
 # Apache License 2.0
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.utils import util as utils
 
@@ -1492,3 +1493,94 @@ class PyaoscxFactory(metaclass=Singleton):
             # Apply the local configuration to the switch
             entry.apply()
         return entry
+
+    def vni(
+        self,
+        vni_id,
+        interface,
+        vni_type="vxlan_vni",
+        routing=None,
+        vlan=None,
+        vrf=None,
+        **kwargs
+    ):
+        """
+        Create a Virtual Network ID (VNI).
+        :param vni_id: VNI identifier.
+        :param interface: Attached interface to the VNI.
+        :param vni_type: Type of the VNI (for now just vxlan_vni).
+        :param vlan: Mapped VLAN to the VNI.
+        :param vrf: Mapped VRF to the VNI (if L3 is supported).
+        :param routing: Flag that indicates if VNI is L2 or L3.
+        :return: VNI object.
+        """
+        if vlan is not None:
+            if routing is not None and routing is True:
+                raise VerificationError("Routing does not allow VLAN")
+            kwargs["vlan"] = vlan
+        if vrf is not None:
+            if not routing:
+                raise VerificationError("Routing must be enabled for L3 VNI")
+            kwargs["vrf"] = vrf
+        if routing is not None:
+            kwargs["routing"] = routing
+
+        vni = self.session.api.get_module(
+            self.session,
+            "Vni",
+            index_id=vni_id,
+            interface=interface,
+            vni_type=vni_type,
+            **kwargs
+        )
+
+        try:
+            vni.get()
+            utils.create_attrs(vni, kwargs)
+        except GenericOperationError:
+            pass
+        finally:
+            vni.apply()
+
+        return vni
+
+    def tunnel_endpoint(
+        self,
+        interface,
+        network_id,
+        destination,
+        origin="static",
+        vrf=None,
+        **kwargs
+    ):
+        """
+        Create a Tunnel Endpoint
+        :param interface: Attached interface for tunnel
+        :param network_id: Network identifier
+        :param destination: Destination IP
+        :param origin: Type of tunneling
+            'static' for user configuration (default)
+            'evpn' for dynamically learnt via EVPN
+            'hsc' for dynamically learnt from a remote controller
+        :param vrf: Mapped VRF of tunnel
+        """
+        tep = self.session.api.get_module(
+            self.session,
+            "TunnelEndpoint",
+            index_id=interface,
+            network_id=network_id,
+            destination=destination,
+            origin=origin,
+            vrf=vrf,
+            **kwargs
+        )
+
+        try:
+            tep.get()
+            utils.create_attrs(tep, kwargs)
+        except GenericOperationError:
+            pass
+        finally:
+            tep.apply()
+
+        return tep
