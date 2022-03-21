@@ -819,16 +819,34 @@ class Interface(PyaoscxModule):
     ####################################################################
 
     @PyaoscxModule.materialized
+    def configure_mclag_options(self, mc_lag=None, lacp_fallback=None):
+        """
+        Configure an Interface object, set its LAG attributes. Requires a
+            call to apply() afterwards.
+        :param mc_lag: Boolean to set the LAG as a multi-chassis LAG.
+        :param lacp_fallback: Boolean to set the LAG's LACP fallback mode.
+        """
+        if not self.__is_special_type:
+            logging.warning(
+                "Interface is not a LAG Interface, cannot set MCLAG options"
+            )
+        if self.__is_special_type:
+            if mc_lag is not None:
+                self.other_config["mclag_enabled"] = mc_lag
+            if lacp_fallback is not None:
+                self.other_config["lacp-fallback"] = lacp_fallback
+
+    @PyaoscxModule.materialized
     def configure_l2(
         self,
         phys_ports=None,
         ipv4=None,
         vlan_ids_list=None,
         vlan_tag=1,
-        lacp="passive",
+        lacp=None,
         description=None,
-        fallback_enabled=False,
-        mc_lag=False,
+        fallback_enabled=None,
+        mc_lag=None,
         vlan_mode="native-untagged",
         trunk_allowed_all=False,
         native_vlan_tag=True,
@@ -846,14 +864,12 @@ class Interface(PyaoscxModule):
             to add as trunk VLANS. Defaults to empty list if not specified.
         :param vlan_tag: Optional VLAN ID or Vlan object to be added as
             vlan_tag. Defaults to VLAN 1.
-        :param lacp: Should be either "passive" or "active." Defaults to
-            "passive" if not specified.
+        :param lacp: Must be either "passive" or "active." Does not change if
+            not specified.
         :param description: Optional description for the interface. Defaults
             to nothing if not specified.
-        :param fallback_enabled: Boolean to determine if the LAG uses LACP
-            fallback. Defaults to False if not specified.
-        :param mc_lag: Boolean to determine if the LAG is multi-chassis.
-            Defaults to False if not specified.
+        :param fallback_enabled: Boolean to set the LAG's LACP fallback mode.
+        :param mc_lag: Boolean to set the LAG as a multi-chassis LAG.
         :param vlan_mode: Vlan mode on Interface, should be access or trunk
             Defaults to 'native-untagged'.
         :param trunk_allowed_all: Flag for vlan trunk allowed all on L2
@@ -872,9 +888,8 @@ class Interface(PyaoscxModule):
                 # Materialize Port
                 port_obj.get()
                 self.interfaces.append(port_obj)
-        # Set lacp
-        self.lacp = lacp
-
+        if lacp:
+            self.lacp = lacp
         # Set Mode, but keep it as it was if it receives None
         if vlan_mode:
             self.vlan_mode = vlan_mode
@@ -930,10 +945,9 @@ class Interface(PyaoscxModule):
         self.routing = False
 
         # Set all remaining attributes for a Lag to be an L2
-        if self.__is_special_type:
-            self.other_config["mclag_enabled"] = mc_lag
-            self.other_config["lacp-fallback"] = fallback_enabled
-
+        self.configure_mclag_options(
+            mc_lag=mc_lag, lacp_fallback=fallback_enabled
+        )
         # Apply Changes inside Switch
         return self.apply()
 
@@ -944,10 +958,10 @@ class Interface(PyaoscxModule):
         ipv4=None,
         ipv6=None,
         vrf="default",
-        lacp="passive",
+        lacp=None,
         description=None,
-        fallback_enabled=False,
-        mc_lag=False,
+        fallback_enabled=None,
+        mc_lag=None,
     ):
         """
         Configure an Interface object, if not materialized, materialize it and
@@ -965,14 +979,12 @@ class Interface(PyaoscxModule):
             ['2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff']
         :param vrf: VRF to attach the SVI to. Defaults to "default" if not
             specified. A Vrf object is also accepted.
-        :param lacp: Should be either "passive" or "active." Defaults to
-            "passive" if not specified.
+        :param lacp: Must be either "passive" or "active." Does not change if
+            not specified.
         :param description: Optional description for the interface. Defaults to
             nothing if not specified.
-        :param fallback_enabled: Boolean to determine if the LAG uses LACP
-            fallback. Defaults to False if not specified.
-        :param mc_lag: Boolean to determine if the LAG is multi-chassis.
-            Defaults to False if not specified.
+        :param fallback_enabled: Boolean to set the LAG's LACP fallback mode.
+        :param mc_lag: Boolean to set the LAG as a multi-chassis LAG.
         :return: True if object was changed.
         """
         # Set Physical Ports
@@ -1023,9 +1035,8 @@ class Interface(PyaoscxModule):
         # If IPv6 is empty, delete
         elif ipv6 == []:
             self.ip6_addresses = []
-
-        # Set lacp
-        self.lacp = lacp
+        if lacp:
+            self.lacp = lacp
         # Set description
         if description is not None:
             self.description = description
@@ -1039,9 +1050,9 @@ class Interface(PyaoscxModule):
         self.routing = True
 
         # Set all remaining attributes for a Lag to be an L3
-        if self.__is_special_type:
-            self.other_config["mclag_enabled"] = mc_lag
-            self.other_config["lacp-fallback"] = fallback_enabled
+        self.configure_mclag_options(
+            mc_lag=mc_lag, lacp_fallback=fallback_enabled
+        )
         self.vlan_mode = "native-untagged"
 
         # Apply Changes inside Switch
