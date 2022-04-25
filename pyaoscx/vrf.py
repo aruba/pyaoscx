@@ -661,3 +661,28 @@ class Vrf(PyaoscxModule):
         for r in routers:
             if r.instance_tag == router.instance_tag:
                 routers.remove(r)
+
+    def update_bgp_routers(self, router):
+        """
+        Update references to BGP Routers. If a Router with the same instance
+            tag is found, update the reference to the new router, otherwise,
+            add reference to the new router.
+        """
+        routers = getattr(self, router.resource_uri_name)
+        for r in routers:
+            if r.asn == router.asn:
+                # Make list element point to current object
+                # See utils.list_attributes.ListDescriptor
+                r = router
+                return
+        routers.append(router)
+
+    def remove_bgp_router(self, router):
+        """
+        Update references to BGP Routers. If a Router with the same instance
+            tag is found, delete the reference to it.
+        """
+        routers = getattr(self, router.resource_uri_name)
+        for r in routers:
+            if r.asn == router.asn:
+                routers.remove(r)
