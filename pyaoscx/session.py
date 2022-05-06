@@ -156,9 +156,15 @@ class Session:
             )
 
         cookies = self.s.cookies
-        self.connected = (
-            hasattr(cookies, "_cookies") and self.ip in cookies._cookies
-        )
+        if ':' in self.ip:
+            ipv6_match = self.ip + '.local'
+            self.connected = (
+                hasattr(cookies, "_cookies") and ipv6_match in cookies._cookies
+            )
+        else:
+            self.connected = (
+                hasattr(cookies, "_cookies") and self.ip in cookies._cookies
+            )
 
         if not self.connected:
             raise LoginError("Cookies were not set correctly. Login failed")
