@@ -205,6 +205,9 @@ class PyaoscxModule(ABC):
             )
 
         payload = {"depth": depth, "selector": selector}
+        if "macs" in self.path:
+            self.path = self.path.lower()
+            payload = {"depth": None, "selector": None}
 
         try:
             response = self.session.request("GET", self.path, params=payload)
