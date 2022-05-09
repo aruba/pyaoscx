@@ -5,6 +5,8 @@ import json
 import logging
 import re
 
+from copy import deepcopy
+
 from urllib.parse import quote_plus, unquote_plus
 
 from netaddr import EUI as MacAddress
@@ -45,7 +47,9 @@ class Mac(PyaoscxModule):
 
         # Assign ID
         self.from_id = from_id
-        self.mac_address = MacAddress(mac_addr, dialect=self.mac_format)
+        self.mac_address = str(
+            MacAddress(mac_addr, dialect=self.mac_format)
+        ).lower()
         # Assign parent VLAN
         self._set_vlan(parent_vlan)
         self._uri = uri
@@ -121,7 +125,9 @@ class Mac(PyaoscxModule):
         """
         logging.info("Retrieving %s from switch", self)
 
-        selector = selector or self.session.api.default_selector
+        # the MAC module is not a configuration module, so the default selector
+        # is readonly information
+        selector = selector or "status"
 
         data = self._get_data(depth, selector)
 
@@ -131,7 +137,7 @@ class Mac(PyaoscxModule):
         self._set_configuration_items(data, selector)
 
         # Set original attributes
-        self._original_attributes = data
+        self._original_attributes = deepcopy(data)
         # Remove both parts of the ID
         if "from" in self._original_attributes:
             self._original_attributes.pop("from")
@@ -139,11 +145,11 @@ class Mac(PyaoscxModule):
             self._original_attributes.pop("mac_addr")
 
         # Set port as an Interface Object
-        if hasattr(self, "port") and self.port is not None:
+        if hasattr(self, "port") and self.port:
             port_response = self.port
             # Instantiate empty object to use static method correctly
-            interface_cls = self.session.api.get_module(
-                self.session, "Interface", ""
+            interface_cls = self.session.api.get_module_class(
+                self.session, "Interface"
             )
             # Set port as a Interface Object
             self.port = interface_cls.from_response(
@@ -185,10 +191,7 @@ class Mac(PyaoscxModule):
         data = json.loads(response.text)
 
         mac_dict = {}
-        # Get all URI elements in the form of a list
-        uri_list = session.api.get_uri_from_data(data)
-
-        for uri in uri_list:
+        for uri in data.values():
             # Create a Mac object
             indices, mac = cls.from_uri(session, parent_vlan, uri)
             mac_dict[indices] = mac
@@ -247,9 +250,11 @@ class Mac(PyaoscxModule):
         mac_addr = mac_pair[1]
         from_id = mac_pair[0]
 
-        mac_address = MacAddress(unquote_plus(mac_addr), dialect=mac_format)
+        mac_address = str(
+            MacAddress(unquote_plus(mac_addr), dialect=mac_format)
+        ).lower()
 
-        return Mac(session, from_id, mac_address, parent_vlan)
+        return cls(session, from_id, mac_address, parent_vlan)
 
     @classmethod
     def from_uri(cls, session, parent_vlan, uri):
@@ -266,15 +271,13 @@ class Mac(PyaoscxModule):
         mac_format.word_sep = ":"
         # Get ID from URI. Note that using a uri object here is of no
         # benefit because we are dealing with the path
-        index_pattern = re.compile(
-            r"(.*)macs/(?P<index1>.+)[,./-](?P<index2>.+)"
-        )
+        index_pattern = re.compile(r"(.*)macs/(?P<index1>.+),(?P<index2>.+)")
         from_id = index_pattern.match(uri).group("index1")
         reference_mac_addr = index_pattern.match(uri).group("index2")
 
-        mac_addr = MacAddress(
-            unquote_plus(reference_mac_addr), dialect=mac_format
-        )
+        mac_addr = str(
+            MacAddress(unquote_plus(reference_mac_addr), dialect=mac_format)
+        ).lower()
 
         mac = Mac(session, from_id, mac_addr, parent_vlan)
         indices = "{0}{1}{2}".format(
