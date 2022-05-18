@@ -15,12 +15,15 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 class VrfAddressFamily(PyaoscxModule):
     """
-    Provide configuration management for Address Family settings on AOS-CX
+    Provide configuration management for VRF Address Family settings on AOS-CX
         devices.
     """
 
     indices = ["address_family"]
     resource_uri_name = "vrf_address_families"
+
+    collection_uri = "system/vrfs/{name}/vrf_address_families"
+    object_uri = collection_uri + "/{address_family}"
 
     def __init__(
         self, session, address_family, parent_vrf, uri=None, **kwargs
@@ -29,8 +32,17 @@ class VrfAddressFamily(PyaoscxModule):
         self.session = session
         # Assign ID
         self.address_family = address_family
-        # Assign parent Vrf object
-        self.__set_vrf(parent_vrf)
+        self.parent_vrf = parent_vrf
+
+        # Verify VRF Address Family  doesn't exist already inside VRF
+        for vrf_address_family in self.parent_vrf.address_families:
+            if vrf_address_family.address_family == self.address_family:
+                # Make list element point to current object
+                vrf_address_family = self
+            else:
+                # Add self to vrf_address_families list in parent_vrf
+                self.parent_vrf.address_families.append(self)
+
         self._uri = uri
         # List used to determine attributes related to the VRF Address Family
         # configuration
@@ -43,28 +55,13 @@ class VrfAddressFamily(PyaoscxModule):
         utils.set_creation_attrs(self, **kwargs)
         # Attribute used to know if object was changed recently
         self.__modified = False
-
-    def __set_vrf(self, parent_vrf):
-        """
-        Set parent VRF as an attribute for the VrfAddressFamily object.
-        :param parent_vrf: a Vrf object.
-        """
-        # Set parent_vrf
-        self.__parent_vrf = parent_vrf
-
-        # Set URI
-        self.base_uri = "{0}/{1}/vrf_address_families".format(
-            self.__parent_vrf.base_uri, self.__parent_vrf.name
-        )
-
-        # Verify VRF Address Family  doesn't exist already inside VRF
-        for vrf_address_family in self.__parent_vrf.address_families:
-            if vrf_address_family.address_family == self.address_family:
-                # Make list element point to current object
-                vrf_address_family = self
-            else:
-                # Add self to vrf_address_families list in parent_vrf
-                self.__parent_vrf.address_families.append(self)
+        uri_indices = {
+            "name": self.parent_vrf.name,
+            "address_family": self.address_family,
+        }
+        self._uri_indices = uri_indices
+        self.base_uri = self.collection_uri.format(**uri_indices)
+        self.path = self.object_uri.format(**uri_indices)
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -183,8 +180,8 @@ class VrfAddressFamily(PyaoscxModule):
             being created.
         :return modified: Boolean, True if object was created or modified.
         """
-        if not self.__parent_vrf.materialized:
-            self.__parent_vrf.apply()
+        if not self.parent_vrf.materialized:
+            self.parent_vrf.apply()
 
         modified = False
 
@@ -284,9 +281,9 @@ class VrfAddressFamily(PyaoscxModule):
         logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from VRF
-        for vrf_address_family in self.__parent_vrf.address_families:
+        for vrf_address_family in self.parent_vrf.address_families:
             if vrf_address_family.address_family == self.address_family:
-                self.__parent_vrf.address_families.remove(vrf_address_family)
+                self.parent_vrf.address_families.remove(vrf_address_family)
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)

@@ -163,7 +163,9 @@ class Vrf(PyaoscxModule):
 
             # Set BGP Routers if any
             # Adds bgp_bouters to parent Vrf object
-            BgpRouter.get_all(self.session, self)
+            bgp_routers = BgpRouter.get_all(self.session, self)
+            for bgp_router in bgp_routers.values():
+                self.bgp_routers.append(bgp_router)
 
         # Clean Address Families settings
         if self.address_families == []:
@@ -172,7 +174,9 @@ class Vrf(PyaoscxModule):
 
             # Set Address Families if any
             # Adds address_families to parent Vrf object
-            VrfAddressFamily.get_all(self.session, self)
+            address_families = VrfAddressFamily.get_all(self.session, self)
+            for address_family in address_families.values():
+                self.address_families.append(address_family)
 
         # Clean OSPF Routers settings
         if "ospfv2" in device.capabilities and self.ospf_routers == []:
@@ -181,7 +185,9 @@ class Vrf(PyaoscxModule):
 
             # Set OSPF Routers if any
             # Adds ospf_routers to parent Vrf object
-            OspfRouter.get_all(self.session, self)
+            ospfv2_routers = OspfRouter.get_all(self.session, self)
+            for ospfv2_router in ospfv2_routers.values():
+                self.ospfv2_routers.append(ospfv2_router)
 
         # If no OSPFv3 Routers are present
         if "ospfv3" in device.capabilities and self.ospfv3_routers == []:
@@ -189,7 +195,9 @@ class Vrf(PyaoscxModule):
             from pyaoscx.ospfv3_router import Ospfv3Router
 
             # Add all ospfv3_routers (if any) to parent Vrf object
-            Ospfv3Router.get_all(self.session, self)
+            ospfv3_routers = Ospfv3Router.get_all(self.session, self)
+            for ospfv3_router in ospfv3_routers.values():
+                self.ospfv3_routers.append(ospfv3_router)
 
         # Clean Static Routess settings
         if self.static_routes == []:
@@ -198,7 +206,10 @@ class Vrf(PyaoscxModule):
 
             # Set Static Route if any
             # Adds static_routes to parent Vrf object
-            StaticRoute.get_all(self.session, self)
+            static_routes = StaticRoute.get_all(self.session, self)
+            for static_route in static_routes.values():
+                self.static_routes.append(static_route)
+
         return True
 
     @classmethod
@@ -511,6 +522,7 @@ class Vrf(PyaoscxModule):
             except GenericOperationError:
                 # Create vrf_address_family inside switch
                 vrf_address_family.apply()
+            self.address_families.append(vrf_address_family)
 
         # Apply changes inside switch
         self.apply()
