@@ -530,7 +530,11 @@ class Interface(PyaoscxModule):
         # Check if VRF is inside the data related to interface
         if hasattr(self, "vrf") and self.vrf is not None:
             # Set VRF in the correct format for PUT
-            iface_data["vrf"] = self.vrf.get_info_format()
+            iface_data["vrf"] = (
+                None
+                if self.vrf.name == "default"
+                else self.vrf.get_info_format()
+            )
 
         # Check if vlan_tag is inside the data related to interface
         if hasattr(self, "vlan_tag") and self.vlan_tag is not None:
@@ -1053,7 +1057,9 @@ class Interface(PyaoscxModule):
         self.configure_mclag_options(
             mc_lag=mc_lag, lacp_fallback=fallback_enabled
         )
-        self.vlan_mode = "native-untagged"
+        self.vlan_mode = None
+        self.vlan_tag = None
+        self.origin = "configuration"
 
         # Apply Changes inside Switch
         return self.apply()
