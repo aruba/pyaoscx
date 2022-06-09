@@ -2162,18 +2162,62 @@ class Interface(PyaoscxModule):
         return self.apply()
 
     @PyaoscxModule.materialized
-    def speed_duplex_configure(
-        self, speeds=["1000"], duplex="half", autonegotiation="off"
+    def configure_speed_duplex(
+        self,
+        autoneg=None,
+        speeds=None,
+        duplex=None,
     ):
         """
         Configure the Interface speed and duplex mode.
-        :param speed: List of allowed Interface speeds.
-        :param duplex_enable: "full" for full duplex or "half" for half duplex.
+        :param speeds: List of allowed Interface speeds.
+        :param duplex: "full" for full duplex or "half" for half duplex.
         :param autonegotiation: switch autonegotiation "on" or "off".
         :return: True if object changed.
         """
-        self.user_config["autoneg"] = autonegotiation
-        self.user_config["duplex"] = duplex
-        self.user_config["speeds"] = ",".join(speeds)
 
+        autoneg = "on" if autoneg else "off"
+        _user_config = {"autoneg": autoneg}
+
+        if speeds and duplex:
+            autoneg = "off"
+            _user_config["autoneg"] = autoneg
+        if autoneg == "on" and duplex:
+            raise ParameterError(
+                "When autoneg is on, duplex must not be specified"
+            )
+        if autoneg == "off":
+            if duplex and len(speeds) > 1:
+                raise ParameterError(
+                    "When specifying duplex, only a single speed can be "
+                    "specified"
+                )
+        if speeds:
+            speeds_string = ",".join(str(s) for s in speeds)
+            _user_config["speeds"] = speeds_string
+            stat_int = Interface(self.session, self.name)
+            stat_int.get(selector="status")
+            sw_capable_speeds = stat_int.hw_intf_info["speeds"]
+            sw_speeds = set([int(s) for s in sw_capable_speeds.split(",")])
+            configure_speeds = set(speeds)
+            if not configure_speeds.issubset(sw_speeds):
+                raise VerificationError(
+                    "Specified speeds {0} are not supported by interface {1}, "
+                    "supported values are: {2}".format(
+                        speeds, self.name, sorted(sw_speeds)
+                    )
+                )
+        if duplex:
+            _user_config["duplex"] = duplex
+
+            speeds_duplex = "{0}-{1}".format(speeds[0], duplex)
+            if "forced_speeds" in stat_int.hw_intf_info:
+                sw_str_speeds_duplex = stat_int.hw_intf_info["forced_speeds"]
+                if speeds_duplex not in sw_str_speeds_duplex.split(","):
+                    raise VerificationError(
+                        "Speeds-duplex setting values are not supported by "
+                        "specified interface: {0}, supported values are: "
+                        "{1}".format(self.name, sw_str_speeds_duplex)
+                    )
+        self.user_config.update(_user_config)
         return self.apply()
