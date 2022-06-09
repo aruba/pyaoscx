@@ -1,43 +1,31 @@
 # (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-import json
 import logging
 
-from pyaoscx.exceptions.generic_op_error import GenericOperationError
-from pyaoscx.exceptions.response_error import ResponseError
-from pyaoscx.exceptions.unsupported_capability_error import (
-    UnsupportedCapabilityError,
-)
-
+from pyaoscx.exceptions.verification_error import VerificationError
+from pyaoscx.pyaoscx_module import PyaoscxModule
 from pyaoscx.utils import util as utils
 
-from pyaoscx.device import Device
-from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.interface import Interface
-
-
-class PoEInterface(Interface):
+class PoEInterface(PyaoscxModule):
     """
     Provide configuration management for PoE Interface on AOS-CX devices.
     """
 
+    collection_uri = "system/interfaces"
+    object_uri = collection_uri + "/{interface}/poe_interface"
     resource_uri_name = "poe_interface"
     indices = ["name"]
 
-    def __init__(self, session, parent_interface, uri=None, **kwargs):
+    def __init__(self, session, parent_interface, **kwargs):
         """
         Create an instance of PoEInterface Class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_interface: parent Inferface object where PoE is stored.
-        :param uri: String with the PoE URI.
         """
-        super(PoEInterface, self).__init__(session, parent_interface.name)
-
         self.session = session
-        self._uri = uri
         # List used to determine attributes related to the PoEInterface
         # configuration
         self.config_attrs = []
@@ -47,6 +35,16 @@ class PoEInterface(Interface):
         self.materialized = False
         # Set arguments needed for correct creation
         utils.set_creation_attrs(self, **kwargs)
+        self.base_uri = self.collection_uri
+        if isinstance(parent_interface, str):
+            parent_interface = self.session.api.get_module(
+                self.session, "Interface", parent_interface
+            )
+        self.name = parent_interface.name
+        self.path = self.object_uri.format(
+            interface=parent_interface.percents_name
+        )
+        self._interface = parent_interface
         # Attribute used to know if object was changed recently
         self.__modified = False
 
@@ -61,59 +59,13 @@ class PoEInterface(Interface):
             return.
         :return: Returns True if no exception is raised.
         """
-        device = Device(self.session)
-        if device.is_capable("quick_poe"):
-            raise UnsupportedCapabilityError("This device is not PoE capable.")
-
         logging.info("Retrieving %s from switch", self)
 
         depth = depth or self.session.api.default_depth
         selector = selector or self.session.api.default_selector
 
-        if not self.session.api.valid_depth(depth):
-            depths = self.session.api.valid_depths
-            raise ValueError("ERROR: Depth should be {0}".format(depths))
-
-        if selector not in self.session.api.valid_selectors:
-            selectors = " ".join(self.session.api.valid_selectors)
-            raise ValueError(
-                "ERROR: Selector should be one of {0}".format(selectors)
-            )
-
-        # Set payload
-        payload = {"depth": depth, "selector": selector}
-
-        # Set URI
-        uri = "{0}/{1}/{2}".format(
-            self.base_uri, self.percents_name, self.resource_uri_name
-        )
-
-        # Try to get a response to use its data
-        try:
-            response = self.session.request("GET", uri, params=payload)
-
-        except Exception as e:
-            raise ResponseError("GET", e)
-
-        if not utils._response_ok(response, "GET"):
-            raise GenericOperationError(response.text, response.status_code)
-
-        data = json.loads(response.text)
-
-        # Add dictionary as attributes for the object
-        utils.create_attrs(self, data)
-
-        # Determines if the PoE Interface is configurable
-        if selector in self.session.api.configurable_selectors:
-            # Set self.config_attrs
-            utils.set_config_attrs(self, data, "config_attrs")
-
-        # Set original attributes
-        self.__original_attributes = data
-
-        # Set object as materialized
+        self._get_and_copy_data(depth, selector, self.indices)
         self.materialized = True
-
         return True
 
     @PyaoscxModule.connected
@@ -137,42 +89,12 @@ class PoEInterface(Interface):
         :return modified: True if Object was modified and a PUT request was
             made.
         """
-        # Variable returned
-        modified = False
-
         poe_interface_data = utils.get_attrs(self, self.config_attrs)
-
-        # Set URI
-        uri = "{0}/{1}/{2}".format(
-            self.base_uri, self.percents_name, self.resource_uri_name
-        )
-
-        # Compare dictionaries
-        if poe_interface_data == self.__original_attributes:
-            # Object was not modified
-            modified = False
-
-        else:
-            post_data = json.dumps(poe_interface_data)
-            try:
-                response = self.session.request("PUT", uri, data=post_data)
-
-            except Exception as e:
-                raise ResponseError("PUT", e)
-
-            if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(
-                    response.text, response.status_code
-                )
-            logging.info("SUCCESS: Updating %s", self)
-
-            # Set new original attributes
-            self.__original_attributes = poe_interface_data
-
-            # Object was modified
-            modified = True
-
-        return modified
+        poe_interface_data["config"] = self.config.copy()
+        self.__modified = self._put_data(poe_interface_data)
+        logging.info("SUCCESS: Updating %s", self)
+        self.__original_attributes = poe_interface_data
+        return self.__modified
 
     @PyaoscxModule.connected
     def create(self):
@@ -199,12 +121,9 @@ class PoEInterface(Interface):
         Method used to obtain the specific PoE Interface URI.
         return: Object's URI.
         """
-        if self._uri is None:
-            self._uri = "{0}/{1}/{2}".format(
-                self.base_uri, self.percents_name, self.resource_uri_name
-            )
+        uri = "{0}{1}".format(self.session.resource_prefix, self.path)
 
-        return self._uri
+        return uri
 
     @PyaoscxModule.deprecated
     def get_info_format(self):
@@ -225,44 +144,124 @@ class PoEInterface(Interface):
         """
         return self.modified
 
-    ####################################################################
-    # IMPERATIVE FUNCTIONS
-    ####################################################################
-
+    @property
     @PyaoscxModule.materialized
-    def set_criticality(self, level):
+    def allocate_by_method(self):
         """
-        Set the criticality level for the PoE Interface.
-        :param level: String containing criticality level for the related
-            PoE Interface. Valid criticality levels: 'low', 'high', and
-            'critical'.
-        :return: Returns True if there is not an exception raised.
+        Getter method for the allocate_by_method attribute.
+        :return: String value for method.
         """
-        valid_criticalities = ["low", "high", "critical"]
-        if level not in valid_criticalities:
-            raise ValueError(
-                "ERROR: Criticality level must be one of {0}".format(
-                    valid_criticalities
+        return self.config["allocate_by_method"]
+
+    @allocate_by_method.setter
+    @PyaoscxModule.materialized
+    def allocate_by_method(self, new_method):
+        """
+        Setter method for the allocate_by_method attribute.
+        """
+        valid_methods = ["class", "usage"]
+        if new_method not in valid_methods:
+            raise VerificationError(
+                "Invalid method {0}, method must be one of {1}".format(
+                    new_method, ",".join(valid_methods)
                 )
             )
+        self.config["allocate_by_method"] = new_method
 
-        # Set power level
-        self.config["priority"] = level
-
-        # Update changes
-        return self.apply()
-
+    @property
     @PyaoscxModule.materialized
-    def set_power(self, state):
+    def assigned_class(self):
         """
-        Perform a PUT call to set a configurable flag to control PoE power
-            delivery on this Interface. A value of True would enable PoE power
-            delivery on this Interface, and a value of False would disable PoE
-            power delivery on this Interface.
-        :return: True if Object was modified and a PUT request was made.
+        Getter method for the cfg_assigned_class attribute.
+        :return: String value for assigned class.
         """
-        # Switches the state to a coherent value for the API documentation
+        return self.config["cfg_assigned_class"]
+
+    @assigned_class.setter
+    def assigned_class(self, new_class):
+        """
+        Setter method for the cfg_assigned_class attribute.
+        """
+        valid_classes = ["class3", "class4", "class6", "class8"]
+        if new_class not in valid_classes:
+            raise VerificationError(
+                "Invalid class {0}, assigned class must be one of {1}".format(
+                    new_class, ",".join(valid_classes)
+                )
+            )
+        self.config["cfg_assigned_class"] = new_class
+
+    @property
+    @PyaoscxModule.materialized
+    def priority(self):
+        """
+        Getter method for the priority attribute.
+        :return: String value for priority.
+        """
+        return self.config["priority"]
+
+    @priority.setter
+    @PyaoscxModule.materialized
+    def priority(self, new_priority):
+        """
+        Setter method for the priority attribute.
+        """
+        valid_priorities = ["low", "high", "critical"]
+        if new_priority not in valid_priorities:
+            raise VerificationError(
+                "Invalid priority {0} priority must be one of {1}".format(
+                    new_priority, ",".join(valid_priorities)
+                )
+            )
+        self.config["priority"] = new_priority
+
+    @property
+    @PyaoscxModule.materialized
+    def power_enabled(self):
+        """
+        Getter method for admin_disabled attribute.
+        :return: Bool value for priority.
+        """
+        return not self.config["admin_disable"]
+
+    @power_enabled.setter
+    @PyaoscxModule.materialized
+    def power_enabled(self, state):
+        """
+        Setter method for admin_disabled attribute
+        """
         self.config["admin_disable"] = not state
 
-        # Update changes
-        return self.apply()
+    @property
+    @PyaoscxModule.materialized
+    def pd_class_override(self):
+        """
+        Getter method for pd_class_override attribute.
+        :return: Bool value for pd_class_override.
+        """
+        return self.config["pd_class_override"]
+
+    @pd_class_override.setter
+    @PyaoscxModule.materialized
+    def pd_class_override(self, new_flag):
+        """
+        Setter method for pd_class_override attribute
+        """
+        self.config["pd_class_override"] = new_flag
+
+    @property
+    @PyaoscxModule.materialized
+    def pre_standard_detect(self):
+        """
+        Getter method for pre_standard_detect attribute.
+        :return: Bool value for pre_standard_detect.
+        """
+        return self.config["pre_standard_detect"]
+
+    @pre_standard_detect.setter
+    @PyaoscxModule.materialized
+    def pre_standard_detect(self, new_flag):
+        """
+        Setter method for pre_standard_detect attribute
+        """
+        self.config["pre_standard_detect"] = new_flag
