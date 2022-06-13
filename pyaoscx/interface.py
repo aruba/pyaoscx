@@ -26,6 +26,7 @@ import pyaoscx.vrf as vrf_mod
 from pyaoscx.ipv6 import Ipv6
 from pyaoscx.vlan import Vlan
 
+from pyaoscx.device import Device
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
@@ -2017,10 +2018,17 @@ class Interface(PyaoscxModule):
 
         self.port_security["enable"] = True
 
+        device = Device(self.session)
+        device.get()
+        max_clients = device.capacities[
+            "port_access_port_security_max_client_limit"
+        ]
         if client_limit is not None and (
-            1 > client_limit or client_limit > 64
+            1 > client_limit or client_limit > max_clients
         ):
-            raise ParameterError("Can only authorize 1 to 64 clients")
+            raise ParameterError(
+                "Can only authorize 1 to {0} clients".format(max_clients)
+            )
 
         if client_limit:
             self.port_security["client_limit"] = client_limit
