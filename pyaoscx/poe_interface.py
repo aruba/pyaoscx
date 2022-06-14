@@ -62,7 +62,7 @@ class PoEInterface(Interface):
         :return: Returns True if no exception is raised.
         """
         device = Device(self.session)
-        if device.is_capable("quick_poe"):
+        if device.is_capable("poe"):
             raise UnsupportedCapabilityError("This device is not PoE capable.")
 
         logging.info("Retrieving %s from switch", self)
