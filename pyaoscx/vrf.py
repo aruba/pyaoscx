@@ -187,7 +187,7 @@ class Vrf(PyaoscxModule):
             # Adds ospf_routers to parent Vrf object
             ospfv2_routers = OspfRouter.get_all(self.session, self)
             for ospfv2_router in ospfv2_routers.values():
-                self.ospfv2_routers.append(ospfv2_router)
+                self.ospf_routers.append(ospfv2_router)
 
         # If no OSPFv3 Routers are present
         if "ospfv3" in device.capabilities and self.ospfv3_routers == []:
