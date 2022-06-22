@@ -555,6 +555,8 @@ class Vrf(PyaoscxModule):
                 # Removing address does an internal delete
                 self.address_families.remove(add_family_obj)
 
+        self.apply()
+
     def setup_dns(
         self,
         domain_name=None,
