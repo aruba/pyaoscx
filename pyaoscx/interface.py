@@ -317,7 +317,9 @@ class Interface(PyaoscxModule):
         if self.ip6_addresses == []:
             # Set IPv6 addresses if any
             # Loads IPv6 objects already into the Interface
-            Ipv6.get_all(self.session, self)
+            ipv6s = Ipv6.get_all(self.session, self)
+            for ipv6 in ipv6s.values():
+                self.ip6_addresses.append(ipv6)
         return True
 
     @classmethod
@@ -1012,6 +1014,7 @@ class Interface(PyaoscxModule):
             self.ip4_address_secondary = ipv4[1:]
 
         # Set IPv6
+        ipv6_configured = False
         if ipv6 is not None and ipv6 != []:
             for ip_address in ipv6:
                 # Verify if incoming address is a string
@@ -1037,9 +1040,11 @@ class Interface(PyaoscxModule):
                     except GenericOperationError:
                         # Create IPv6 inside switch
                         ip_address.apply()
+                        ipv6_configured = True
         # If IPv6 is empty, delete
         elif ipv6 == []:
             self.ip6_addresses = []
+            ipv6_configured = True
         if lacp:
             self.lacp = lacp
         # Set description
@@ -1063,7 +1068,7 @@ class Interface(PyaoscxModule):
         self.origin = "configuration"
 
         # Apply Changes inside Switch
-        return self.apply()
+        return self.apply() or ipv6_configured
 
     def configure_svi(
         self,
@@ -1130,6 +1135,7 @@ class Interface(PyaoscxModule):
             self.ip4_address = None
             self.ip4_address_secondary = None
         # Set IPv6
+        ipv6_configured = False
         if ipv6 is not None and ipv6 != []:
             for ip_address in ipv6:
                 # Verify if incoming address is a string
@@ -1155,9 +1161,11 @@ class Interface(PyaoscxModule):
                     except GenericOperationError:
                         # Create IPv6 inside switch
                         ip_address.apply()
+                        ipv6_configured = True
         # If IPv6 is empty, delete
         elif ipv6 == []:
             self.ip6_addresses = []
+            ipv6_configured = True
 
         # Set VRF
         if vrf is not None:
@@ -1174,7 +1182,7 @@ class Interface(PyaoscxModule):
             self.description = description
 
         # Apply changes
-        return self.apply()
+        return self.apply() or ipv6_configured
 
     @PyaoscxModule.materialized
     def add_ipv4_address(self, ip_address):
