@@ -73,15 +73,6 @@ class Ipv6(PyaoscxModule):
             self.__parent_int_name,
         )
 
-        # Add self to ip6_address list in parent Interface
-        for ip6_address in self.__parent_int.ip6_addresses:
-            if ip6_address.address == self.address:
-                # Make list element point to current object
-                ip6_address = self
-
-        # Adds to parent list
-        self.__parent_int.ip6_addresses.append(self)
-
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
