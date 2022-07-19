@@ -1,27 +1,31 @@
 # (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-import re
+from netaddr import valid_mac
 
-from urllib.parse import quote_plus, unquote_plus
+import json
+import logging
 
-from netaddr import EUI as MacAddress
-from netaddr import mac_eui48
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
+from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
-from pyaoscx.mac import Mac
 
-
-class StaticMac(Mac):
+class StaticMac(PyaoscxModule):
     """
     Provide configuration management for Static MAC on AOS-CX devices.
     """
 
     indices = ["mac_addr"]
     resource_uri_name = "static_macs"
+
+    collection_uri = "system/vlans/{vlan_id}/static_macs"
+    object_uri = collection_uri + "/{mac_addr}"
 
     def __init__(self, session, mac_addr, parent_vlan, uri=None, **kwargs):
 
@@ -34,26 +38,111 @@ class StaticMac(Mac):
         :param parent_vlan: Vlan object to which this MAC belongs
         :param uri: Optional string containing the uri of the MAC object
         """
-        super(StaticMac, self).__init__(
-            session, "static", mac_addr, parent_vlan, uri=uri
-        )
+        self.session = session
+        # Assign id
+        self.__mac_addr = mac_addr
+        self.__parent_vlan = parent_vlan
+        self._uri = uri
+        # List used to determine attributes related to the Static MAC
+        # configuration
+        self.config_attrs = []
+        self.materialized = False
+        # Attribute dictionary used to manage the original data
+        # obtained from the GET
+        self._original_attributes = {}
         # Set arguments needed for correct creation
         utils.set_creation_attrs(self, **kwargs)
-        self.display_name = "static Mac"
+        # Attribute used to know if object was changed recently
+        self.__modified = False
+        uri_indices = {
+            "vlan_id": self.__parent_vlan.id,
+            "mac_addr": self.__mac_addr,
+        }
+        self._uri_indices = uri_indices
+        self.base_uri = self.collection_uri.format(**uri_indices)
+        self.path = self.object_uri.format(**uri_indices)
 
-    def _mac_path(self):
-        """
-        Get the path for internal purposes.
-        """
-        return "{0}/{1}".format(
-            self.base_uri, quote_plus(str(self.mac_address))
-        )
+    @property
+    def mac_addr(self):
+        return self.__mac_addr
 
-    def _set_configuration_items(self, data, selector):
+    @PyaoscxModule.connected
+    def get(self, depth=None, selector=None):
+        """
+        Perform a GET call to retrieve data for a Static MAC table entry and
+            fill the object with the incoming attributes
+        :param depth: Integer deciding how many levels into the API JSON that
+            references will be returned.
+        :param selector: Alphanumeric option to select specific information to
+            return.
+        :return: Returns True if there is not an exception raised.
+        """
+        logging.info("Retrieving %s from switch", self)
+
+        depth = depth or self.session.api.default_depth
+        selector = selector or self.session.api.default_selector
+
+        data = self._get_data(depth, selector)
+
+        # Add dictionary as attributes for the object
+        utils.create_attrs(self, data)
+
         # Determines if the Static MAC is configurable
         if selector in self.session.api.configurable_selectors:
             # Set self.config_attrs and delete ID from it
-            utils.set_config_attrs(self, data, "config_attrs", ["mac_addr"])
+            utils.set_config_attrs(self, data, "config_attrs", self.indices)
+
+        # Set original attributes
+        self._original_attributes = data
+        # Remove ID
+        if "mac_addr" in self._original_attributes:
+            self._original_attributes.pop("mac_addr")
+
+        # Sets object as materialized
+        # Information is loaded from the Device
+        self.materialized = True
+
+        return True
+
+    @classmethod
+    def get_all(cls, session, parent_vlan):
+        """
+        Perform a GET call to retrieve all system Static MACs inside a VLAN,
+            and create a dictionary containing them.
+        :param cls: Object's class.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :param parent_vlan: VLAN object where Static MAC is stored.
+        :return: Dictionary containing Static MAC IDs as keys and a Static MAC
+            objects as values.
+        """
+        logging.info("Retrieving all %s data from switch", cls.__name__)
+
+        uri = "{0}/{1}/static_macs".format(
+            parent_vlan.base_uri, parent_vlan.id
+        )
+
+        try:
+            response = session.request("GET", uri)
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        data = json.loads(response.text)
+
+        static_mac_dict = {}
+
+        for uri in data.values():
+            # Create a StaticMac object and adds it to parent Vrf object list
+            mac_addr, static_mac = StaticMac.from_uri(
+                session, parent_vlan, uri
+            )
+            # Load all Static MAC data from within the Switch
+            static_mac_dict[mac_addr] = static_mac
+
+        return static_mac_dict
 
     @PyaoscxModule.connected
     def apply(self):
@@ -62,18 +151,13 @@ class StaticMac(Mac):
             Checks whether the Static MAC exists in the switch. Calls
             self.update() if Static MAC is being updated. Calls self.create()
             if a new Static MAC is being created.
+        :return modified: Boolean, True if object was created or modified.
         """
-        if not self._parent_vlan.materialized:
-            self._parent_vlan.apply()
-
-        modified = False
+        if not self.__parent_vlan.materialized:
+            self.__parent_vlan.apply()
         if self.materialized:
-            modified = self.update()
-        else:
-            modified = self.create()
-        # Set internal attribute
-        self.__modified = modified
-        return modified
+            return self.update()
+        return self.create()
 
     @PyaoscxModule.connected
     def update(self):
@@ -82,15 +166,26 @@ class StaticMac(Mac):
         :return modified: True if Object was modified and a PUT request was
             made.
         """
-        # Transform the MAC object to string to be sent to the switch
-        self.mac_addr = str(self.mac_address)
-        # Create the address representation for the URI
         static_mac_data = utils.get_attrs(self, self.config_attrs)
 
-        if "port" in static_mac_data:
-            static_mac_data["port"] = self.port.get_info_format()
+        if hasattr(self, "port") and self.port is not None:
+            if isinstance(self.port, str):
+                port = self.session.api.get_module(
+                    self.session, "Interface", self.port
+                )
+            port.get()
+            if not port.materialized:
+                raise VerificationError(
+                    "Port {0} not materialized".format(port.name)
+                )
+            if hasattr(port, "routing") and port.routing:
+                raise VerificationError(
+                    "{0} is not an L2 port".format(port.name)
+                )
+            static_mac_data["port"] = port.get_info_format()
 
-        return self._put_data(static_mac_data)
+        self.__modified = self._put_data(static_mac_data)
+        return self.__modified
 
     @PyaoscxModule.connected
     def create(self):
@@ -99,51 +194,60 @@ class StaticMac(Mac):
             attributes as POST body. Only returns if no exception is raised.
         :return modified: Boolean, True if entry was created
         """
-        self.mac_addr = str(self.mac_address)
         static_mac_data = utils.get_attrs(self, self.config_attrs)
-        # Set attributes
+        if not valid_mac(self.mac_addr):
+            raise ParameterError("Invalid MAC Address")
         static_mac_data["mac_addr"] = self.mac_addr
-        static_mac_data["vlan"] = self._parent_vlan.get_uri()
+        static_mac_data["vlan"] = self.__parent_vlan.get_info_format()
         if hasattr(self, "port") and self.port is not None:
-            static_mac_data["port"] = self.port.get_uri()
+            if isinstance(self.port, str):
+                port = self.session.api.get_module(
+                    self.session, "Interface", self.port
+                )
+            port.get()
+            if not port.materialized:
+                raise VerificationError(
+                    "Port {0} not materialized".format(port.name)
+                )
+            if hasattr(port, "routing") and port.routing:
+                raise VerificationError(
+                    "{0} is not an L2 port".format(port.name)
+                )
+            static_mac_data["port"] = port.get_info_format()
 
-        return self._post_data(static_mac_data)
+        self.__modified = self._post_data(static_mac_data)
+        return self.__modified
 
     @PyaoscxModule.connected
     def delete(self):
         """
-        Perform DELETE call to delete Static MAC mac_addr from interface on
-            the switch.
+        Perform DELETE call to delete Static MAC.
         """
-        reference_address = quote_plus(str(self.mac_address))
-        uri = "{0}/{1}".format(self.base_uri, reference_address)
+        self._send_data(self.path, None, "DELETE", "Delete")
 
-        self._send_data(uri, None, "DELETE", "Delete")
-
-        # Delete back reference from VRF
-        for static_mac in self._parent_vlan.static_macs:
+        # Delete back reference from VLAN
+        for static_mac in self.__parent_vlan.static_macs:
             if static_mac.mac_address == self.mac_address:
-                self._parent_vlan.static_macs.remove(static_mac)
+                self.__parent_vlan.static_macs.remove(static_mac)
 
         utils.delete_attrs(self, self.config_attrs)
 
     @classmethod
     def from_response(cls, session, parent_vlan, response_data):
         """
-        Create a Static MAC object given a response_data related to the IP6
-            mac_addr object.
+        Create a Static MAC object given a response_data related to it.
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_vlan: parent Vlan object where Static MAC is stored.
         :param response_data: The response must be a dictionary of the form:
             {
-                mac_addr: "/rest/v10.04/interface/static_macs/mac_addr"
+                <mac_addr>: (
+                    "/rest/v10.04/system/vlans/<vlan_id>/static_macs/<mac_addr>"
+                )
             }
         :return: Static MAC object
         """
-        mac_format = mac_eui48
-        mac_format.word_sep = ":"
         static_mac_arr = session.api.get_keys(
             response_data, StaticMac.resource_uri_name
         )
@@ -157,41 +261,39 @@ class StaticMac(Mac):
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :param parent_vlan: Parent VLAN class where Static MAC is stored.
+        :param parent_vlan: VLAN object where Static MAC is stored.
         :param uri: a String with a URI.
         :return index, static_mac_obj: tuple containing both the StaticMac
             Object and the static_mac's mac_address.
         """
-        mac_format = mac_eui48
-        mac_format.word_sep = ":"
         # Obtain ID from URI
-        index_pattern = re.compile(r"(.*)static_macs/(?P<index>.+)")
-        reference_mac_addr = index_pattern.match(uri).group("index")
+        # system/vlans/<vlan_id>/static_macs/<mac_addr>
+        mac_addr = uri.split("/")[-1]
 
-        mac_addr = MacAddress(
-            unquote_plus(reference_mac_addr), dialect=mac_format
-        )
+        # Create Static MAC object
+        static_mac_obj = StaticMac(session, mac_addr, parent_vlan)
 
-        static_mac_obj = StaticMac(session, mac_addr, parent_vlan, uri=uri)
+        return mac_addr, static_mac_obj
 
-        return reference_mac_addr, static_mac_obj
+    def __str__(self):
+        return "Static MAC ID {0}".format(self.mac_addr)
 
     @PyaoscxModule.deprecated
     def get_uri(self):
-        # TODO: remove this method in favor of uri_path once all
-        # modules have been translated to the 'properties' style
-        return self.uri_path
-
-    @property
-    def uri_path(self):
         """
-        Method used to obtain the specific Static MAC URI.
+        Method used to obtain the specific Statis MAC URI.
         return: Object's URI.
         """
-        if self._uri is None:
-            self._uri = self.session.resource_prefix + self._mac_path()
+        return self.path
 
-        return self._uri
+    @PyaoscxModule.deprecated
+    def get_info_format(self):
+        """
+        Method used to obtain correct object format for referencing inside
+            other objects.
+        return: Object format depending on the API Version.
+        """
+        return self.session.api.get_index(self)
 
     @property
     def modified(self):
