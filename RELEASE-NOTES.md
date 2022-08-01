@@ -1,3 +1,25 @@
+# 2.3.0
+
+## Notable Changes
+
+* Fully tested the OSPFv2 and OSPFv3 functionality
+* Bugfixes in other modules
+* New modules supported for OSPF feature and fully tested:
+  * ospf_area.py
+  * ospf_interface.py
+  * ospf_router.py
+  * ospfv3_router.py
+  * ospf_virtual_link.py
+* This modules are not fully tested and therefore not supported yet:
+  * bgp_neighbor.py
+  * bgp_router.py
+  * mac.py
+  * poe_interface.py
+  * static_mac.py
+  * vrf.py
+  * vsx.py
+  * vrf_address_family.py
+
 # 2.2.1
 
 ## Notable Changes
