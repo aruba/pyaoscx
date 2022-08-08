@@ -2,8 +2,9 @@
 # Apache License 2.0
 
 from netaddr import IPNetwork
+import os
 
-import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
@@ -159,44 +160,34 @@ def file_upload(session, file_path, complete_uri):
             "https://172.25.0.2/rest/v10.04/firmware?image=primary".
     :return True if successful.
     """
-    with open(file_path, "rb") as file:
-        file_param = {"fileupload": file}
-        try:
-            # User session login
-            # Perform Login
-            response_login = requests.post(
-                "{0}login?username={1}&password={2}".format(
-                    session.base_url, session.username(), session.password()
-                ),
-                verify=False,
-                timeout=5,
-                proxies=session.proxy,
-            )
+    file_name = os.path.basename(file_path)
+    file_param = {
+        "fileupload": (
+            file_name,
+            open(file_path, "rb"),
+            "application/octet-stream",
+        )
+    }
+    m_part = MultipartEncoder(fields=file_param)
+    file_header = {"Accept": "*/*", "Content-Type": m_part.content_type}
 
-            # Perform File Upload
-            response_file_upload = requests.post(
-                url=complete_uri,
-                files=file_param,
-                verify=False,
-                proxies=session.proxy,
-                cookies=response_login.cookies,
-            )
+    try:
+        # Perform File Upload
+        response_file_upload = session.s.post(
+            complete_uri,
+            verify=False,
+            data=m_part,
+            headers=file_header,
+            proxies=session.proxy,
+        )
 
-            # Perform Logout
-            requests.post(
-                session.base_url + "logout",
-                verify=False,
-                proxies=session.proxy,
-                cookies=response_login.cookies,
-            )
+    except Exception as e:
+        raise ResponseError("POST", e)
 
-        except Exception as e:
-            raise ResponseError("POST", e)
-
-        if response_file_upload.status_code != 200:
-            raise GenericOperationError(
-                response_file_upload.text, response_file_upload.status_code
-            )
+    if response_file_upload.status_code != 200:
+        raise GenericOperationError(
+            response_file_upload.text, response_file_upload.status_code
+        )
 
     # Return true if successful
     return True
