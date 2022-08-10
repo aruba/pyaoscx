@@ -31,6 +31,8 @@ class Session:
         '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
     """
 
+    _login_headers = {"Accept": "*/*", "x-use-csrf-token": "true"}
+
     def __init__(self, ip_address, api, proxy=None):
 
         self.api = API.create(api)
@@ -96,6 +98,7 @@ class Session:
 
         # Set request.Session()
         session.s.cookies = req_session.cookies
+        session.s.headers = req_session.headers
         session.connected = True
 
         # Set credentials
@@ -142,7 +145,9 @@ class Session:
                 verify=False,
                 timeout=5,
                 proxies=self.proxy,
+                headers=self._login_headers,
             )
+            self.__assign_csrftoken(response, self.s)
         except requests.exceptions.ConnectTimeout:
             raise Exception(
                 "Error connecting to host: connection attempt timed out."
@@ -156,8 +161,8 @@ class Session:
             )
 
         cookies = self.s.cookies
-        if ':' in self.ip:
-            ipv6_match = self.ip + '.local'
+        if ":" in self.ip:
+            ipv6_match = self.ip + ".local"
             self.connected = (
                 hasattr(cookies, "_cookies") and ipv6_match in cookies._cookies
             )
@@ -237,6 +242,7 @@ class Session:
         if use_proxy is False:
             s.proxies["https"] = None
             s.proxies["http"] = None
+
         try:
             print(base_url + "login")
             response = s.post(
@@ -245,7 +251,9 @@ class Session:
                 verify=False,
                 timeout=5,
                 proxies=s.proxies,
+                headers=cls._login_headers,
             )
+            cls.__assign_csrftoken(response, s)
         except requests.exceptions.ConnectTimeout:
             logging.warning(
                 "ERROR: Error connecting to host: "
@@ -270,7 +278,9 @@ class Session:
                     verify=False,
                     timeout=5,
                     proxies=s.proxies,
+                    headers=cls._login_headers,
                 )
+                cls.__assign_csrftoken(response, s)
                 if response.status_code == ZEROIZED:
                     data = {"password": password}
                     response = s.put(
@@ -379,3 +389,15 @@ class Session:
             data=data,
             proxies=self.proxy,
         )
+
+    @classmethod
+    def __assign_csrftoken(cls, response, session):
+        if "X-Csrf-Token" in response.headers:
+            csrftoken = response.headers["X-Csrf-Token"]
+            session.headers.update(
+                {"Accept": "*/*", "x-csrf-token": csrftoken}
+            )
+        else:
+            logging.warning(
+                "WARNING: This version doesn't support X-Csrf-Token"
+            )
