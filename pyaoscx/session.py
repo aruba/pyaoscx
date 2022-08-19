@@ -48,8 +48,6 @@ class Session:
         # request methods
         self.base_url = "https://{0}/rest/v{1}/".format(self.ip, self.api)
         self.resource_prefix = "/rest/v{0}/".format(self.api)
-        self.s = requests.Session()
-        self.s.verify = False
         self.__username = self.__password = ""
 
     def cookies(self):
@@ -97,8 +95,7 @@ class Session:
             session.proxy = req_session.proxies
 
         # Set request.Session()
-        session.s.cookies = req_session.cookies
-        session.s.headers = req_session.headers
+        session.s = req_session
         session.connected = True
 
         # Set credentials
@@ -108,7 +105,7 @@ class Session:
 
         return session
 
-    def open(self, username=None, password=None):
+    def open(self, username=None, password=None, use_proxy=True):
         """
         Perform a POST call to login and gain access to other API calls. If
             either username or password is not specified, user will be prompted
@@ -134,30 +131,21 @@ class Session:
             if password is None:
                 password = getpass.getpass()
 
-        login_data = {"username": username, "password": password}
         self.__username = username
         self.__password = password
         try:
-            login_uri = "{0}{1}".format(self.base_url, "login")
-            response = self.s.post(
-                login_uri,
-                data=login_data,
-                verify=False,
-                timeout=5,
-                proxies=self.proxy,
-                headers=self._login_headers,
+            self.s = Session.login(
+                self.base_url,
+                username,
+                password,
+                use_proxy,
+                handle_zeroized_device=True,
             )
-            self.__assign_csrftoken(response, self.s)
+            self.s.verify = False
+            self.s.proxies = self.proxy
         except requests.exceptions.ConnectTimeout:
             raise Exception(
                 "Error connecting to host: connection attempt timed out."
-            )
-
-        if response.status_code != 200:
-            raise Exception(
-                "FAIL: Login failed with status code {0}: {1}".format(
-                    response.status_code, response.text
-                )
             )
 
         cookies = self.s.cookies
@@ -174,8 +162,6 @@ class Session:
         if not self.connected:
             raise LoginError("Cookies were not set correctly. Login failed")
 
-        logging.info("SUCCESS: Login succeeded")
-
     def close(self):
         """
         Perform a POST call to logout and end the session. Given all the
@@ -183,30 +169,7 @@ class Session:
             within the session, no parameters are required.
         """
         if self.connected:
-            logout_uri = "{0}{1}".format(self.base_url, "logout")
-
-            try:
-                response = self.s.post(
-                    logout_uri, verify=False, proxies=self.proxy
-                )
-            except BaseException:
-                raise Exception(
-                    "Unable to process the request: ({0}) {1}".format(
-                        response.status_code, response.text
-                    )
-                )
-
-            if response.status_code != 200:
-                raise Exception(
-                    "FAIL: Logout failed with status code {0}: {1}".format(
-                        response.status_code, response.text
-                    )
-                )
-
-            logging.info("SUCCESS: Logout succeeded")
-
-    # Session Login and Logout
-    # Used for Connection within Ansible
+            Session.logout(s=self.s, url=self.base_url)
 
     @classmethod
     def login(
