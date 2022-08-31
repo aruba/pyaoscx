@@ -293,8 +293,11 @@ class Configuration:
         """
         success = False
 
-        uri = "fullconfigs/{0}?from={1}fullconfigs/{2}".format(
-            self.session.resource_prefix, destination_config, source_config
+        source_url = "{0}fullconfigs/{1}".format(
+            self.session.resource_prefix, source_config
+        )
+        uri = "fullconfigs/{0}?from={1}".format(
+            destination_config, quote_plus(source_url)
         )
 
         try:
