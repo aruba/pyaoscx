@@ -454,7 +454,12 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         except Exception as e:
             raise ResponseError("PUT", e)
 
-        if not utils._response_ok(response, "PUT"):
+        if (
+            not utils._response_ok(response, "PUT")
+            and response.status_code != 400
+        ):
+            # In this case, status code 400 is a valid state
+            # PUT often returns "400: Firmware upgrade in progress"
             raise GenericOperationError(response.text, response.status_code)
 
         # True if successful
