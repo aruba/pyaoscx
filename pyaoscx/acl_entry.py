@@ -411,6 +411,8 @@ class AclEntry(PyaoscxModule):
         for acl_entry in self.__parent_acl.cfg_aces:
             if acl_entry.sequence_number == self.sequence_number:
                 self.__parent_acl.cfg_aces.remove(acl_entry)
+        self.__parent_acl._update_version()
+        self.__parent_acl.apply()
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
