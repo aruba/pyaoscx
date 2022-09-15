@@ -153,6 +153,44 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         utils.create_attrs(self, data_subsystems)
 
     @PyaoscxModule.connected
+    def get_data_planes(self):
+        """
+        Perform GET call to retrieve data-planes attributes and create a
+            dictionary containing them.
+        """
+        logging.info(
+            "Retrieving the switch data-planes attributes and capabilities"
+        )
+
+        api = self.session.api
+        if hasattr(api, "default_data_planes_facts_depth"):
+            depth = api.default_data_planes_facts_depth
+        else:
+            depth = api.default_subsystem_facts_depth
+
+        # Build URI
+        uri = "system/subsystems?attributes=data_planes&depth={0}".format(
+            depth
+        )
+
+        try:
+            # Try to perform a GET call and retrieve the data
+            response = self.session.request("GET", uri)
+
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        # Load into json format
+        data = json.loads(response.text)
+        data_subsystems = {"data_planes": data}
+
+        # Create class attributes using util.create_attrs
+        utils.create_attrs(self, data_subsystems)
+
+    @PyaoscxModule.connected
     def get_firmware_version(self):
         """
         Perform a GET call to retrieve device firmware version.
