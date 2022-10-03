@@ -2031,9 +2031,7 @@ class Interface(PyaoscxModule):
         max_clients = device.capacities[
             "port_access_port_security_max_client_limit"
         ]
-        if client_limit is not None and (
-            1 > client_limit or client_limit > max_clients
-        ):
+        if client_limit and (1 > client_limit or client_limit > max_clients):
             raise ParameterError(
                 "Can only authorize 1 to {0} clients".format(max_clients)
             )
@@ -2041,7 +2039,7 @@ class Interface(PyaoscxModule):
         if client_limit:
             self.port_security["client_limit"] = client_limit
 
-        if sticky_mac_learning:
+        if sticky_mac_learning is not None:
             self.port_security[
                 "sticky_mac_learning_enable"
             ] = sticky_mac_learning
@@ -2133,12 +2131,14 @@ class Interface(PyaoscxModule):
                 _valid_sticky_macs[mac_address] = _valid_vlans
         self.port_security_static_sticky_client_mac_addr = _valid_sticky_macs
 
-        if violation_action:
-            if violation_action == "notify" and violation_recovery_time:
+        if violation_action and violation_recovery_time:
+            if violation_action == "notify" and violation_recovery_time != 10:
                 raise ParameterError(
-                    "Must not specify recovery time when violation action is "
-                    "'notify'"
+                    "Must not specify recovery time different than 10 seconds "
+                    "when violation action is 'notify'"
                 )
+
+        if violation_action:
             self.port_access_security_violation["action"] = violation_action
 
         if violation_recovery_time:
