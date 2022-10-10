@@ -478,9 +478,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         """
         uri = "firmware?image={0}".format(partition_name)
 
-        success = utils.file_upload(
-            self.session, firmware_file_path, self.session._build_uri(uri)
-        )
+        success = utils.file_upload(self.session, firmware_file_path, uri)
         # If no errors detected
         return success
 

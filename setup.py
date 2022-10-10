@@ -27,6 +27,6 @@ setup(
     ],
     keywords="networking aruba aos-cx switch rest api python",
     packages=find_packages(exclude=["docs"]),
-    install_requires=["requests", "PyYAML", "netaddr", "requests_toolbelt"],
+    install_requires=["requests", "PyYAML", "netaddr"],
     zip_safe=False,
 )
