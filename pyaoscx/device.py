@@ -196,6 +196,18 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         Perform a GET call to retrieve device firmware version.
         :return: firmware_version: The firmware version.
         """
+        data = self.get_firmware_info()
+        self.firmware_version = data["current_version"]
+        # Return Version
+        return self.firmware_version
+
+    @PyaoscxModule.connected
+    def get_firmware_info(self):
+        """
+        Perform a GET call to retrieve device firmware information.
+        :return: firmware_info: The versions of current, primary and
+            secondary images.
+        """
         try:
             response = self.session.request("GET", "firmware")
 
@@ -205,11 +217,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
 
-        data = json.loads(response.text)
-
-        self.firmware_version = data["current_version"]
-        # Return Version
-        return self.firmware_version
+        firmware_info = json.loads(response.text)
+        return firmware_info
 
     @PyaoscxModule.materialized
     def apply(self):
