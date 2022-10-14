@@ -124,9 +124,10 @@ class ACL(PyaoscxModule):
         if self.cfg_aces == []:
             # Set ACL Entries if any
             # Adds ACL Entries to parent ACL already
-            from pyaoscx.acl_entry import AclEntry
-
-            AclEntry.get_all(self.session, self)
+            AclEntry = self.session.api.get_module_class(
+                self.session, "AclEntry"
+            )
+            self.cfg_aces = list(AclEntry.get_all(self.session, self).values())
         return True
 
     @classmethod
