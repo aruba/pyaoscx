@@ -1,3 +1,14 @@
+# 2.3.1
+
+## Notable Changes
+
+* Fixed create_checkpoint function in configuration module
+* Added support for Csrf Token
+* Added support for Data planes
+* Added support for REST v10.09
+* Added function get_firmware_info to Device
+* Remove repeated logic for open/login and close/logout functions in Session
+
 # 2.3.0
 
 ## Notable Changes
