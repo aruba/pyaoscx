@@ -2,8 +2,9 @@
 # Apache License 2.0
 
 from netaddr import IPNetwork
+import os
 
-import requests
+from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
@@ -147,7 +148,7 @@ def _response_ok(response, call_type):
     return response.status_code in ok_codes[call_type]
 
 
-def file_upload(session, file_path, complete_uri):
+def file_upload(session, file_path, complete_uri, try_pycurl=False):
     """
     Upload any file given a URI and the path to a file located on the local
         machine.
@@ -157,37 +158,149 @@ def file_upload(session, file_path, complete_uri):
     :param complete_uri: Complete URI to perform the POST Request and upload
         the file. Example:
             "https://172.25.0.2/rest/v10.04/firmware?image=primary".
+    :param try_pycurl: If True the function will try to use pycurl instead
+        of requests.
     :return True if successful.
     """
-    with open(file_path, "rb") as file:
-        file_param = {"fileupload": file}
+    if try_pycurl:
         try:
-            # User session login
-            # Perform Login
-            response_login = requests.post(
-                "{0}login?username={1}&password={2}".format(
-                    session.base_url, session.username(), session.password()
-                ),
-                verify=False,
-                timeout=5,
-                proxies=session.proxy,
+            import pycurl
+            from urllib.parse import urlencode
+
+            use_pycurl = True
+        except ImportError:
+            use_pycurl = False
+    else:
+        use_pycurl = False
+
+    file_name = os.path.basename(file_path)
+
+    if use_pycurl:
+        response = {}
+        headers = {}
+
+        def response_function(response_line):
+            response["s"] = response_line.decode("iso-8859-1")
+            return
+
+        def header_function(header_line):
+            header_line = header_line.decode("iso-8859-1")
+            if ":" in header_line:
+                name, value = header_line.split(":", 1)
+                name = name.strip()
+                value = value.strip()
+                name = name.lower()
+                if name == "set-cookie" and name in headers:
+                    tmp_value = headers[name]
+                    tmp_value = tmp_value.split(";")[0]
+                    value = tmp_value + "; " + value
+                headers[name] = value
+            return
+
+        # pycurl handles proxies diferently than requests
+        for proto, ip in session.proxy.items():
+            if proto in ["http", "https"]:
+                proto = proto + "_proxy"
+            if ip is None:
+                os.environ.pop(proto, None)
+            elif ip:
+                os.environ[proto] = ip
+
+        login_headers = ["Accept: */*", "x-use-csrf-token: true"]
+        upload_headers = ["Accept: */*", "Content-Type: multipart/form-data"]
+        logout_headers = ["Accept: */*"]
+        login_data = {
+            "username": session.username(),
+            "password": session.password(),
+        }
+        postfields = urlencode(login_data)
+
+        c = pycurl.Curl()
+        c.setopt(c.URL, session.base_url + "login")
+        c.setopt(c.HTTPHEADER, login_headers)
+        c.setopt(c.CUSTOMREQUEST, "POST")
+        c.setopt(c.POSTFIELDS, postfields)
+        c.setopt(c.SSL_VERIFYPEER, False)
+        c.setopt(c.SSL_VERIFYHOST, False)
+        c.setopt(c.HEADERFUNCTION, header_function)
+        c.setopt(c.WRITEFUNCTION, response_function)
+        c.perform()
+        c.close()
+
+        token_id = "x-csrf-token"
+        if "set-cookie" in headers:
+            tmp_header = "Cookie: " + headers["set-cookie"]
+            upload_headers.append(tmp_header)
+            logout_headers.append(tmp_header)
+        if token_id in headers:
+            tmp_header = token_id + ": " + headers[token_id]
+            upload_headers.append(tmp_header)
+            logout_headers.append(tmp_header)
+
+        c = pycurl.Curl()
+        c.setopt(c.URL, complete_uri)
+        c.setopt(c.HTTPHEADER, upload_headers)
+        c.setopt(c.WRITEFUNCTION, response_function)
+        c.setopt(c.CUSTOMREQUEST, "POST")
+        c.setopt(c.SSL_VERIFYPEER, 0)
+        c.setopt(c.SSL_VERIFYHOST, 0)
+        c.setopt(
+            c.HTTPPOST,
+            [
+                (
+                    "fileupload",
+                    (
+                        c.FORM_FILE,
+                        file_path,
+                        c.FORM_FILENAME,
+                        file_name,
+                        c.FORM_CONTENTTYPE,
+                        "application/octet-stream",
+                    ),
+                )
+            ],
+        )
+        c.perform()
+        status_code = c.getinfo(c.RESPONSE_CODE)
+        c.close()
+
+        c = pycurl.Curl()
+        c.setopt(c.URL, session.base_url + "logout")
+        c.setopt(c.HTTPHEADER, logout_headers)
+        c.setopt(c.WRITEFUNCTION, response_function)
+        c.setopt(c.CUSTOMREQUEST, "POST")
+        c.setopt(c.SSL_VERIFYPEER, 0)
+        c.setopt(c.SSL_VERIFYHOST, 0)
+        c.perform()
+        c.close()
+        if status_code != 200:
+            raise GenericOperationError(
+                response["s"] + " (" + pycurl.version + ")", status_code
             )
 
+        # Return true if successful
+        return True
+    # with requests
+    else:
+        file_param = {
+            "fileupload": (
+                file_name,
+                open(file_path, "rb"),
+                "application/octet-stream",
+            )
+        }
+        m_part = MultipartEncoder(fields=file_param)
+        file_header = {"Accept": "*/*", "Content-Type": m_part.content_type}
+
+        try:
+            file_header.update(session.s.headers)
             # Perform File Upload
-            response_file_upload = requests.post(
-                url=complete_uri,
-                files=file_param,
+            response_file_upload = session.s.post(
+                complete_uri,
                 verify=False,
+                data=m_part,
+                headers=file_header,
                 proxies=session.proxy,
-                cookies=response_login.cookies,
-            )
-
-            # Perform Logout
-            requests.post(
-                session.base_url + "logout",
-                verify=False,
-                proxies=session.proxy,
-                cookies=response_login.cookies,
             )
 
         except Exception as e:
@@ -198,8 +311,8 @@ def file_upload(session, file_path, complete_uri):
                 response_file_upload.text, response_file_upload.status_code
             )
 
-    # Return true if successful
-    return True
+        # Return true if successful
+        return True
 
 
 def get_ip_version(ip):
