@@ -31,15 +31,15 @@ class Session:
         '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
     """
 
-    _login_headers = {"Accept": "*/*", "x-use-csrf-token": "true"}
-
     def __init__(self, ip_address, api, proxy=None):
 
         self.api = API.create(api)
         self.ip = ip_address
         self.connected = False
         self.proxy = (
-            {"no_proxy": self.ip} if proxy is None else {"https": proxy}
+            {"no_proxy": self.ip}
+            if proxy is None
+            else {"http": proxy, "https": proxy}
         )
         self.scheme = "https"
         self.version_path = "rest/v{0}/".format(self.api)
@@ -199,12 +199,13 @@ class Session:
             password = getpass.getpass()
 
         login_data = {"username": username, "password": password}
+        login_headers = {"Accept": "*/*", "x-use-csrf-token": "true"}
 
         s = requests.Session()
+        o = requests.utils.urlparse(base_url)
 
         if use_proxy is False:
-            s.proxies["https"] = None
-            s.proxies["http"] = None
+            s.proxies["no_proxy"] = o.hostname
 
         try:
             print(base_url + "login")
@@ -214,7 +215,7 @@ class Session:
                 verify=False,
                 timeout=5,
                 proxies=s.proxies,
-                headers=cls._login_headers,
+                headers=login_headers,
             )
             cls.__assign_csrftoken(response, s)
         except requests.exceptions.ConnectTimeout:
@@ -241,7 +242,7 @@ class Session:
                     verify=False,
                     timeout=5,
                     proxies=s.proxies,
-                    headers=cls._login_headers,
+                    headers=login_headers,
                 )
                 cls.__assign_csrftoken(response, s)
                 if response.status_code == ZEROIZED:

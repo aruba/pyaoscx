@@ -466,7 +466,10 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         return True
 
     def upload_firmware_local(
-        self, partition_name="primary", firmware_file_path=None
+        self,
+        partition_name="primary",
+        firmware_file_path=None,
+        try_pycurl=False,
     ):
         """
         Perform a POST request to upload a firmware image from a local file.
@@ -474,11 +477,18 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             uploaded to.
         :param firmware_file_path: File name and path for local file uploading
             firmware image.
+        :param try_pycurl: If True the function will try to use pycurl instead
+            of requests.
         :return success: True if success.
         """
         uri = "firmware?image={0}".format(partition_name)
 
-        success = utils.file_upload(self.session, firmware_file_path, uri)
+        success = utils.file_upload(
+            self.session,
+            firmware_file_path,
+            self.session._build_uri(uri),
+            try_pycurl,
+        )
         # If no errors detected
         return success
 
@@ -488,6 +498,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         firmware_file_path=None,
         remote_firmware_file_path=None,
         vrf=None,
+        try_pycurl=False,
     ):
         """
         Upload a firmware image from a local file OR from a remote location.
@@ -502,6 +513,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             ex: 'http://192.168.1.2:8000/TL_10_04_0030A.swi'.
         :param vrf: VRF to be used to contact HTTP server, required if
             remote_firmware_file_path is provided.
+        :param try_pycurl: If True the function will try to use pycurl instead
+            of requests.
         :return bool: True if success.
         """
         result = None
@@ -517,7 +530,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         # Locally
         else:
             result = self.upload_firmware_local(
-                partition_name, firmware_file_path
+                partition_name, firmware_file_path, try_pycurl
             )
 
         # If no errors detected
