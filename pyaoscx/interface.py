@@ -1623,6 +1623,40 @@ class Interface(PyaoscxModule):
         ):
             self.user_config["admin"] = state
 
+    @property
+    def mtu(self):
+        if (
+            "lag" not in self.name
+            and hasattr(self, "user_config")
+            and isinstance(self.user_config, dict)
+        ):
+            if "mtu" in self.user_config:
+                return self.user_config["mtu"]
+            else:
+                # default MTU value
+                return 1500
+        else:
+            raise VerificationError(
+                "Interface {0} has not MTU attribute".format(self.name)
+            )
+
+    @mtu.setter
+    def mtu(self, new_mtu):
+        """
+        Set the MTU value
+        :param mtu: new MTU value
+        """
+        if (
+            "lag" not in self.name
+            and hasattr(self, "user_config")
+            and isinstance(self.user_config, dict)
+        ):
+            self.user_config["mtu"] = new_mtu
+        else:
+            raise VerificationError(
+                "Interface {0} has not MTU attribute".format(self.name)
+            )
+
     def configure_vsx(
         self, active_forwarding, vsx_sync, act_gw_mac, act_gw_ip
     ):
