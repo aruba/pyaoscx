@@ -2131,13 +2131,6 @@ class Interface(PyaoscxModule):
                 _valid_sticky_macs[mac_address] = _valid_vlans
         self.port_security_static_sticky_client_mac_addr = _valid_sticky_macs
 
-        if violation_action and violation_recovery_time:
-            if violation_action == "notify" and violation_recovery_time != 10:
-                raise ParameterError(
-                    "Must not specify recovery time different than 10 seconds "
-                    "when violation action is 'notify'"
-                )
-
         if violation_action:
             self.port_access_security_violation["action"] = violation_action
 
