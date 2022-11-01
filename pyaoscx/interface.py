@@ -6,6 +6,7 @@ import logging
 import re
 
 from copy import deepcopy
+from random import randint
 from urllib.parse import quote_plus, unquote_plus
 from warnings import warn
 
@@ -1563,7 +1564,7 @@ class Interface(PyaoscxModule):
         # When changes are applied, port is disabled and lacp key changed
         return self.apply()
 
-    def clear_acl(self, acl_type):
+    def clear_acl(self, acl_type, acl_direction):
         """
         Clear an interface's ACL.
         :param acl_type: Type of ACL: options are 'aclv4_out', 'aclv4_in',
@@ -1571,14 +1572,26 @@ class Interface(PyaoscxModule):
         :return: True if object was changed.
         """
         if acl_type == "ipv6":
-            self.aclv6_in_cfg = None
-            self.aclv6_in_cfg_version = None
+            if acl_direction == "in":
+                self.aclv6_in_cfg = None
+                self.aclv6_in_cfg_version = None
+            else:
+                self.aclv6_out_cfg = None
+                self.aclv6_out_cfg_version = None
         if acl_type == "ipv4":
-            self.aclv4_in_cfg = None
-            self.aclv4_in_cfg_version = None
+            if acl_direction == "in":
+                self.aclv4_in_cfg = None
+                self.aclv4_in_cfg_version = None
+            else:
+                self.aclv4_out_cfg = None
+                self.aclv4_out_cfg_version = None
         if acl_type == "mac":
-            self.aclmac_in_cfg = None
-            self.aclmac_in_cfg_version = None
+            if acl_direction == "in":
+                self.aclmac_in_cfg = None
+                self.aclmac_in_cfg_version = None
+            else:
+                self.aclmac_out_cfg = None
+                self.aclmac_out_cfg_version = None
 
         # Apply Changes
         return self.apply()
@@ -1913,27 +1926,29 @@ class Interface(PyaoscxModule):
         # Get the current version
         acl_obj.get()
 
+        new_cfg_version = randint(-9007199254740991, 9007199254740991)
+
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
             if (
                 hasattr(self, "aclv6_in_cfg_version")
                 and self.aclv6_in_cfg_version is None
             ):
-                self.aclv6_in_cfg_version = acl_obj.cfg_version
+                self.aclv6_in_cfg_version = new_cfg_version
         elif list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
             if (
                 hasattr(self, "aclv4_in_cfg_version")
                 and self.aclv4_in_cfg_version is None
             ):
-                self.aclv4_in_cfg_version = acl_obj.cfg_version
+                self.aclv4_in_cfg_version = new_cfg_version
         elif list_type == "mac":
             self.aclmac_in_cfg = acl_obj
             if (
                 hasattr(self, "aclmac_in_cfg_version")
                 and self.aclmac_in_cfg_version is None
             ):
-                self.aclmac_in_cfg_version = acl_obj.cfg_version
+                self.aclmac_in_cfg_version = new_cfg_version
 
         # Apply changes
         return self.apply()
@@ -1955,29 +1970,31 @@ class Interface(PyaoscxModule):
         # Get the current version
         acl_obj.get()
 
+        new_cfg_version = randint(-9007199254740991, 9007199254740991)
+
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
             if (
                 hasattr(self, "aclv6_out_cfg_version")
                 and self.aclv6_out_cfg_version is None
             ):
-                self.aclv6_out_cfg_version = acl_obj.cfg_version
+                self.aclv6_out_cfg_version = new_cfg_version
         elif list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
             if (
                 hasattr(self, "aclv4_out_cfg_version")
                 and self.aclv4_out_cfg_version is None
             ):
-                self.aclv4_out_cfg_version = acl_obj.cfg_version
+                self.aclv4_out_cfg_version = new_cfg_version
         elif list_type == "mac":
             self.aclmac_out_cfg = acl_obj
             if (
                 hasattr(self, "aclmac_out_cfg_version")
                 and self.aclmac_out_cfg_version is None
             ):
-                self.aclmac_out_cfg_version = acl_obj.cfg_version
+                self.aclmac_out_cfg_version = new_cfg_version
 
-        # Routeing
+        # Routing
         self.routing = True
 
         # Apply changes
