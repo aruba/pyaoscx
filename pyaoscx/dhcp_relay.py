@@ -380,10 +380,11 @@ class DhcpRelay(PyaoscxModule):
         """
         # Set IPv4
         if ipv4_list is not None and ipv4_list != []:
-            for i in range(len(ipv4_list)):
-                if ipv4_list[i] not in self.ipv4_ucast_server:
-                    self.ipv4_ucast_server.append(ipv4_list[i])
-
+            for ipv4 in ipv4_list:
+                if ipv4 not in self.ipv4_ucast_server:
+                    self.ipv4_ucast_server.append(ipv4)
+            if "ipv4_ucast_server" not in self.config_attrs:
+                self.config_attrs.append("ipv4_ucast_server")
         # Apply changes inside switch
         return self.apply()
 
@@ -397,9 +398,11 @@ class DhcpRelay(PyaoscxModule):
         """
         # Set IPv6
         if ipv6_list is not None and ipv6_list != []:
-            for i in range(len(ipv6_list)):
-                if ipv6_list[i] not in self.ipv6_ucast_server:
-                    self.ipv6_ucast_server.append(ipv6_list[i])
+            for ipv6 in ipv6_list:
+                if ipv6 not in self.ipv6_ucast_server:
+                    self.ipv6_ucast_server.append(ipv6)
+            if "ipv6_ucast_server" not in self.config_attrs:
+                self.config_attrs.append("ipv6_ucast_server")
 
         # Apply changes inside switch
         return self.apply()
