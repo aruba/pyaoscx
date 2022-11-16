@@ -2095,92 +2095,93 @@ class Interface(PyaoscxModule):
                 "sticky_mac_learning_enable"
             ] = sticky_mac_learning
 
-        # Use netaddr.EUI to verify that all static MAC addresses are valid,
-        # and use a colon (:) character as the separator.  Example: accept
-        # '2C:54:91:88:C9:E3', but not '2C-54-91-88-C9-E3', then re-convert to
-        # string because that is what the API accepts.
         mac_format = mac_eui48
         mac_format.word_sep = ":"
-        _valid_static_macs = []
-        allowed_mac_addr = allowed_mac_addr or []
-        for mac_addr in allowed_mac_addr:
-            try:
-                mac = MacAddress(mac_addr, dialect=mac_format)
-                _valid_static_macs.append(str(mac))
-            except AddrFormatError as exc:
-                raise ParameterError("Invalid static MAC address") from exc
-        self.port_security_static_client_mac_addr = _valid_static_macs
 
-        # Use netaddr.EUI to verify that all static MAC addresses are valid,
-        # and use a colon (:) character as the separator.  Example: accept
-        # '2C:54:91:88:C9:E3', but not '2C-54-91-88-C9-E3', then re-convert to
-        # string because that is what the API accepts.
-        _valid_sticky_macs = {}
-        allowed_sticky_mac_addr = allowed_sticky_mac_addr or {}
-        for mac_address, vlans in allowed_sticky_mac_addr.items():
-            try:
-                mac = MacAddress(mac_address, dialect=mac_format)
-                _valid_sticky_macs[str(mac)] = vlans
-            except AddrFormatError as exc:
-                raise ParameterError("Invalid sticky MAC address") from exc
+        if allowed_mac_addr:
+            sw_static_macs = self.port_security_static_client_mac_addr
+            for mac_addr in allowed_mac_addr:
+                if mac_addr not in sw_static_macs:
+                    try:
+                        mac = MacAddress(mac_addr, dialect=mac_format)
+                        sw_static_macs.append(str(mac))
+                    except AddrFormatError as exc:
+                        raise ParameterError(
+                            "Invalid static MAC address"
+                        ) from exc
 
-        # Verify all VLAN IDs are valid numbers
-        for mac_address, vlans in _valid_sticky_macs.items():
-            _valid_vlans = []
-            for vlan in vlans:
+        if allowed_sticky_mac_addr:
+            _valid_sticky_macs = {}
+            for mac_address, vlans in allowed_sticky_mac_addr.items():
                 try:
-                    vlan = int(vlan)
-                except ValueError as exc:
-                    raise ParameterError("Invalid sticky MAC VLANs") from exc
-                _valid_vlans.append(vlan)
+                    mac = MacAddress(mac_address, dialect=mac_format)
+                    _valid_sticky_macs[str(mac)] = vlans
+                except AddrFormatError as exc:
+                    raise ParameterError("Invalid sticky MAC address") from exc
 
-            __status_int = Interface(self.session, self.name)
-            __status_int.get(selector="status")
-            # NOTE: applied_vlan_tag is NOT in the default get() path, so we
-            # get it as a dictionary here
-            _vlan_tag = None
-            _vlan_tag_present = bool(__status_int.applied_vlan_tag)
-            if _vlan_tag_present:
-                _vlan_tag = int(next(iter(__status_int.applied_vlan_tag)))
-            # NOTE: applied_vlan_trunks is NOT in the default get() path, so we
-            # get it as a dictionary here
-            _vlan_trunks = None
-            _vlan_trunks_present = bool(__status_int.applied_vlan_trunks)
-            if _vlan_trunks_present:
-                _vlan_trunks = sorted(
-                    [int(k) for k in __status_int.applied_vlan_trunks]
-                )
-            if _valid_vlans == [] and _vlan_tag_present:
-                _valid_vlans = [_vlan_tag]
+            # Verify all VLAN IDs are valid numbers
+            sw_sticky_macs = self.port_security_static_sticky_client_mac_addr
+            for mac_address, vlans in _valid_sticky_macs.items():
+                _valid_vlans = []
+                if mac_address in sw_sticky_macs:
+                    _valid_vlans = sw_sticky_macs[mac_address]
+                for vlan in vlans:
+                    try:
+                        vlan = int(vlan)
+                    except ValueError as exc:
+                        raise ParameterError(
+                            "Invalid sticky MAC VLANs"
+                        ) from exc
+                    if vlan not in _valid_vlans:
+                        _valid_vlans.append(vlan)
 
-            if not _vlan_tag_present and not _vlan_trunks_present:
-                raise VerificationError(
-                    "No VLANs are configured in this interface"
-                )
-            for vlan in _valid_vlans:
-                if not (
-                    _vlan_tag_present
-                    and vlan == _vlan_tag
-                    or _vlan_trunks_present
-                    and vlan in _vlan_trunks
-                ):
-                    _err_msg_allowed_vlans = []
-                    if _vlan_tag_present:
-                        _err_msg_allowed_vlans.append(
-                            "vlan_access: {0}".format(_vlan_tag)
-                        )
-                    if _vlan_trunks_present:
-                        _err_msg_allowed_vlans.append(
-                            "vlan_trunks: {0}".format(_vlan_trunks)
-                        )
-                    raise VerificationError(
-                        "One or more of {0} VLANs are not configured, the "
-                        "allowed VLANs for this interface are: {1}".format(
-                            _valid_vlans, ", ".join(_err_msg_allowed_vlans)
-                        )
+                __status_int = Interface(self.session, self.name)
+                __status_int.get(selector="status")
+                # NOTE: applied_vlan_tag is NOT in the default get() path, so
+                # we get it as a dictionary here
+                _vlan_tag = None
+                _vlan_tag_present = bool(__status_int.applied_vlan_tag)
+                if _vlan_tag_present:
+                    _vlan_tag = int(next(iter(__status_int.applied_vlan_tag)))
+                # NOTE: applied_vlan_trunks is NOT in the default get() path,
+                # so we get it as a dictionary here
+                _vlan_trunks = None
+                _vlan_trunks_present = bool(__status_int.applied_vlan_trunks)
+                if _vlan_trunks_present:
+                    _vlan_trunks = sorted(
+                        [int(k) for k in __status_int.applied_vlan_trunks]
                     )
-                _valid_sticky_macs[mac_address] = _valid_vlans
-        self.port_security_static_sticky_client_mac_addr = _valid_sticky_macs
+                if _valid_vlans == [] and _vlan_tag_present:
+                    _valid_vlans = [_vlan_tag]
+
+                if not _vlan_tag_present and not _vlan_trunks_present:
+                    raise VerificationError(
+                        "No VLANs are configured in this interface"
+                    )
+                for vlan in _valid_vlans:
+                    if not (
+                        _vlan_tag_present
+                        and vlan == _vlan_tag
+                        or _vlan_trunks_present
+                        and vlan in _vlan_trunks
+                    ):
+                        _err_msg_allowed_vlans = []
+                        if _vlan_tag_present:
+                            _err_msg_allowed_vlans.append(
+                                "vlan_access: {0}".format(_vlan_tag)
+                            )
+                        if _vlan_trunks_present:
+                            _err_msg_allowed_vlans.append(
+                                "vlan_trunks: {0}".format(_vlan_trunks)
+                            )
+                        raise VerificationError(
+                            "One or more of {0} VLANs are not configured, the "
+                            "allowed VLANs for this interface are: {1}".format(
+                                _valid_vlans, ", ".join(_err_msg_allowed_vlans)
+                            )
+                        )
+                    _valid_sticky_macs[mac_address] = _valid_vlans
+            sw_sticky_macs.update(_valid_sticky_macs)
 
         if violation_action:
             self.port_access_security_violation["action"] = violation_action
