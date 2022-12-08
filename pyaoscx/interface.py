@@ -61,7 +61,6 @@ class Interface(PyaoscxModule):
         # List of previous interfaces before update
         # used to verify if an interface is deleted from lag
         self.__prev_interfaces = []
-
         # Set ip6 addresses
         self.ip6_addresses = ip6_addresses
 
@@ -572,6 +571,12 @@ class Interface(PyaoscxModule):
 
             # Set interfaces into correct form
             for element in self.interfaces:
+                if isinstance(element, str):
+                    element = self.session.api.get_module(
+                        self.session, "Interface", element
+                    )
+                    element.get()
+
                 # If element is the same as current, ignore
                 if element.name == self.name and self.type == "lag":
                     pass
@@ -582,13 +587,9 @@ class Interface(PyaoscxModule):
                             "Interface {0}".format(element.name),
                             "Object inside interfaces not materialized",
                         )
-                    formated_element = element.get_info_format()
-                    formatted_interfaces.update(formated_element)
-
-                    if self.type == "lag":
-                        # New element being added to LAG
-                        element.__add_member_to_lag(self)
-
+                    if self.type != "lag" or element.__add_member_to_lag(self):
+                        formated_element = element.get_info_format()
+                        formatted_interfaces.update(formated_element)
             # Set values in correct form
             iface_data["interfaces"] = formatted_interfaces
 
@@ -706,18 +707,24 @@ class Interface(PyaoscxModule):
         # Extract LAG ID from LAG name
         lag_id = int(re.search("\\d+", lag_name).group())
 
-        # Update Values
-        try:
-            self.user_config["admin"] = "down"
-        except AttributeError:
-            pass
-        try:
+        if (
+            "lacp-aggregation-key" in self.other_config
+            and self.other_config["lacp-aggregation-key"] != lag_id
+        ):
+            logging.warning(
+                "Could not add member to {0}: ".format(lag_name),
+                "Interface {0} belongs to lag{1}".format(
+                    self.name, self.other_config["lacp-aggregation-key"]
+                ),
+            )
+            return False
+        else:
             self.other_config["lacp-aggregation-key"] = lag_id
-        except AttributeError:
-            pass
+            self.admin_state = lag.admin_state
 
         # Make a POST call and update values
         self.update()
+        return True
 
     @PyaoscxModule.connected
     def __delete_lag(self, lag):
@@ -734,10 +741,7 @@ class Interface(PyaoscxModule):
             )
 
         # Update Values
-        try:
-            self.user_config["admin"] = "down"
-        except AttributeError:
-            pass
+        self.admin_state = "down"
         self.other_config.pop("lacp-aggregation-key", None)
 
         # Make a PUT call and update values
@@ -1640,7 +1644,7 @@ class Interface(PyaoscxModule):
 
     @property
     def admin_state(self):
-        return self.admin
+        return "down" if self.admin is None else self.admin
 
     @admin_state.setter
     def admin_state(self, state):
@@ -1692,6 +1696,54 @@ class Interface(PyaoscxModule):
             raise VerificationError(
                 "Interface {0} has not MTU attribute".format(self.name)
             )
+
+    @property
+    def lacp_mode(self):
+        return self.lacp if self.lacp is not None else "disabled"
+
+    @lacp_mode.setter
+    def lacp_mode(self, new_lacp_mode):
+        """
+        Set the LACP mode value
+        :param new_lacp_mode: new LACP mode value
+        """
+        valid_modes = ["active", "passive", "disabled"]
+        if new_lacp_mode not in valid_modes:
+            raise ParameterError(
+                "Invalid LACP mode {0}, valid modes are: {1}".format(
+                    new_lacp_mode, ", ".join(valid_modes)
+                )
+            )
+        self.lacp = None if new_lacp_mode == "disabled" else new_lacp_mode
+
+    @property
+    def lacp_rate(self):
+        if "lacp-time" in self.other_config:
+            return self.other_config["lacp-time"]
+        else:
+            return "slow"
+
+    @lacp_rate.setter
+    def lacp_rate(self, new_lacp_rate):
+        """
+        Set the LACP rate value
+        :param new_lacp_rate: new LACP rate value
+        """
+        if self.lacp_mode == "disabled":
+            raise VerificationError(
+                "LACP rate change for static LAGs is not allowed"
+            )
+        valid_rates = ["slow", "fast"]
+        if new_lacp_rate not in valid_rates:
+            raise ParameterError(
+                "Invalid LACP rate {0}, valid rates are: {1}".format(
+                    new_lacp_rate, ", ".join(valid_rates)
+                )
+            )
+        if new_lacp_rate == "slow":
+            self.other_config.pop("lacp-time", None)
+        else:
+            self.other_config["lacp-time"] = new_lacp_rate
 
     def configure_vsx(
         self, active_forwarding, vsx_sync, act_gw_mac, act_gw_ip
