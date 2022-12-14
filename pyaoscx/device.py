@@ -220,6 +220,28 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         firmware_info = json.loads(response.text)
         return firmware_info
 
+    @PyaoscxModule.connected
+    def get_firmware_status(self):
+        """
+        Perform a GET call to retrieve device firmware status.
+        :return: firmware_status: The date, reason and status of the firmware
+            upload.
+        """
+        uri = "firmware/status"
+
+        try:
+            # Try to perform a GET call and retrieve the data
+            response = self.session.request("GET", uri)
+
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        firmware_status = json.loads(response.text)
+        return firmware_status
+
     @PyaoscxModule.materialized
     def apply(self):
         """
