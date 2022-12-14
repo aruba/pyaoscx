@@ -2101,6 +2101,7 @@ class Interface(PyaoscxModule):
         if allowed_mac_addr:
             sw_static_macs = self.port_security_static_client_mac_addr
             for mac_addr in allowed_mac_addr:
+                mac_addr = mac_addr.upper()
                 if mac_addr not in sw_static_macs:
                     try:
                         mac = MacAddress(mac_addr, dialect=mac_format)
