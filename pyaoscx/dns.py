@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from pyaoscx.configuration import Configuration
@@ -228,7 +228,7 @@ class Dns(PyaoscxModule):
     # IMPERATIVE FUNCTIONS
     ####################################################################
 
-    def setup_mgmt_nameservers(self, primary=None, secondary=None):
+    def setup_mgmt_nameservers(self, session, primary=None, secondary=None):
         """
         Setup primary and secondary name servers on a mgmt interface.
 
@@ -239,19 +239,19 @@ class Dns(PyaoscxModule):
         :return: Return True if coinfig was modified.
         """
         # Create configuration Object
-        config = Configuration()
+        config = Configuration(session)
 
         # Return if configuration was modified
         return config.setup_mgmt_nameservers_dns(primary, secondary)
 
-    def delete_mgmt_nameservers(self):
+    def delete_mgmt_nameservers(self, session):
         """
         Delete primary and secondary name servers on a mgmt interface.
 
         :return: Return True if coinfig was modified.
         """
         # Create configuration Object
-        config = Configuration()
+        config = Configuration(session)
 
         return config.delete_mgmt_nameservers_dns()
 
@@ -336,16 +336,16 @@ class Dns(PyaoscxModule):
         if domain_name is not None:
             self.dns_domain_name = None
 
-        if domain_list is not None:
-            self.dns_domain_list = None
+        if domain_list != {}:
+            self.dns_domain_list = {}
 
-        if domain_servers is not None:
-            self.dns_name_servers = None
+        if domain_servers != {}:
+            self.dns_name_servers = {}
 
-        if host_v4_address_mapping is not None:
-            self.dns_host_v4_address_mapping = None
+        if host_v4_address_mapping != {}:
+            self.dns_host_v4_address_mapping = {}
 
-        if host_v6_address_mapping is not None:
-            self.dns_host_v6_address_mapping = None
+        if host_v6_address_mapping != {}:
+            self.dns_host_v6_address_mapping = {}
 
         return self.apply()

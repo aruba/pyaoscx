@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -641,10 +641,13 @@ class Vrf(PyaoscxModule):
         Delete DNS client configuration within a Vrf object.
 
         :param domain_name: If value is not None, it is deleted
-        :param domain_list: If value is not None, it is deleted
-        :param domain_servers: If value is not None, it is deleted
-        :param host_v4_address_mapping: If value is not None, it is deleted
-        :param host_v6_address_mapping: If value is not None, it is deleted
+        :param domain_list: If value is not an empty dictionary, it is deleted.
+        :param domain_servers: If value is not an empty dictionary, it is
+            deleted.
+        :param host_v4_address_mapping: If value is not an empty dictionary, it
+            is deleted.
+        :param host_v6_address_mapping: If value is not an empty dictionary, it
+            is deleted.
         :return modified: Returns True if modified.
         """
         # Update Values
@@ -652,17 +655,17 @@ class Vrf(PyaoscxModule):
         if domain_name is not None:
             self.dns_domain_name = None
 
-        if domain_list is not None:
-            self.dns_domain_list = None
+        if domain_list != {}:
+            self.dns_domain_list = {}
 
-        if domain_servers is not None:
-            self.dns_name_servers = None
+        if domain_servers != {}:
+            self.dns_name_servers = {}
 
-        if host_v4_address_mapping is not None:
-            self.dns_host_v4_address_mapping = None
+        if host_v4_address_mapping != {}:
+            self.dns_host_v4_address_mapping = {}
 
-        if host_v6_address_mapping is not None:
-            self.dns_host_v6_address_mapping = None
+        if host_v6_address_mapping != {}:
+            self.dns_host_v6_address_mapping = {}
 
         return self.apply()
 

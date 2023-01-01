@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -331,6 +331,7 @@ class Configuration:
             a IP address. Example: "10.10.2.10".
         :return: Return True if coinfig was modified.
         """
+        self.get()
         if "mode" in self.mgmt_intf:
             mgmt_if_mode = self.mgmt_intf["mode"]
         else:
@@ -354,6 +355,7 @@ class Configuration:
 
         :return: Return True if coinfig was modified.
         """
+        self.get()
         if "dns_server_1" in self.mgmt_intf:
             self.mgmt_intf.pop("dns_server_1")
 
