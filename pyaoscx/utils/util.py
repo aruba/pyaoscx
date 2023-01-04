@@ -1,9 +1,8 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
-from netaddr import IPNetwork
 import os
-
+from ipaddress import ip_interface
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
@@ -323,8 +322,8 @@ def get_ip_version(ip):
     :return: String with the IP version. Can be either ipv4 or ipv6.
     """
     try:
-        ip_net = IPNetwork(ip)
+        ip_net = ip_interface(ip)
         return "ipv{0}".format(ip_net.version)
-    except ValueError:
-        msg = "Invalid IP Address: {0}".format(ip)
+    except ValueError as intr:
+        msg = "Invalid IP: {0}".format(intr)
         raise ParameterError(msg)
