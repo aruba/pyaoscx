@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -7,6 +7,7 @@ import re
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.utils import util as utils
 
@@ -105,6 +106,10 @@ class AclEntry(PyaoscxModule):
         utils.set_creation_attrs(self, **kwargs)
         # Attribute used to know if object was changed recently
         self.__modified = False
+        if "src_ip" in kwargs:
+            self.src_ip = kwargs["src_ip"]
+        if "dst_ip" in kwargs:
+            self.dst_ip = kwargs["dst_ip"]
 
     def __set_acl(self, parent_acl):
         """
@@ -350,6 +355,8 @@ class AclEntry(PyaoscxModule):
         """
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
         acl_entry_data["sequence_number"] = self.sequence_number
+        acl_entry_data["src_ip"] = self.src_ip
+        acl_entry_data["dst_ip"] = self.dst_ip
 
         # Try to get protocol number
         try:
@@ -590,3 +597,45 @@ class AclEntry(PyaoscxModule):
 
         # Apply changes
         return self.apply()
+
+    @property
+    def src_ip(self):
+        """
+        Getter method for source ip attribute.
+        :return: String value for src_ip.
+        """
+        return self._src_ip
+
+    @src_ip.setter
+    def src_ip(self, new_src_ip):
+        """
+        Setter method for the src_ip attribute.
+        """
+        version = utils.get_ip_version(new_src_ip)
+        if version != self.__parent_acl.list_type:
+            raise VerificationError(
+                  "Version does not match the IP"
+                  "version type in {}".format(self.__parent_acl.name)
+                  )
+        self._src_ip = new_src_ip
+
+    @property
+    def dst_ip(self):
+        """
+        Getter method for destination ip attribute.
+        :return: String value for dst_ip.
+        """
+        return self._dst_ip
+
+    @dst_ip.setter
+    def dst_ip(self, new_dst_ip):
+        """
+        Setter method for the dst_ip attribute.
+        """
+        version = utils.get_ip_version(new_dst_ip)
+        if version != self.__parent_acl.list_type:
+            raise VerificationError(
+                 "Version does not match the IP"
+                 "version type in {}".format(self.__parent_acl.name)
+                    )
+        self._dst_ip = new_dst_ip
