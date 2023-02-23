@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -20,6 +20,7 @@ from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.utils import util as utils
+from pyaoscx.utils.iptools import overlapping_ips
 from pyaoscx.utils.list_attributes import ListDescriptor
 
 import pyaoscx.vrf as vrf_mod
@@ -1039,6 +1040,14 @@ class Interface(PyaoscxModule):
             self.ip4_address = None
             self.ip4_address_secondary = None
         elif isinstance(ipv4, list):
+            for ip_address in ipv4:
+                overlapping_ips(
+                    self.session,
+                    self.name,
+                    ip4_addr=ip_address,
+                    ip6_addr=None,
+                    new_vrf=vrf,
+                )
             self.ip4_address = ipv4[0]
             self.ip4_address_secondary = ipv4[1:]
 
@@ -1046,6 +1055,13 @@ class Interface(PyaoscxModule):
         ipv6_configured = False
         if ipv6 is not None and ipv6 != []:
             for ip_address in ipv6:
+                overlapping_ips(
+                    self.session,
+                    self.name,
+                    ip4_addr=None,
+                    ip6_addr=ip_address,
+                    new_vrf=vrf,
+                )
                 # Verify if incoming address is a string
                 if isinstance(ip_address, str):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
@@ -1156,6 +1172,13 @@ class Interface(PyaoscxModule):
         # Set IPv4
         if ipv4 is not None and ipv4 != []:
             for i in range(len(ipv4)):
+                overlapping_ips(
+                    self.session,
+                    self.name,
+                    ip4_addr=ipv4[i],
+                    ip6_addr=None,
+                    new_vrf=vrf,
+                )
                 if i == 0:
                     self.ip4_address = ipv4[i]
                 else:
@@ -1168,6 +1191,13 @@ class Interface(PyaoscxModule):
         ipv6_configured = False
         if ipv6 is not None and ipv6 != []:
             for ip_address in ipv6:
+                overlapping_ips(
+                    self.session,
+                    self.name,
+                    ip4_addr=None,
+                    ip6_addr=ip_address,
+                    new_vrf=vrf,
+                )
                 # Verify if incoming address is a string
                 if isinstance(ip_address, str):
                     # Create Ipv6 object -- add it to ipv6_addresses internal
