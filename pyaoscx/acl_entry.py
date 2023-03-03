@@ -102,14 +102,14 @@ class AclEntry(PyaoscxModule):
         # Attribute dictionary used to manage the original data
         # obtained from the GET
         self.__original_attributes = {}
+        if "src_ip" in kwargs:
+            self.src_ip = kwargs.pop("src_ip")
+        if "dst_ip" in kwargs:
+            self.dst_ip = kwargs.pop("dst_ip")
         # Set arguments needed for correct creation
         utils.set_creation_attrs(self, **kwargs)
         # Attribute used to know if object was changed recently
         self.__modified = False
-        if "src_ip" in kwargs:
-            self.src_ip = kwargs["src_ip"]
-        if "dst_ip" in kwargs:
-            self.dst_ip = kwargs["dst_ip"]
 
     def __set_acl(self, parent_acl):
         """
@@ -355,8 +355,10 @@ class AclEntry(PyaoscxModule):
         """
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
         acl_entry_data["sequence_number"] = self.sequence_number
-        acl_entry_data["src_ip"] = self.src_ip
-        acl_entry_data["dst_ip"] = self.dst_ip
+        if self.src_ip:
+            acl_entry_data["src_ip"] = self.src_ip
+        if self.dst_ip:
+            acl_entry_data["dst_ip"] = self.dst_ip
 
         # Try to get protocol number
         try:
@@ -604,7 +606,7 @@ class AclEntry(PyaoscxModule):
         Getter method for source ip attribute.
         :return: String value for src_ip.
         """
-        return self._src_ip
+        return self._src_ip if hasattr(self, "_src_ip") else None
 
     @src_ip.setter
     def src_ip(self, new_src_ip):
@@ -614,9 +616,9 @@ class AclEntry(PyaoscxModule):
         version = utils.get_ip_version(new_src_ip)
         if version != self.__parent_acl.list_type:
             raise VerificationError(
-                  "Version does not match the IP"
-                  "version type in {}".format(self.__parent_acl.name)
-                  )
+                "Version does not match the IP"
+                "version type in {}".format(self.__parent_acl.name)
+            )
         self._src_ip = new_src_ip
 
     @property
@@ -625,7 +627,7 @@ class AclEntry(PyaoscxModule):
         Getter method for destination ip attribute.
         :return: String value for dst_ip.
         """
-        return self._dst_ip
+        return self._dst_ip if hasattr(self, "_dst_ip") else None
 
     @dst_ip.setter
     def dst_ip(self, new_dst_ip):
@@ -635,7 +637,7 @@ class AclEntry(PyaoscxModule):
         version = utils.get_ip_version(new_dst_ip)
         if version != self.__parent_acl.list_type:
             raise VerificationError(
-                 "Version does not match the IP"
-                 "version type in {}".format(self.__parent_acl.name)
-                    )
+                "Version does not match the IP"
+                "version type in {}".format(self.__parent_acl.name)
+            )
         self._dst_ip = new_dst_ip
