@@ -3,11 +3,13 @@
 
 import json
 import logging
-import random
+from random import randint
 import re
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.verification_error import VerificationError
+from pyaoscx.device import Device
 
 from pyaoscx.utils import util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
@@ -30,11 +32,17 @@ class Vlan(PyaoscxModule):
     macs = ListDescriptor("macs")
     static_macs = ListDescriptor("static_macs")
 
-    def __init__(self, session, vlan_id, uri=None, **kwargs):
+    def __init__(
+        self, session, vlan_id, name=None, mgmd_enable=None, uri=None, **kwargs
+    ):
 
         self.session = session
         self._uri = uri
         self.id = vlan_id
+        self.name = name
+        if mgmd_enable is None:
+            mgmd_enable = {}
+        self.mgmd_enable = mgmd_enable
         # List used to determine attributes related to the VLAN configuration
         self.config_attrs = []
         self.materialized = False
@@ -75,6 +83,8 @@ class Vlan(PyaoscxModule):
             data.pop("macs")
 
         # Add dictionary as attributes for the object
+        if "vsx_sync" in data:
+            self.vsx_sync = data.pop("vsx_sync")
         utils.create_attrs(self, data)
 
         # Determines if the VLAN is configurable
@@ -193,8 +203,14 @@ class Vlan(PyaoscxModule):
         :return modified: True if Object was modified and a PUT request was
             made.
         """
-        vlan_data = utils.get_attrs(self, self.config_attrs)
 
+        vlan_data = utils.get_attrs(self, self.config_attrs)
+        if self.vsx_sync:
+            vlan_data["vsx_sync"] = self.vsx_sync
+        if hasattr(self, "voice"):
+            vlan_data["voice"] = self.voice
+        if hasattr(self, "mgmd_enable"):
+            vlan_data["mgmd_enable"] = self.mgmd_enable
         # Set all ACLs
         if "aclmac_in_cfg" in vlan_data and self.aclmac_in_cfg is not None:
             # Set values in correct form
@@ -219,13 +235,36 @@ class Vlan(PyaoscxModule):
 
         :return modified: Boolean, True if VLAN was created.
         """
+
         # Get all VLAN data given by the user
         vlan_data = utils.get_attrs(self, self.config_attrs)
+        if self.vsx_sync:
+            vlan_data["vsx_sync"] = self.vsx_sync
+        if hasattr(self, "voice"):
+            vlan_data["voice"] = self.voice
+        if hasattr(self, "mgmd_enable"):
+            vlan_data["mgmd_enable"] = self.mgmd_enable
         if isinstance(self.id, str):
             self.id = int(self.id)
         vlan_data["id"] = self.id
-
+        vlan_data["name"] = (
+            self.name if self.name else "VLAN {}". format(str(self.id))
+        )
         return self._post_data(vlan_data)
+
+    @property
+    def vsx_sync(self):
+        return self._vsx_valid if hasattr(self, "_vsx_valid") else None
+
+    @vsx_sync.setter
+    def vsx_sync(self, new_vsx_sync):
+        device = Device(self.session)
+        device.get()
+        if "vsx" not in device.capabilities:
+            raise VerificationError(
+                "vsx_sync is not supported on this platform"
+            )
+        self._vsx_valid = new_vsx_sync
 
     @PyaoscxModule.connected
     def delete(self):
@@ -415,19 +454,19 @@ class Vlan(PyaoscxModule):
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
             if self.aclv6_in_cfg_version is None:
-                self.aclv6_in_cfg_version = random.randint(
+                self.aclv6_in_cfg_version = randint(
                     -9007199254740991, 9007199254740991
                 )
         if list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
             if self.aclv4_in_cfg_version is None:
-                self.aclv4_in_cfg_version = random.randint(
+                self.aclv4_in_cfg_version = randint(
                     -9007199254740991, 9007199254740991
                 )
         if list_type == "mac":
             self.aclmac_in_cfg = acl_obj
             if self.aclmac_in_cfg_version is None:
-                self.aclmac_in_cfg_version = random.randint(
+                self.aclmac_in_cfg_version = randint(
                     -9007199254740991, 9007199254740991
                 )
 
@@ -451,19 +490,19 @@ class Vlan(PyaoscxModule):
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
             if self.aclv6_out_cfg_version is None:
-                self.aclv6_out_cfg_version = random.randint(
+                self.aclv6_out_cfg_version = randint(
                     -9007199254740991, 9007199254740991
                 )
         if list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
             if self.aclv4_out_cfg_version is None:
-                self.aclv4_out_cfg_version = random.randint(
+                self.aclv4_out_cfg_version = randint(
                     -9007199254740991, 9007199254740991
                 )
         if list_type == "mac":
             self.aclmac_out_cfg = acl_obj
             if self.aclmac_out_cfg_version is None:
-                self.aclmac_out_cfg_version = random.randint(
+                self.aclmac_out_cfg_version = randint(
                     -9007199254740991, 9007199254740991
                 )
 
