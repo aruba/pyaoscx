@@ -9,7 +9,7 @@ with open(path.join(this_directory, "README.md"), encoding="utf-8") as f:
 
 setup(
     name="pyaoscx",
-    version="2.3.1",
+    version="2.4.0",
     description="AOS-CX Python Modules",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -27,6 +27,12 @@ setup(
     ],
     keywords="networking aruba aos-cx switch rest api python",
     packages=find_packages(exclude=["docs"]),
-    install_requires=["requests", "PyYAML", "netaddr", "requests_toolbelt"],
+    install_requires=[
+        "requests",
+        "PyYAML",
+        "netaddr",
+        "requests_toolbelt",
+        "wheel",
+    ],
     zip_safe=False,
 )

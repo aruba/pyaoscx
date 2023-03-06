@@ -1,3 +1,18 @@
+# 2.4.0
+
+## Notable Changes
+
+* Fixed bugs for firmware upload
+* Fixed ACL entry functionality
+* Added support MTU attribute to Interface class
+* Fixed bugs for DHCP Relay class
+* Added function to get firmware status
+* Fully tested Port Security functionality
+* New modules supported and fully tested:
+  * mac.py
+  * poe_interface.py
+  * static_mac.py
+
 # 2.3.1
 
 ## Notable Changes
