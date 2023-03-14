@@ -48,6 +48,12 @@ class OspfRouter(PyaoscxModule):
                 self.session.api.get_module(self.session, "Interface", i)
                 for i in kwargs["passive_interfaces"]
             ]
+        self.active_interfaces = None
+        if kwargs.get("active_interfaces"):
+            self.active_interfaces = [
+                self.session.api.get_module(self.session, "Interface", i)
+                for i in kwargs["active_interfaces"]
+            ]
         # Use to manage Areas
         self.areas = []
         # Attribute used to know if object was changed recently
@@ -170,14 +176,19 @@ class OspfRouter(PyaoscxModule):
             return self.update()
         return self.create()
 
-    def __get_passive_interfaces_to_correct_form(self):
+    def __get_interfaces_to_correct_form(self, intf_list):
         """
         Auxiliary method to set passive interfaces to correct form for
             requests.
         """
+        ospf_interfaces = (
+            self.passive_interfaces
+            if intf_list == "passive"
+            else self.active_interfaces
+        )
         formatted_interfaces = {}
-        if self.passive_interfaces is not None:
-            for iface in self.passive_interfaces:
+        if ospf_interfaces is not None:
+            for iface in ospf_interfaces:
                 if isinstance(iface, str):
                     iface = self.session.api.get_module(
                         self.session, "Interface", iface
@@ -201,9 +212,12 @@ class OspfRouter(PyaoscxModule):
         """
         ospf_router_data = utils.get_attrs(self, self.config_attrs)
 
-        formatted_ifaces = self.__get_passive_interfaces_to_correct_form()
+        formatted_ifaces = self.__get_interfaces_to_correct_form("passive")
         if formatted_ifaces != {}:
             ospf_router_data["passive_interfaces"] = formatted_ifaces
+        formatted_ifaces = self.__get_interfaces_to_correct_form("active")
+        if formatted_ifaces != {}:
+            ospf_router_data["active_interfaces"] = formatted_ifaces
 
         self.__modified = self._put_data(ospf_router_data)
         return self.__modified
@@ -218,9 +232,12 @@ class OspfRouter(PyaoscxModule):
         ospf_router_data = utils.get_attrs(self, self.config_attrs)
         ospf_router_data["instance_tag"] = self.__instance_tag
 
-        formatted_ifaces = self.__get_passive_interfaces_to_correct_form()
+        formatted_ifaces = self.__get_interfaces_to_correct_form("passive")
         if formatted_ifaces != {}:
             ospf_router_data["passive_interfaces"] = formatted_ifaces
+        formatted_ifaces = self.__get_interfaces_to_correct_form("active")
+        if formatted_ifaces != {}:
+            ospf_router_data["active_interfaces"] = formatted_ifaces
 
         self.__modified = self._post_data(ospf_router_data)
         return self.__modified
