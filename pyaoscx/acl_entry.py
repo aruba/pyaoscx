@@ -632,7 +632,7 @@ class AclEntry(PyaoscxModule):
                 "Version does not match the IP"
                 "version type in {}".format(self.__parent_acl.name)
             )
-        self._src_ip = new_src_ip
+        self._src_ip = utils.fix_ip_mask(new_src_ip,version)
 
     @property
     def dst_ip(self):
@@ -654,4 +654,4 @@ class AclEntry(PyaoscxModule):
                 "Version does not match the IP"
                 "version type in {}".format(self.__parent_acl.name)
             )
-        self._dst_ip = new_dst_ip
+        self._dst_ip = utils.fix_ip_mask(new_dst_ip,version)
