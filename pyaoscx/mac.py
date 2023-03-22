@@ -83,16 +83,6 @@ class Mac(PyaoscxModule):
             self.resource_uri_name,
         )
 
-        macs = getattr(self._parent_vlan, self.resource_uri_name)
-        found = False
-        for mac in macs:
-            if mac.mac_address == self.mac_address:
-                found = True
-                # Make list element point to current object
-                mac = self
-        if not found:
-            macs.append(self)
-
     def _mac_path(self):
         """
         Get the path for internal purposes.
@@ -163,7 +153,7 @@ class Mac(PyaoscxModule):
         return True
 
     @classmethod
-    def get_all(cls, session, parent_vlan):
+    def get_all(cls, session, parent_vlan=None):
         """
         Perform a GET call to retrieve all system MACs inside a BGP Router, and
             create a dictionary containing them.
@@ -176,8 +166,18 @@ class Mac(PyaoscxModule):
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
-        path = "{0}/{1}/{2}".format(
-            parent_vlan.base_uri, parent_vlan.id, cls.resource_uri_name
+        if parent_vlan:
+            vlan_id = parent_vlan.id
+            vlan_base_uri = parent_vlan.base_uri
+        else:
+            # Need to get all MACs from VLANS with just one request
+            # Using wildcards
+            vlan_id = quote_plus("*")
+            Vlan = session.api.get_module_class(session, "Vlan")
+            vlan_base_uri = Vlan.base_uri
+
+        path = "{0}/{1}/{2}?depth=2".format(
+            vlan_base_uri, vlan_id, cls.resource_uri_name
         )
 
         try:
@@ -188,13 +188,28 @@ class Mac(PyaoscxModule):
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
 
-        data = json.loads(response.text)
+        # If all vlans are requested, this dictionary is indexed by vlan id,
+        # otherwise that index does not exist
+        _data = json.loads(response.text)
+        if parent_vlan:
+            data = {str(vlan_id): _data}
+        else:
+            data = _data
 
         mac_dict = {}
-        for uri in data.values():
-            # Create a Mac object
-            indices, mac = cls.from_uri(session, parent_vlan, uri)
-            mac_dict[indices] = mac
+        for vlan_id, macs_dict in data.items():
+            for indices, mac in macs_dict.items():
+                # Create a Mac object
+                # Need to create objects manually to avoid requests
+                # as possible, depth=2 gives all data from macs
+                Vlan = session.api.get_module_class(session, "Vlan")
+                _parent_vlan = Vlan(session, vlan_id=vlan_id)
+                mac_obj = cls(
+                    session, mac["from"], mac["mac_addr"], _parent_vlan
+                )
+                Interface = session.api.get_module_class(session, "Interface")
+                mac_obj.port = Interface.from_response(session, mac["port"])
+                mac_dict[indices] = mac_obj
 
         return mac_dict
 
