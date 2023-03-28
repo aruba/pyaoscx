@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -104,23 +104,23 @@ class OspfRouter(PyaoscxModule):
         # Sets object as materialized
         # Information is loaded from the Device
         self.materialized = True
-        # Set a list of passive_interfaces as an attribute
-        if self.passive_interfaces:
-            interfaces_list = []
-            # Get all URI elements in the form of a list
-            uri_list = self.session.api.get_uri_from_data(
-                self.passive_interfaces
-            )
-            # gotta use deferred import to avoid cyclical import error
-            from pyaoscx.interface import Interface
-
-            for uri in uri_list:
-                # Create an Interface object
-                _, iface = Interface.from_uri(self.session, uri)
-                # Add interface to list
-                interfaces_list.append(iface)
-            # Set list as Interfaces
-            self.passive_interfaces = interfaces_list
+        # Set a list of passive and/or active_interfaces as an attribute
+        for ospf_interfaces in ["passive_interfaces", "active_interfaces"]:
+            o_intfs = getattr(self, ospf_interfaces)
+            if o_intfs:
+                interfaces_list = []
+                # Get all URI elements in the form of a list
+                uri_list = self.session.api.get_uri_from_data(o_intfs)
+                Interface = self.session.api.get_module_class(
+                    self.session, "Interface"
+                )
+                for uri in uri_list:
+                    # Create an Interface object
+                    _, iface = Interface.from_uri(self.session, uri)
+                    # Add interface to list
+                    interfaces_list.append(iface)
+                # Set list as Interfaces
+                setattr(self, ospf_interfaces, interfaces_list)
         if self.areas == []:
             # Set Areas if any
             # Adds Area to parent OspfRouter
@@ -197,7 +197,9 @@ class OspfRouter(PyaoscxModule):
                 if not iface.materialized:
                     raise VerificationError(
                         "Interface {0}".format(iface.name),
-                        "Object inside passive_interfaces not materialized",
+                        "Object inside {0}_interfaces not materialized".format(
+                            intf_list
+                        ),
                     )
                 formatted_iface = iface.get_info_format()
                 formatted_interfaces.update(formatted_iface)
