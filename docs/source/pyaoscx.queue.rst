@@ -1,7 +1,7 @@
-pyaoscx.vxlan module
+pyaoscx.queue module
 ====================
 
-.. automodule:: pyaoscx.vxlan
+.. automodule:: pyaoscx.queue
    :members:
    :undoc-members:
    :show-inheritance:

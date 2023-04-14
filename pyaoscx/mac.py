@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -71,6 +71,7 @@ class Mac(PyaoscxModule):
         Set parent Vlan object as an attribute for the MAC class. It is a
             private method because the user shouldn't be able to change the
             parent vlan.
+
         :param parent_vlan a Vlan object.
         """
         # Set parent VLAN
@@ -107,6 +108,7 @@ class Mac(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a MAC table entry and fill
             the object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -157,6 +159,7 @@ class Mac(PyaoscxModule):
         """
         Perform a GET call to retrieve all system MACs inside a BGP Router, and
             create a dictionary containing them.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -249,13 +252,14 @@ class Mac(PyaoscxModule):
     def from_response(cls, session, parent_vlan, response_data):
         """
         Create a Mac object given a response_data related to the MAC ID object.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_vlan: parent VLAN class where MAC is stored.
         :param response_data: The response must be a dictionary of the form:
             {
-                "<id1>,<id2>": "/rest/v10.04/system/vlans/id/macs/id1,id2"
+            "<id1>,<id2>": "/rest/v10.04/system/vlans/id/macs/id1,id2"
             }
         :return: Mac object.
         """
@@ -275,6 +279,7 @@ class Mac(PyaoscxModule):
     def from_uri(cls, session, parent_vlan, uri):
         """
         Create a Mac object.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_vlan: parent VLAN class where MAC is stored.
@@ -307,7 +312,8 @@ class Mac(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific MAC URI.
+        Method used to obtain the specific MAC URI
+
         return: Object's URI.
         """
         # TODO: remove this method in favor of uri_path once all
@@ -318,6 +324,7 @@ class Mac(PyaoscxModule):
     def uri_path(self):
         """
         Method used to obtain the specific MAC URI.
+
         return: Object's URI.
         """
         if self._uri is None:
@@ -336,6 +343,7 @@ class Mac(PyaoscxModule):
         """
         Method used to obtain correct object format for referencing inside
             other objects.
+
         return: Object format depending on the API Version.
         """
         # TODO: remove in favor of info_format when all modules are translated
@@ -347,6 +355,7 @@ class Mac(PyaoscxModule):
         """
         Method used to obtain correct object format for referencing inside
             other objects.
+
         return: Object format depending on the API Version
         """
         return self.session.api.get_index(self)
@@ -362,6 +371,7 @@ class Mac(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute
+
         :return: Boolean. True if the object was recently modified.
         """
         return self.modified
@@ -374,6 +384,7 @@ class Mac(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a MAC table entry and return
             info as a dictionary. Do not apply the configuration.
+
         :return info_dict: Returns a dictionary containing the current MAC
             Address information.
         """

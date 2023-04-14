@@ -1,7 +1,7 @@
-pyaoscx.lag module
+pyaoscx.api module
 ==================
 
-.. automodule:: pyaoscx.lag
+.. automodule:: pyaoscx.api
    :members:
    :undoc-members:
    :show-inheritance:

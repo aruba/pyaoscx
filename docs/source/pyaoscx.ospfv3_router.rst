@@ -1,7 +1,7 @@
-pyaoscx.loop\_protect module
+pyaoscx.ospfv3_router module
 ============================
 
-.. automodule:: pyaoscx.loop_protect
+.. automodule:: pyaoscx.ospfv3_router
    :members:
    :undoc-members:
    :show-inheritance:

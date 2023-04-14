@@ -114,6 +114,7 @@ class AclEntry(PyaoscxModule):
     def __set_acl(self, parent_acl):
         """
         Set parent Acl object as an attribute for the AclEntry object.
+
         :param parent_acl: a Acl object.
         """
         # Set parent acl
@@ -141,6 +142,7 @@ class AclEntry(PyaoscxModule):
         """
         Perform a GET call to retrieve data for an ACL Entry table entry and
             fill the object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -202,6 +204,7 @@ class AclEntry(PyaoscxModule):
         """
         Perform a GET call to retrieve all system ACL Entries inside an ACL,
             and create a dictionary containing them.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -250,6 +253,7 @@ class AclEntry(PyaoscxModule):
             ACE on the switch and the local representation on immutable
             attributes a replace (delete+create) will take place. Note that
             unspecified parameters will be kept intact.
+
         :return modified: Boolean, True if object was created or modified.
         """
         if not self.__parent_acl.materialized:
@@ -296,6 +300,7 @@ class AclEntry(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing ACL Entry.
+
         :return modified: True if Object was modified and a PUT request
             was made.
         """
@@ -351,6 +356,7 @@ class AclEntry(PyaoscxModule):
         """
         Perform a POST call to create a new ACL Entry. Only returns if no
             exception is raised.
+
         :return modified: Boolean, True if entry was created
         """
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
@@ -428,13 +434,14 @@ class AclEntry(PyaoscxModule):
         """
         Create a AclEntry object given a response_data related to the ACL Entry
             sequence_number object.
+
         :param cls: Class calling the method.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_acl: parent Acl object where ACL Entry is stored.
         :param response_data: The response must be a dictionary of the form:
             {
-                <seq_number>: "/rest/v10.04/system/acls/cfg_aces/<seq_number>"
+            <seq_number>: "/rest/v10.04/system/acls/cfg_aces/<seq_number>"
             }
         :return: AclEntry object.
         """
@@ -448,6 +455,7 @@ class AclEntry(PyaoscxModule):
     def from_uri(cls, session, parent_acl, uri):
         """
         Create a AclEntry object given a URI.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_acl: parent Acl object where ACL Entry is stored.
@@ -471,6 +479,7 @@ class AclEntry(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific ACL Entry URI.
+
         return: AclEntry object's URI.
         """
         if self._uri is None:
@@ -487,6 +496,7 @@ class AclEntry(PyaoscxModule):
         """
         Method used to obtain correct object format for referencing inside
             other objects.
+
         return: AclEntry object format depending on the API Version.
         """
         return self.session.api.get_index(self)
@@ -525,6 +535,7 @@ class AclEntry(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
@@ -548,17 +559,18 @@ class AclEntry(PyaoscxModule):
         """
         Create an AclEntry object, ACL Entry already exists, value passed won't
             update the entry.
+
         :param action: Action should be either "permit" or "deny".
         :param count: Optional boolean flag that when true, will make entry
             increment hit count for matched packets.
         :param src_ip: Optional source IP address. Both IPv4 and IPv6 are
             supported. Example:
-                10.10.12.11/255.255.255.255
-                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+            10.10.12.11/255.255.255.255
+            2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
         :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are
             supported. Example:
-                10.10.12.11/255.255.255.255
-                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+            10.10.12.11/255.255.255.255
+            2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
         :param dst_l4_port_min: Optional minimum L4 port number in range; used
             in conjunction with dst_l4_port_max.
         :param dst_l4_port_max: Optional maximum L4 port number in range; used
@@ -604,6 +616,7 @@ class AclEntry(PyaoscxModule):
     def src_ip(self):
         """
         Getter method for source ip attribute.
+
         :return: String value for src_ip.
         """
         return self._src_ip if hasattr(self, "_src_ip") else None
@@ -625,6 +638,7 @@ class AclEntry(PyaoscxModule):
     def dst_ip(self):
         """
         Getter method for destination ip attribute.
+
         :return: String value for dst_ip.
         """
         return self._dst_ip if hasattr(self, "_dst_ip") else None

@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import functools
@@ -28,8 +28,9 @@ class PyaoscxModule(ABC):
         """
         Function used as a decorator to ensure the module has a established
             connection.
+
         :param fnct: function which behavior is modified.
-        :return ensure_connected: Function.
+        :return: Function.
         """
 
         @functools.wraps(fnct)
@@ -43,8 +44,9 @@ class PyaoscxModule(ABC):
     def materialized(fnct):
         """
         Function used as a decorator to verify if the object is materialized.
+
         :para fnct: function which behavior is modified.
-        :return is_materialized: Function.
+        :return: Function.
         """
 
         @functools.wraps(fnct)
@@ -60,8 +62,9 @@ class PyaoscxModule(ABC):
     def deprecated(func):
         """
         Function used as a decorator to show deprecation notice of a method.
+
         :param func: function whose behavior is modified/wrapped.
-        :return func: function whose behavior is modified/wrapped.
+        :return: function whose behavior is modified/wrapped.
         """
 
         @functools.wraps(func)
@@ -83,6 +86,7 @@ class PyaoscxModule(ABC):
         """
         Perform a GET call to retrieve data for a table entry and fill the
             object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -96,6 +100,7 @@ class PyaoscxModule(ABC):
         """
         Perform a GET call to retrieve all system <pyaoscx_module_type> and
             create a dictionary of each object.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -113,7 +118,8 @@ class PyaoscxModule(ABC):
             exists in the switch. Calls self.update() if object being updated.
             Calls self.create() if a new <pyaoscx_module_type> is being
             created.
-        :return modified: Boolean, True if object was created or modified.
+
+        :return: Boolean, True if object was created or modified.
         """
         pass
 
@@ -123,7 +129,8 @@ class PyaoscxModule(ABC):
         """
         Perform a PUT call to apply changes to an existing
             <pyaoscx_module_type> table entry.
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         pass
@@ -134,7 +141,8 @@ class PyaoscxModule(ABC):
         """
         Perform a POST call to create a new <pyaoscx_module_type>. Only returns
             if an exception is not raise.
-        :return modified: Boolean, True if entry was created.
+
+        :return: Boolean, True if entry was created.
         """
         pass
 
@@ -150,12 +158,12 @@ class PyaoscxModule(ABC):
     def from_uri(cls, session, uri):
         """
         Create a <pyaoscx_module_type> object given its URI.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param uri: a String with a URI.
-        :return index, <pyaoscx_module_type>: tuple containing both the
-            <pyaoscx_module_type> object its ID.
+        :return: tuple containing both the <pyaoscx_module_type> object its ID.
         """
         pass
 
@@ -186,6 +194,7 @@ class PyaoscxModule(ABC):
     def _get_data(self, depth, selector):
         """
         Perform a GET call to retrieve data from a switch.
+
         :param depth: Integer deciding how many levels into the API JSON
             that references will be retrieved from the switch
         :param selector: Alphanumeric option to select specific information
@@ -220,6 +229,7 @@ class PyaoscxModule(ABC):
     def _put_data(self, data):
         """
         Perform a PUT request to the switch.
+
         :param data: data to send.
         :return: True if the object was modified.
         """
@@ -235,6 +245,7 @@ class PyaoscxModule(ABC):
     def _post_data(self, data):
         """
         Perform a POST request to the switch.
+
         :param data: data to send.
         """
         self._send_data(self.base_uri, data, "POST", "Adding")
@@ -245,6 +256,7 @@ class PyaoscxModule(ABC):
     def _send_data(self, path, data, http_verb, display_verb):
         """
         Perform either PUT or POST operation to the switch.
+
         :param path: path of the resource for the request. This could
             the base URI if this was called in a create method, or
             the VLAN URI if this was called in an update method.
@@ -279,6 +291,7 @@ class PyaoscxModule(ABC):
             replacement object has a None parameter then a replace is not
             required because they just get ignored, null parameters are
             meant to be taken as 'keep the current value' by PYAOSCX.
+
         :param current: Module representing the current switch configuration.
         :param replacement: Another Module (same type) object to compare to
         :param immutable_parameter_names: the names of parameters that cannot
@@ -309,6 +322,7 @@ class PyaoscxModule(ABC):
             replaced, the parameters that are not specified (locally) should
             remain unchanged (switch), so it is necessary to extract them from
             the switch before performing the replacement.
+
         :param other: the other module to extract the parameters.
         """
         # Until we are able to read the Schema we need to keep a list of the
@@ -332,6 +346,7 @@ class PyaoscxModule(ABC):
         """
         Method used to obtain correct object format for referencing inside
             other objects.
-        return: Object format depending on the API Version.
+
+        :return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)

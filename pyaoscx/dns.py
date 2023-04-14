@@ -65,6 +65,7 @@ class Dns(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a DNS inside the VRF table
             entry and fill the object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -117,7 +118,8 @@ class Dns(PyaoscxModule):
             configuring it inside the Vrf object. Checks whether the DNS exists
             in the switch. Calls self.update() if DNS configuration is being
             updated.
-        :return modified: Boolean, True if object was created or modified.
+
+        :return: Boolean, True if object was created or modified.
         """
         modified = False
         # Apply changes
@@ -131,7 +133,8 @@ class Dns(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing DNS.
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         # Variable returned
@@ -216,6 +219,7 @@ class Dns(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
@@ -227,11 +231,12 @@ class Dns(PyaoscxModule):
     def setup_mgmt_nameservers(self, primary=None, secondary=None):
         """
         Setup primary and secondary name servers on a mgmt interface.
+
         :param primary: Primary nameservers on mgmt interface, a IPv4 address.
             Example: '10.10.2.10'.
         :param secondary: Secondary nameservers on mgmt interface,
             a IP address. Example: '10.10.2.10'.
-        :return modified: Return True if coinfig was modified.
+        :return: Return True if coinfig was modified.
         """
         # Create configuration Object
         config = Configuration()
@@ -242,7 +247,8 @@ class Dns(PyaoscxModule):
     def delete_mgmt_nameservers(self):
         """
         Delete primary and secondary name servers on a mgmt interface.
-        :return modified: Return True if coinfig was modified.
+
+        :return: Return True if coinfig was modified.
         """
         # Create configuration Object
         config = Configuration()
@@ -259,33 +265,34 @@ class Dns(PyaoscxModule):
     ):
         """
         Setup DNS client configuration within a Vrf object.
+
         :param domain_name: Domain name used for name resolution by the DNS
             client, if 'dns_domain_list' is not configured.
         :param domain_list: dict of DNS Domain list names to be used for
             address resolution, keyed by the resolution priority order.
             Example:
-                {
-                    0: "hpe.com"
-                    1: "arubanetworks.com"
-                }
+            {
+            0: "hpe.com"
+            1: "arubanetworks.com"
+            }
         :param domain_servers: dict of DNS Name servers to be used for address
             resolution, keyed by the resolution priority order. Example:
-                {
-                    0: "4.4.4.10"
-                    1: "4.4.4.12"
-                }
+            {
+            0: "4.4.4.10"
+            1: "4.4.4.12"
+            }
         :param host_v4_address_mapping: dict of static host address
             configurations and the IPv4 address associated with them. Example:
-                {
-                    "host1": "5.5.44.5"
-                    "host2": "2.2.44.2"
-                }
+            {
+            "host1": "5.5.44.5"
+            "host2": "2.2.44.2"
+            }
         :param host_v6_address_mapping: dict of static host address
             configurations and the IPv6 address associated with them. Example:
-                {
-                    "host1": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-                }
-        :return modified: Returns True if modified.
+            {
+            "host1": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+            }
+        :return: Returns True if modified.
         """
         # Update Values
 
@@ -316,12 +323,13 @@ class Dns(PyaoscxModule):
     ):
         """
         Delete DNS client configuration within a Vrf object.
+
         :param domain_name: If value is not None, it is deleted.
         :param domain_list: If value is not None, it is deleted.
         :param domain_servers: If value is not None, it is deleted.
         :param host_v4_address_mapping: If value is not None, it is deleted.
         :param host_v6_address_mapping: If value is not None, it is deleted.
-        :return modified: Returns True if modified.
+        :return: Returns True if modified.
         """
         # Update Values
 

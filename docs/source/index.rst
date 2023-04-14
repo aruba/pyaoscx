@@ -1,5 +1,5 @@
-pyaoscx Module Documentation
-==================================
+pyaoscx
+=======
 
 .. toctree::
    :maxdepth: 3
@@ -7,167 +7,131 @@ pyaoscx Module Documentation
 
    index
 
-The AOS-CX operating system provides a REST API to enable automated configuration and management of switches. This package contains Python modules that can be called upon to access the REST API and configure various features on the switches. 
+These modules are written for AOS-CX API v10.04 and later. These scripts
+are written for devices running AOS-CX firmware version 10.04 or
+greater.
 
-.. Note:: Starting from AOS-CX release 10.04, there are two version of the REST API, the legacy v1 API and the newer v10.04 API.
+See the `Release Notes <RELEASE-NOTES.md>`__ for more information.
 
-Getting Started
-================
-.. Important:: This package is compatible with Python 3. Python 2 is not supported.
+Please note that pyaoscx v2 is **not** backwards compatible for pyaoscx
+v1 and earlier, so please specify the correct version when using pyaoscx
+in requirements.txt files
 
-First ensure that REST API access is enabled and set to read/write mode with the following commands:
+It is also important to note that the latest code commits on the Master
+branch in Git are usually ahead of the official releases and tags, so
+please be aware of this when cloning the repo versus doing a
+``pip install pyaoscx``
 
-.. code-block:: console
+Structure
+---------
 
-   switch(config)# https-server rest access-mode read-write
-   switch(config)# https-server vrf mgmt
+Detailed information about the structure and design can be found in the
+`Design document <pyaoscx/DESIGN.md>`__.
 
-Additionally, ensure that the switch is reachable via an out-of-band management IP address with the appropriate login credentials.
+-  REST API call functions are found in the modules in /pyaoscx.
+-  REST API call functions are combined into other functions that
+   emulate low-level processes. These low-level process functions are
+   also placed in files in /pyaoscx.
+-  Functions from the /pyaoscx files (API functions and low-level
+   functions) are combined to emulate larger network configuration
+   processes (workflows). These workflow scripts stored in the
+   /workflows folder.
 
-Installation Instructions
--------------------------
-Python comes with a package management system, `pip <https://packaging.python.org/tutorials/installing-packages/#id17>`_. Pip can install, update, or remove packages from the Python environment. It can also do this for virtual environments. It is a good idea to create a separate virtual environment for this project. A guide to virtual environments can be found `here <https://docs.python-guide.org/dev/virtualenvs/>`_.
-
-To use pip to install the pyaoscx package from the official Python Package Index, PyPI, excecute the following command:
-
-.. code-block:: console
-
-   pip install pyaoscx
-
-
-Package Structure
+How to contribute
 -----------------
-::
 
-   pyaoscx
-   │   README.md
-   │   Contributing.md
-   │   ...
-   │
-   └───pyaoscx
-   │   │   access_security.py
-   │   │   acl.py
-   │   │   ...
-   │   
-   └───docs
-   │   │   ...
-   │   
-   └───workflows
-       │   cleanup_l2_l3_vlans.py
-       │   configure_l2_l3_vlans.py
-       └───print_system_info.py
+Please see the accompanying `CONTRIBUTING.md <CONTRIBUTING.md>`__ file
+for guidelines on how to contribute to this repository.
 
-The ``pyaoscx`` package is a directory containing files and subdirectories. Contained directly within the top level ``pyaoscx`` directory are informative files such as the readme, licensing information, contribution guidelines, and release notes. Also contained within the pyaoscx package are the subdirectories relevant to the developer, ``pyaoscx`` and ``workflows``. 
+Git Workflow
+------------
 
-
-pyaoscx
-^^^^^^
-The ``pyaoscx`` subfolder contains the AOS-CX Python modules. Each module contains function definitions which either make a single REST API call or make multiple REST API calls. Each function that makes multiple REST API calls is written as such to perform a small logical low-level process (e.g. create a VLAN and then subsequently create a corresponding VLAN interface).
-The REST API calls are performed using the Python ``requests`` library, which provides functions to make
-HTTP GET, PUT, POST, and DELETE requests.
-
-
-workflows
-^^^^^^^^^^
-Workflows are scripts that combine calls to the functions in the ``pyaoscx`` modules (API call functions and low-level functions) to emulate larger network configuration processes. The ``workflows`` subfolder contains three example workflows. Each contains comments that describe step-by-step the operations being performed. You can make copies of these workflows in your own user directory and run them directly, or you can reference these examples to create your own workflows.
-
-
-Executing Workflows
---------------------
-After installing the package, you should be able to execute workflows. Let's try that out by executing the simplest example workflow, print_system_info.py. This workflow simply logs into a switch and then prints switch configuration info to the console. To execute this workflow, first, copy this workflow from the workflows folder to a working directory outside of the package. Open your copy of the script and you'll notice that the ``try:`` block in the ``main()`` function consists of these statements:
+This repo adheres to the 'shared repo' git workflow: 1. Clone the repo
+to a local machine:
 
 ::
 
-    session_dict = dict(s=session.login(base_url, username, password), url=base_url)
-    
-	system_info_dict = system.get_system_info(params={"selector": "configuration"}, **session_dict)
-	
-	pprint.pprint(system_info_dict)
+    ```git clone <repo_URL>```
 
-The first two lines call the ``session.login()`` and ``system.get_system_info()`` functions in the ``session`` and ``system`` modules, respectively. The third line simply prints the system information out to the console in readable format.
+2. Checkout a local working branch:
 
-Execute the workflow. You'll be asked to input the switch's out-of-band management IP address, login username, and password. After you do that successfully, the rest of the script should run and you should see this output:
+   ``git checkout -b <local_working_branch_name>``
+3. Add and amend files in the local working branch:
 
-::
+   ``git add <file_name>``
+4. Commit regularly. Each commit should encompass a single logical
+   change to the repo (e.g. adding a new function in /pyaoscx is one
+   commit; writing docstrings for all functions in a module is another
+   commit). Include an explanatory message with each commit:
 
-	C:\Users\wangder\AppData\Local\Programs\Python\Python37-32\python.exe "C:/Users/wangder/OneDrive - Hewlett Packard Enterprise/git/packaging/pyaoscx/workflows/print_system_info.py"
-	Switch IP Address: <IP address redacted>
-	Switch login username: <username redacted>
-	Switch login password: <password redacted>
-	INFO:root:SUCCESS: Login succeeded
-	INFO:root:SUCCESS: Getting dictionary of system information succeeded
-	{'aaa': {'fail_through': False,
-			 'login_lockout_time': 300,
-			 'radius_auth': 'pap',
-			 'radius_retries': 1,
-			 'radius_timeout': 5,
-	.
-	.
-	.
-	.
-	.
-	}
-	INFO:root:SUCCESS: Logout succeeded
+   ``git commit -m "<Clear_explanation_of_commit_here>"``
+5. Push commits to github.hpe.com:
 
-Congratulations! You've just run your first AOS-CX Python workflow!
+   ``git push origin <local_working_branch_name>``
+6. Merge changes using a Pull Request on github.hpe.com. Ensure the PR
+   has a relevant title and additional comments if necessary. PRs should
+   be raised regularly once code is tested and the user satisfied that
+   it is ready for submission. Do not put off creaing a PR until a whole
+   project is complete. The larger the PR, the difficult it is to
+   successfully merge.
 
-Creating Workflows
-------------------
-To create your own workflows, follow the structure of the three provided example workflows. Generally speaking, the key elements of a workflow script are:
+Setup
+-----
 
-1. Importing the appropriate modules from ``pyaoscx``.
-2. Logging into the switch(es) by calling ``session.login()``.
-3. Calling the functions in the imported modules to execute the desired actions (the 'core steps' of the workflow).
-4. Logging out of the switch(es) by calling ``session.logout()``.
+Before starting ensure the switch REST API is enabled. Instructions for
+checking and changing whether or not the REST API is enabled status are
+available in the *ArubaOS-CX Rest API Guide*. This includes making sure
+each device has an administrator account with a password, and each
+device has https-server rest access-mode read-write and enabled on the
+reachable vrf.
 
-If you open ``configure_l2_l3_vlans.py`` and compare it to ``print_system_info.py``, you'll notice that the main difference between the two scripts is the core steps. Inside the ``try:`` block, instead of getting the system information and printing it, we have calls to create a VLAN and VLAN interface, among other operations:
+How to run this code
+~~~~~~~~~~~~~~~~~~~~
+
+In order to run the workflow scripts, please complete the steps below:
+1. install virtual env (refer
+https://docs.python.org/3/library/venv.html). Make sure python version 3
+is installed in system.
 
 ::
 
-	vlan.create_vlan_and_svi(999, 'VLAN999', 'vlan999', 'vlan999',
-				 'For LAB 999', '10.10.10.99/24', vlan_port_desc='### SVI for LAB999 ###',
-				 **session_dict)
+    ```
+    $ python3 -m venv switchenv
+    ```
 
-	# Add DHCP helper IPv4 addresses for SVI
-	dhcp.add_dhcp_relays('vlan999', "default", ['1.1.1.1', '2.2.2.2'], **session_dict)
+2. Activate the virtual env
 
-	# Add a new entry to the Port table if it doesn't yet exist
-	interface.add_l2_interface('1/1/20', **session_dict)
+   ::
 
-	# Update the Interface table entry with "user-config": {"admin": "up"}
-	interface.enable_disable_interface('1/1/20', **session_dict)
+       $ source switchenv/bin/activate
+       in Windows:
+       $ venv/Scripts/activate.bat
 
-	# Set the L2 port VLAN mode as 'access'
-	vlan.port_set_vlan_mode('1/1/20', "access", **session_dict)
+3. Install the pyaoscx package
 
-	# Set the access VLAN on the port
-	vlan.port_set_untagged_vlan('1/1/20', 999, **session_dict)
+   ::
 
-Similarly, the core steps in ``cleanup_l2_l3_vlans.py`` unconfigure the configuration done by ``configure_l2_l3_vlans.py`` by essentially performing the opposite actions: 
+       (switchenv)$ pip install pyaoscx
 
-::
+4. Now you can run different workflows from pyaoscx/workflows (e.g.
+   ``print_system_info.py``)
+5. Keep in mind that the workflows perform high-level configuration
+   processes; they are highly dependent on the configuration already on
+   the switch prior to running the workflows. For this reason, the
+   comment at the top of each workflow script describes any necessary
+   preconditions.
 
-	# Delete all DHCP relays for interface
-	dhcp.delete_dhcp_relays('vlan999', "default", **session_dict)
+Troubleshooting Issues
+----------------------
 
-	# Delete VLAN and SVI
-	vlan.delete_vlan_and_svi(999, 'vlan999', **session_dict)
+1. If you encounter module import errors, make sure that the package has
+   been installed correctly.
 
-	# Initialize L2 interface
-	interface.initialize_interface('1/1/20', **session_dict)
+Additionally, please read the RELEASE-NOTES.md file for the current
+release information and known issues.
 
-In the example workflows, the arguments in the function calls are hardcoded in the scripts, and the switch IP address and login credentials are provided by the user at runtime. Instead, you can have the script accept these data points, along with the arguments for the other functions, from an input file. 
-
-You can see examples of how to do this in our `Github repo <https://github.com/aruba/aos-cx-python>`_. This repo contains more example workflows in its ``workflows`` folder. You'll notice that the example workflows in the Github repo read data from the YAML files in the ``sampledata`` folder, and then use that data for arguments in function calls, as opposed to having the data hardcoded in each workflow. Separating the data out into input files also makes it easier for the configuration parameters to be modified.
-
-Function Documentation
-======================
-Scroll down to the "Indices and tables" section and then click on "Module Index" to see all the available documentation for all the functions in the modules.
-
-
-	
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

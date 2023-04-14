@@ -1,7 +1,7 @@
-pyaoscx.common\_ops module
+pyaoscx.ospf_router module
 ==========================
 
-.. automodule:: pyaoscx.common_ops
+.. automodule:: pyaoscx.ospf_router
    :members:
    :undoc-members:
    :show-inheritance:

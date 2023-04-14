@@ -1,4 +1,4 @@
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -30,6 +30,7 @@ class QosDscp(PyaoscxModule):
     def __init__(self, session, code_point, **kwargs):
         """
         Initialize a QoS DSCP trust mode object.
+
         :param session: pyaoscx.Session object used to represent logical
             connection to the device.
         :param code_point: Integer to identify a QoS DSCP configuration.
@@ -58,6 +59,7 @@ class QosDscp(PyaoscxModule):
     def code_point(self):
         """
         Method used to obtain the specific code point.
+
         :return: returns the code point of this QoS DSCP trust mode object.
         """
         # Use the @property decorator to make `self.code_point` read-only, and
@@ -69,6 +71,7 @@ class QosDscp(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a QoS DSCP table entry and fill
             the object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to query specific information.
@@ -110,9 +113,10 @@ class QosDscp(PyaoscxModule):
         """
         Perform a GET call to retrieve all system QoS DSCP configurations from
             a switch.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
-        :return:  containing all system QoS.
+        :return: containing all system QoS.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
 
@@ -141,7 +145,8 @@ class QosDscp(PyaoscxModule):
         Main method used to update an existing QoS table entry. Checks whether
             the QoS DSCP entry exists in the switch. Calls self.update if
             object is being updated.
-        :return modified: Boolean, True if object was modified.
+
+        :return: Boolean, True if object was modified.
         """
         self.__modified = self.update()
         return self.__modified
@@ -150,7 +155,8 @@ class QosDscp(PyaoscxModule):
     def update(self):
         """
         Perform a PUT request to update an existing QoS DSCP object.
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         qos_dscp_data = utils.get_attrs(self, self.config_attrs)
@@ -172,11 +178,12 @@ class QosDscp(PyaoscxModule):
         """
         Create a QoS DSCP trust mode object given a response_data related to
             the QoS DSCP trust mode object.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param response_data: The response must be a dictionary of the form:
             {
-                "3" : "/rest/v10.08/system/qos_dscp_map_entries/3"
+            "3" : "/rest/v10.08/system/qos_dscp_map_entries/3"
             }
         :return: QoS DSCP trust mode object.
         """
@@ -192,6 +199,7 @@ class QosDscp(PyaoscxModule):
     def from_uri(cls, session, uri):
         """
         Create a QoS DSCP object given a QoS DSCP trust mode URI.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param uri: s String with a URI.
@@ -213,6 +221,7 @@ class QosDscp(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific QoS DSCP trust mode URI.
+
         :return: Object's URI.
         """
         # Return self.path containing the object's URI
@@ -229,6 +238,7 @@ class QosDscp(PyaoscxModule):
     def was_modified(self):
         """
         Getter method to check it object has been modified.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
@@ -247,6 +257,7 @@ class QosDscp(PyaoscxModule):
     def cos(self, cos):
         """
         Updates the value of the cos of this QoS DSCP instance.
+
         :param cos: Priority Code Point (PCP) that will be assigned to any IP
             packet with the specified DSCP codepoint, if that packet's ingress
             port has an effective trust mode of trust dscp. The new PCP is used
@@ -273,6 +284,7 @@ class QosDscp(PyaoscxModule):
     def priority_code_point(self, priority_code_point):
         """
         Updates the value of the priority_code_point of this QoS DSCP instance.
+
         :param priority_code_point: Priority Code Point (PCP) that will be
             assigned to any IP packet with the specified DSCP codepoint, if
             that packet's ingress port has an effective trust mode of trust
@@ -302,6 +314,7 @@ class QosDscp(PyaoscxModule):
     def color(self, color):
         """
         Updates the value of the color of this QoS DSCP instance.
+
         :param color: String to identify the color which may be used later in
             the pipeline in packet-drop decision points. Example: "green".
         """
@@ -321,6 +334,7 @@ class QosDscp(PyaoscxModule):
     def description(self, description):
         """
         Updates the description of this QoS DSCP instance.
+
         :param description: String used for customer documentation.
         """
         # Verify data type
@@ -339,6 +353,7 @@ class QosDscp(PyaoscxModule):
     def local_priority(self, priority):
         """
         Updates the value of the local priority of this QoS DSCP instance.
+
         :param priority: Integer to represent an internal meta-data value that
             will be associated with the packet. This value will be used later
             to select the egress queue for the packet.

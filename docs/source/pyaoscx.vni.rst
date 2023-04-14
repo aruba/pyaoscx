@@ -1,7 +1,7 @@
-pyaoscx.nae module
+pyaoscx.vni module
 ==================
 
-.. automodule:: pyaoscx.nae
+.. automodule:: pyaoscx.vni
    :members:
    :undoc-members:
    :show-inheritance:

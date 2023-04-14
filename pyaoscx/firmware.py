@@ -9,9 +9,10 @@ from pyaoscx.utils import util as utils
 def get_firmware_version(**kwargs):
     """
     Perform GET calls to retrieve the current firmware version.
+
     :param kwargs:
-        keyword s: requests.session object with loaded cookie jar
-        keyword url: URL in main() function.
+        keyword "s" requests.session object with loaded cookie jar
+        keyword "url" URL in main() function.
     :return: Firmware version string if found, otherwise None.
     """
     target_url = kwargs["url"] + "firmware"

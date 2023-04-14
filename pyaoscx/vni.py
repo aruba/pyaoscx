@@ -53,6 +53,7 @@ class Vni(PyaoscxModule):
         """
         Perform a GET call to retrieve data for VNI table entry and fill
             the object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned
         :param selector: Alphanumeric option to select specific information to
@@ -107,6 +108,7 @@ class Vni(PyaoscxModule):
         """
         Perform a GET call to retrieve all system VNI and create a dictionary
             containing each respective VNI
+
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the switch
@@ -137,6 +139,7 @@ class Vni(PyaoscxModule):
         """
         Main method used to either create or update a
             VNI table entry
+
         :return: True if the object was modified
         """
         if self.materialized:
@@ -147,7 +150,8 @@ class Vni(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing VNI table entry
-        :return modified: True if object was modified and a PUT request was
+
+        :return: True if object was modified and a PUT request was
             made. False otherwise
         """
         vni_data = utils.get_attrs(self, self.config_attrs)
@@ -167,7 +171,8 @@ class Vni(PyaoscxModule):
         Perform a POST call to create a new VNI using the object's
             attributes as POST body. Exception is raised if object is unable
             to be created
-        :return modified: Boolean, True if entry was created
+
+        :return: Boolean, True if entry was created
         """
         vni_data = utils.get_attrs(self, self.config_attrs)
         vni_data["id"] = self.id
@@ -194,6 +199,7 @@ class Vni(PyaoscxModule):
     def from_response(cls, session, parent_intf, response_data):
         """
         Create a VNI object given a response_data related to a VNI object
+
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
@@ -210,12 +216,13 @@ class Vni(PyaoscxModule):
     def from_uri(cls, session, parent_intf, uri):
         """
         Create a Vni object given a VNI URI
+
         :param cls: Object's class
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
         :param parent_intf: Interface attached to this tunnel
         :param uri: A String with a URI
-        :return VNI_ids, Vni: tuple containing the VNI ids (type, and actual
+        :return: tuple containing the VNI ids (type, and actual
             ID) and the VNI object.
         """
         index_pattern = re.compile(
@@ -235,6 +242,7 @@ class Vni(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific VNI URI
+
         :return: Object's URI
         """
         uri = "{0}{1}".format(self.session.resource_prefix, self.path)
@@ -245,7 +253,8 @@ class Vni(PyaoscxModule):
         """
         Method to obtain correct object format for referencing inside
             other objects
-        return: Object format depending on the API Version
+
+        :return: Object format depending on the API Version
         """
         return self.session.api.get_index(self)
 
@@ -260,16 +269,25 @@ class Vni(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
 
     @property
     def interface(self):
+        """
+        Getter method for the interface attribute.
+
+        :return: Interface object for method.
+        """
         return self.__interface
 
     @interface.setter
     def interface(self, new_interface):
+        """
+        Setter method for the interface attribute.
+        """
         if self.type == "vxlan_vni" and new_interface.type != "vxlan":
             raise VerificationError(
                 "Incompatible VNI and Interface types: "

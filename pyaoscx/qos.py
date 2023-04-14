@@ -28,6 +28,7 @@ class Qos(PyaoscxModule):
     def __init__(self, session, name, **kwargs):
         """
         Initialize a Qos object.
+
         :param session: pyaoscx.Session object used to represent logical
             connection to the device.
         :param name: String representing a user-defined name for a Qos object.
@@ -52,6 +53,7 @@ class Qos(PyaoscxModule):
     def name(self):
         """
         Method used to obtain the specific name.
+
         :return: returns the name of this Qos object.
         """
         # This uses the @property decorator to make self.name read-only
@@ -62,6 +64,7 @@ class Qos(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a QoS table entry and fill the
             object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -90,6 +93,7 @@ class Qos(PyaoscxModule):
     def get_all(cls, session):
         """
         Perfom GET request to retrieve all Schedule Profiles in a switch.
+
         :param session: pyaoscx.Session object used to represent a logical.
         :return: Dictionary containing all system QoS configurations.
         """
@@ -120,6 +124,7 @@ class Qos(PyaoscxModule):
             Profile. Checks whether the QoS configuration exists in the switch.
             Calls self.update() if object is being updated. Calls self.create()
             if a new object is being created.
+
         :return modified: Boolean, True if object was created or modified.
         """
         if self.materialized:
@@ -132,6 +137,7 @@ class Qos(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing Schedule Profile.
+
         :return modified: True if Object was modified and a PUT request was
             made.
         """
@@ -144,6 +150,7 @@ class Qos(PyaoscxModule):
         Perform a POST request to create a new QoS configuration using the
             object's attributes as the request's body. An exception is raised
             if object cannot be created.
+
         :return modified: Boolean, True if entry was created.
         """
         qos_data = utils.get_attrs(self, self.config_attrs)
@@ -162,11 +169,12 @@ class Qos(PyaoscxModule):
     def from_response(cls, session, response_data):
         """
         Create a Qos object given a response_data related to it.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param response_data: The response must be a dictionary of the form:
             {
-                "<QoS name>": "/rest/v10.08/system/qos/<QoS name>"
+            "<QoS name>": "/rest/v10.08/system/qos/<QoS name>"
             }
         :return: Qos Object.
         """
@@ -180,6 +188,7 @@ class Qos(PyaoscxModule):
     def from_uri(cls, session, uri):
         """
         Create a Qos object given a QoS URI.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param uri: a String with a URI.
@@ -200,6 +209,7 @@ class Qos(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the this instance's URI.
+
         :return: Object's URI.
         """
         # Parent class uses self.path internally to store the value of the URI
@@ -216,6 +226,7 @@ class Qos(PyaoscxModule):
     def was_modified(self):
         """
         Getter method to check it object has been modified.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
@@ -227,6 +238,7 @@ class Qos(PyaoscxModule):
     def set_global_trust_mode(cls, session, trust_mode):
         """
         Sets the global trust mode for the switch.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param trust_mode: A string to set the global trust mode, which can be
@@ -271,6 +283,7 @@ class Qos(PyaoscxModule):
         """
         Sets the global schedule profile (the name of a Qos object) for the
             switch.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param profile: Name of a schedule profile (the name of a Qos object)

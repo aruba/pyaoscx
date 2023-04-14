@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "pyaoscx"
-copyright = "2019-2022, HPE Aruba"
+copyright = "2019-2023, HPE Aruba"
 author = "HPE Aruba"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = "2.4.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -58,7 +58,7 @@ html_theme = "sphinx_rtd_theme"
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named 'default.css' will overwrite the builtin 'default.css'.
-html_static_path = ["_static"]
+# html_static_path = ["_static"]
 
 # Required to make the ReadtheDocs integration work with Github
 master_doc = "index"

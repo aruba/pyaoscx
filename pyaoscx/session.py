@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import getpass
@@ -62,12 +62,13 @@ class Session:
         Create a session from an existing request Session. It allows to create
             an internal session from an already-authenticated and serialized
             session.
+
         :param req_session: Existing Request Session object.
         :param base_url: Url needed to create Session Object.
         :param credentials: Dictionary with user and password credentials.
             Example: {
-                username: <username>,
-                password: <password>
+            username: <username>,
+            password: <password>
             }
         :return session: Request Session Object.
         """
@@ -110,6 +111,7 @@ class Session:
         Perform a POST call to login and gain access to other API calls. If
             either username or password is not specified, user will be prompted
             to enter the missing credential(s).
+
         :param username: username
         :param password: password
         """
@@ -184,6 +186,7 @@ class Session:
         Perform a POST call to login and gain access to other API calls. If
             either username or password is not specified, user will be prompted
             to enter the missing credential(s).
+
         :param base_url: URL in main() function
         :param username: username
         :param password: password
@@ -276,9 +279,10 @@ class Session:
     def logout(cls, **kwargs):
         """
         Perform a POST call to logout and end session.
+
         :param kwargs:
-            keyword s: requests.session object with loaded cookie jar
-            keyword url: URL in main() function
+            keyword "s" requests.session object with loaded cookie jar
+            keyword "url" URL in main() function
         :return: True if successful.
         """
         response = kwargs["s"].post(
@@ -300,6 +304,7 @@ class Session:
     def username(self):
         """
         Get username.
+
         :return username.
         """
         return self.__username
@@ -307,6 +312,7 @@ class Session:
     def password(self):
         """
         Get password.
+
         :return password.
         """
         return self.__password
@@ -314,6 +320,7 @@ class Session:
     def _build_uri(self, resource_path):
         """
         Build a URI representing a resource.
+
         :param resource_path: Resource path before adding version prefix.
         :return: String of the uri
         """
@@ -326,6 +333,7 @@ class Session:
     def request(self, operation, path, params=None, data=None, verify=False):
         """
         Perform a Request to the switch.
+
         :param operation: type of operation: PUT, GET, POST, DELETE.
         :param path: Path to the resource.
         :param params: Extra request parameters.

@@ -17,8 +17,8 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 class Configuration:
     """
-    Represents a Device's Configuration and all of its attributes.
-    Keeping all configuration information.
+    Represents a Device's Configuration and all of its attributes
+        keeping all configuration information.
     """
 
     base_uri = "system"
@@ -86,7 +86,8 @@ class Configuration:
         Main method used to update System Attributes. Checks whether the System
             is materialized. Calls self.update() if the configuration is being
             updated.
-        :return modified: Boolean, True if object was modified.
+
+        :return: Boolean, True if object was modified.
         """
         modified = False
         if self.materialized:
@@ -99,7 +100,8 @@ class Configuration:
     def update(self):
         """
         Perform a PUT call to apply changes to a Device Configuration.
-        :return modified: Boolean, True if object was modified.
+
+        :return: Boolean, True if object was modified.
         """
         system_data = utils.get_attrs(self, self.config_attrs)
 
@@ -143,6 +145,7 @@ class Configuration:
     def get_full_config(self, config_name="running-config"):
         """
         Perform a GET request to obtain the device's full config.
+
         :param config_name: String with the local-config name wanted.
             Defaults to 'running-config'.
         :return config_data: Data containing the full configuration.
@@ -167,13 +170,14 @@ class Configuration:
     ):
         """
         TFTP switch config from TFTP server.
+
         :param config_file_location: TFTP server address and path for
             uploading configuration.
         :param config_name: Config file or checkpoint to be uploaded to.
             When using TFTP only running-config or startup-config can be used.
         :param vrf: VRF to be used to contact TFTP server, required if
             remote_output_file_tftp_path is provided.
-        :return success: Return True if response is successful or False if
+        :return: Return True if response is successful or False if
             it was not.
         """
         success = False
@@ -199,6 +203,7 @@ class Configuration:
     ):
         """
         Copy TFTP switch config to TFTP server using a PUT request.
+
         :param config_name:  String with the config file or checkpoint to be
             downloaded. When using TFTP only 'running-config' or
             'startup-config' can be used.
@@ -235,6 +240,7 @@ class Configuration:
         """
         Obtains the switch's full config in json format and saves it to
             a local file or a remote location over TFTP.
+
         :param config_name:  String with the config file or checkpoint to be
             downloaded. When using TFTP only 'running-config' or
             'startup-config' can be used.
@@ -246,7 +252,7 @@ class Configuration:
             version of the config. 'json' or 'cli'. Defaults to 'json'.
         :param remote_file_tftp_path: TFTP server address and path for
             copying off configuration, must be reachable through provided vrf.
-        :return bool: True if success.
+        :return: True if success.
         """
         success = False
 
@@ -285,11 +291,12 @@ class Configuration:
         """
         Perform a PUT request to create a new checkpoint or copy an existing
               checkpoint to AOS-CX switch config.
+
         :param source_config: Name of the source configuration from which
             checkpoint needs to be created or copied.
         :param destination_config: Name of the destination configuration or
             name of checkpoint.
-        :return bool: True if success.
+        :return: True if success.
         """
         success = False
 
@@ -317,11 +324,12 @@ class Configuration:
     def setup_mgmt_nameservers_dns(self, primary=None, secondary=None):
         """
         Setup primary and secondary name servers on a mgmt interface.
+
         :param primary: Primary nameservers on mgmt interface, a IPv4 address.
             Example: "10.10.2.10".
         :param secondary: Secondary nameservers on mgmt interface,
             a IP address. Example: "10.10.2.10".
-        :return modified: Return True if coinfig was modified.
+        :return: Return True if coinfig was modified.
         """
         if "mode" in self.mgmt_intf:
             mgmt_if_mode = self.mgmt_intf["mode"]
@@ -343,7 +351,8 @@ class Configuration:
     def delete_mgmt_nameservers_dns(self):
         """
         Delete primary and secondary name servers on a mgmt interface.
-        :return modified: Return True if coinfig was modified.
+
+        :return: Return True if coinfig was modified.
         """
         if "dns_server_1" in self.mgmt_intf:
             self.mgmt_intf.pop("dns_server_1")
@@ -363,6 +372,7 @@ class Configuration:
     ):
         """
         Uploads configuration from a configuration file.
+
         :param config_name:  String with the Config file or checkpoint to be
             uploaded to. When using TFTP only 'running-config' or
             'startup-config' can be used. Defaults to None.
@@ -377,7 +387,7 @@ class Configuration:
         :param remote_file_tftp_path: String for TFTP server address and path
             for copying off configuration, must be reachable through provided
             vrf. Defaults to None.
-        :return success: Return boolean True if response is successful.
+        :return: Return boolean True if response is successful.
         """
         success = False
 
@@ -415,6 +425,7 @@ class Configuration:
     ):
         """
         Uploads configuration from a configuration file.
+
         :param config_name:  String with the Config file or checkpoint
             to be uploaded to. When using TFTP only 'running-config' or
             'startup-config' can be used. Defaults to None.
@@ -424,7 +435,7 @@ class Configuration:
         :param config_json: String with the JSON file name and path for
             locally uploading configuration, only JSON version of
             configuration can be uploaded. Defaults to None.
-        :return success: Return boolean True if response is successful.
+        :return: Return boolean True if response is successful.
         """
         success = False
 

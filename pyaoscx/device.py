@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from copy import deepcopy
@@ -194,7 +194,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def get_firmware_version(self):
         """
         Perform a GET call to retrieve device firmware version.
-        :return: firmware_version: The firmware version.
+
+        :return: The firmware version.
         """
         data = self.get_firmware_info()
         self.firmware_version = data["current_version"]
@@ -205,7 +206,8 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def get_firmware_info(self):
         """
         Perform a GET call to retrieve device firmware information.
-        :return: firmware_info: The versions of current, primary and
+
+        :return: The versions of current, primary and
             secondary images.
         """
         try:
@@ -224,6 +226,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def get_firmware_status(self):
         """
         Perform a GET call to retrieve device firmware status.
+
         :return: firmware_status: The date, reason and status of the firmware
             upload.
         """
@@ -246,6 +249,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def apply(self):
         """
         Main method to update an existing Device object.
+
         :return modified: Boolean, True if object was created or modified.
         """
         return self.update()
@@ -254,6 +258,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def update(self):
         """
         Perform a PUT call to apply changes to a Device object.
+
         :return modified: Boolean, True if object was created or modified.
         """
         if not self.modified:
@@ -282,9 +287,10 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def update_banner(self, banner_info, banner_type="banner"):
         """
         Perform a PUT request to modify a Device's Banner.
+
         :param banner_info: String to be configured as the banner.
-        :param banner_type: Type of banner being configured on the switch.
-            Either banner or banner_exec.
+        :param banner_type: Type of banner being configured on the switch
+            either banner or banner_exec.
         :return modified: Returns True if Banner was modified.
         """
         modified = False
@@ -346,8 +352,9 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def delete_banner(self, banner_type="banner"):
         """
         Perform a DELETE request to delete a device's Banner.
-        :param banner_type: Type of banner being removed on the switch.
-            Either banner or banner_exec.
+
+        :param banner_type: Type of banner being removed on the switch
+            either banner or banner_exec.
         :return modified: Returns True if Banner was modified.
         """
         logging.info("Removing Banner")
@@ -402,6 +409,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         """
         Perform a POST request to Boot the AOS-CX switch with image present
             to the specified partition.
+
         :param partition_name: Name of the partition for device to boot to.
         :return bool: True if success.
         """
@@ -429,6 +437,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     ):
         """
         Perform a PUT request to upload a firmware image given a http_request.
+
         :param remote_firmware_file_path: "HTTP server address and path for
             uploading firmware image, must be reachable through provided vrf
             ex: http://192.168.1.2:8000/TL_10_04_0030A.swi".
@@ -495,6 +504,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     ):
         """
         Perform a POST request to upload a firmware image from a local file.
+
         :param partition_name: Name of the partition for the image to be
             uploaded to.
         :param firmware_file_path: File name and path for local file uploading
@@ -524,6 +534,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     ):
         """
         Upload a firmware image from a local file OR from a remote location.
+
         :param partition_name: Name of the partition for the image to be
             uploaded to.
         :param firmware_file_path: File name and path for local file uploading
@@ -561,6 +572,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def vsx_capable(self):
         """
         Return whether this device supports the VSX functionality.
+
         :return: True if device supports VSX.
         """
         return hasattr(self, "capabilities") and "vsx" in self.capabilities
@@ -568,6 +580,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
     def is_capable(self, capability):
         """
         Check if the current Device has the given capability.
+
         :param capability: String name of a Device capability.
         :return: True if Device is capable.
         """

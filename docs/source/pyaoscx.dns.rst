@@ -1,7 +1,7 @@
-pyaoscx.bgp module
+pyaoscx.dns module
 ==================
 
-.. automodule:: pyaoscx.bgp
+.. automodule:: pyaoscx.dns
    :members:
    :undoc-members:
    :show-inheritance:

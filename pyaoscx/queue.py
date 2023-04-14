@@ -1,4 +1,4 @@
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -93,6 +93,7 @@ class Queue(PyaoscxModule):
     def queue_number(self):
         """
         Method to retrieve the queue_number identifier of this object.
+
         :return: returns the queue number of this object.
         """
         return self.__queue_number
@@ -101,6 +102,7 @@ class Queue(PyaoscxModule):
     def qos_name(self):
         """
         Method to retrieve the qos_name identifier of this object.
+
         :return: returns the Qos name of this object.
         """
         return self.__qos_name
@@ -110,6 +112,7 @@ class Queue(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a Queue table entry and fill
             object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -141,6 +144,7 @@ class Queue(PyaoscxModule):
         """
         Perform a GET call to retrieve all system Queues for given Schedule
             Profile from a switch.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :return: Dictionary containing all system Schedule Profile's Queues.
@@ -174,9 +178,10 @@ class Queue(PyaoscxModule):
         """
         Main method used to either create or update an existing Queue. Checks
             whether the Queue exists in the switch. Calls self.update() if
-            object is being updated.
-        Calls self.create() if a new object is being created.
-        :return modified: Boolean, True if object was created or modified.
+            object is being updated. Calls self.create() if a new object is
+            being created.
+
+        :return: Boolean, True if object was created or modified.
         """
         if self.materialized:
             self.__modified = self.update()
@@ -188,7 +193,8 @@ class Queue(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing Queue table entry.
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         queue_data = utils.get_attrs(self, self.config_attrs)
@@ -200,7 +206,8 @@ class Queue(PyaoscxModule):
         Perform a POST request to create a new Queue using the object's
             attributes as the request body. An exception is raised if object
             cannot be created.
-        :return modified: Boolean, True if entry was created.
+
+        :return: Boolean, True if entry was created.
         """
         queue_data = utils.get_attrs(self, self.config_attrs)
         queue_data["queue_number"] = self.queue_number
@@ -218,11 +225,12 @@ class Queue(PyaoscxModule):
     def from_response(cls, session, response_data):
         """
         Create a Queue object given a related response_data.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param response_data: The response must be a dictionary of the form:
             {
-                "strict": "/rest/v10.08/system/qos/"<Qos name>/queues/7"
+            "strict": "/rest/v10.08/system/qos/"<Qos name>/queues/7"
             }
         :return: Queue Object.
         """
@@ -244,10 +252,11 @@ class Queue(PyaoscxModule):
     def from_uri(cls, session, uri):
         """
         Create a Queue object given a Queue URI.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param uri: a String with a URI.
-        :return name, queue: tuple with the Queue object and its name.
+        :return: tuple with the Queue object and its name.
         """
         # Get queue number from uri
         uri_arr = uri.split("/")
@@ -261,6 +270,7 @@ class Queue(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain this instance's URI.
+
         :return: Object's URI.
         """
         return self.path
@@ -276,6 +286,7 @@ class Queue(PyaoscxModule):
     def was_modified(self):
         """
         Getter method to check it object has been modified.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified

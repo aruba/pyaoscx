@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -55,6 +55,7 @@ class StaticRoute(PyaoscxModule):
     def __set_vrf(self, parent_vrf):
         """
         Set parent Vrf object as an attribute for the StaticRoute object.
+
         :param parent_vrf: a Vrf object.
         """
         # Set parent Vrf object
@@ -80,6 +81,7 @@ class StaticRoute(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a Static Route table entry and
             fill the object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -154,6 +156,7 @@ class StaticRoute(PyaoscxModule):
         """
         Perform a GET call to retrieve all system Static Routes inside a VRF,
             and create a dictionary containing them.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -199,7 +202,8 @@ class StaticRoute(PyaoscxModule):
             Route table entry. Checks whether the Static Route exists in the
             switch. Calls self.update() if object being updated. Calls
             self.create() if a new Static Route is being created.
-        :return modified: Boolean, True if object was created or modified.
+
+        :return: Boolean, True if object was created or modified.
         """
         if not self.__parent_vrf.materialized:
             self.__parent_vrf.apply()
@@ -218,7 +222,8 @@ class StaticRoute(PyaoscxModule):
         """
         Perform a PUT call to apply changes to an existing Static Route table
             entry.
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         # Variable returned
@@ -261,6 +266,7 @@ class StaticRoute(PyaoscxModule):
         """
         Perform a POST call to create a new Static Route table entry. Only
             returns if no exception is raised.
+
         :return: Boolean, True if entry was created
         """
         # Add 'address_family' as a config attribute and remove duplicates
@@ -322,13 +328,14 @@ class StaticRoute(PyaoscxModule):
         """
         Create a StaticRoute object given a response_data related to the Static
             Route prefix object.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_vrf: parent Vrf object where Static Route is stored.
         :param response_data: The response must be a dictionary of the form:
             {
-                prefix: "/rest/v10.04/system/vrfs/static_routes/prefix"
+            prefix: "/rest/v10.04/system/vrfs/static_routes/prefix"
             }
         :return: Static Route Object.
         """
@@ -342,12 +349,13 @@ class StaticRoute(PyaoscxModule):
     def from_uri(cls, session, parent_vrf, uri):
         """
         Create a StaticRoute object given a URI.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_vrf: parent Vrf object where Static Route is stored.
         :param uri: a String with a URI.
-        :return index, static_route: tuple containing both the static_route
+        :return: tuple containing both the static_route
             object and the static_route's prefix.
         """
         # Obtain ID from URI
@@ -366,7 +374,8 @@ class StaticRoute(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific static route URI.
-        return: Object's URI.
+
+        :return: Object's URI.
         """
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
@@ -382,7 +391,8 @@ class StaticRoute(PyaoscxModule):
         """
         Method used to obtain correct object format for referencing inside
             other objects.
-        return: Object format depending on the API Version.
+
+        :return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
@@ -397,6 +407,7 @@ class StaticRoute(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
@@ -416,12 +427,13 @@ class StaticRoute(PyaoscxModule):
         """
         Create a Static Nexthop, with a VRF and a Destination Address related
             to a Static Route.
+
         :param next_hop_ip_address: The IPv4 address or the IPv6 address of
             next hop.
             Example:
-                '1.1.1.1'
-                or
-                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+            '1.1.1.1'
+            or
+            '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
         :param next_hop_interface: The interface through which the next hop
             can be reached.
         :param distance: Administrative distance to be used for the next

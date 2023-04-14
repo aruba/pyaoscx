@@ -27,8 +27,7 @@ class PyaoscxFactory(metaclass=Singleton):
     """
     Provide a Factory class to instantiate all pyaoscx Modules through specific
         methods. This class is superseded by the Device class, use the Device
-        class instead of this one.
-    Using the API Version given by the Session.
+        class instead of this one. Using the API Version given by the Session.
     """
 
     def __init__(self, session):
@@ -38,6 +37,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a Configuration class, to obtain device configuration and
             perform other actions such as backup_config.
+
         :return: Configuration object.
         """
         config = Configuration(self.session)
@@ -56,33 +56,34 @@ class PyaoscxFactory(metaclass=Singleton):
     ):
         """
         Create a DNS class, to configure a DNS inside a given VRF.
+
         :param domain_name: Domain name used for name resolution by the DNS
             client, if 'dns_domain_list' is not configured.
         :param domain_list: dict of DNS Domain list names to be used for
             address resolution, keyed by the resolution priority order.
             Example:
-                {
-                    0: "hpe.com"
-                    1: "arubanetworks.com"
-                }
+            {
+            0: "hpe.com"
+            1: "arubanetworks.com"
+            }
         :param domain_servers: dict of DNS Name servers to be used for address
             resolution, keyed by the resolution priority order. Example:
-                {
-                    0: "4.4.4.10"
-                    1: "4.4.4.12"
-                }
+            {
+            0: "4.4.4.10"
+            1: "4.4.4.12"
+            }
         :param host_v4_address_mapping: dict of static host address
             configurations and the IPv4 address associated with them. Example:
-                {
-                    "host1": "5.5.44.5"
-                    "host2": "2.2.44.2"
-                }
+            {
+            "host1": "5.5.44.5"
+            "host2": "2.2.44.2"
+            }
         :param host_v6_address_mapping: dict of static host address
             configurations and the IPv6 address associated with them. Example:
-                {
-                    "host1": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
-                }
-        : return DNS object.
+            {
+            "host1": "2001:0db8:85a3:0000:0000:8a2e:0370:7334"
+            }
+        :return: DNS object.
         """
         if vrf is None:
             vrf = "default"
@@ -119,6 +120,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def interface(self, name):
         """
         Create an Interface object.
+
         :param name: Alphanumeric name of Interface.
         :return: Interface object.
         """
@@ -141,6 +143,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a Ipv6 object. If values differ from existing object, incoming
             changes will be applied.
+
         :param address: Alphanumeric address of IPv6. Example:
             '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
         :param interface_name: Alphanumeric name of the Interface parent of the
@@ -198,6 +201,7 @@ class PyaoscxFactory(metaclass=Singleton):
     ):
         """
         Create a Vlan object.
+
         :param vlan_id: Numeric ID for VLAN.
         :param name: Alphanumeric name of VLAN, Defaults to "VLAN <ID>".
         :param description: Optional description to add to VLAN.
@@ -257,6 +261,7 @@ class PyaoscxFactory(metaclass=Singleton):
         Get VRF from switch, this avoids making changes to the VRF object. Note
             the __double_leading_underscore that signifies that this is meant
             to be used only inside this module.
+
         :param name: VRF name.
         :return: Materialized Vrf object.
         """
@@ -268,6 +273,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a Vrf object. If values differ from existing object, incoming
             changes will be applied.
+
         :param name: VRF name.
         :param route_distinguisher: Optional route distinguisher to add.
             Defaults to nothing if not specified.
@@ -307,8 +313,8 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a Vsx object.  If values differ from existing object, incoming
             changes will be applied.
+
         :return: A Vsx object.
-        :rtype: Vsx.
         """
         keepalive_vrf = kwargs.get("keepalive_vrf")
         if keepalive_vrf:
@@ -356,6 +362,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a BgpRouter object as Autonomous System Number. If values differ
             from existing object, incoming changes will be applied.
+
         :param vrf: Alphanumeric name of the VRF the BGP ASN belongs to. A Vrf
             object is also accepted.
         :param asn: Integer that represents the Autonomous System Number.
@@ -389,6 +396,7 @@ class PyaoscxFactory(metaclass=Singleton):
         Create a BgpRouter object with a BGP VRF settings for the associated
             BGP ASN. If values differ from existing object, incoming changes
             will be applied.
+
         :param vrf: Alphanumeric name of the VRF the BGP ASN belongs to. A Vrf
             object is also accepted.
         :param asn: Integer that represents the Autonomous System Number.
@@ -441,6 +449,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a BgpNeighbor object. If values differ from existing object,
             incoming changes will be applied.
+
         :param vrf: Alphanumeric name of the VRF the BGP ASN belongs to.
             A Vrf object is also accepted.
         :param bgp_router_asn: Integer that represents the Autonomous System
@@ -575,6 +584,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create OspfRouter object. If values differ from existing object,
             incoming changes will be applied.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to A Vrf
             object is also accepted.
         :param ospf_id: OSPF process ID between numbers 1-63.
@@ -605,12 +615,13 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create Ospfv3Router object. If values differ from existing object,
             incoming changes will be applied.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
             A Vrf object is also accepted.
         :param ospfv3_id: OSPF process ID between numbers 1-63.
         :param redistribute: List of types of redistribution methods for the
-        OSPF Process, with the options being "bgp", "connected",
-        "local_loopback", "rip", and "static".
+            OSPF Process, with the options being "bgp", "connected",
+            "local_loopback", "rip", and "static".
         :return: Ospfv3Router object.
         """
         if "redistribute" not in kwargs:
@@ -635,6 +646,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create an OspfArea object. If values differ from existing object,
             incoming changes will be applied.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
         :param ospf_router: OSPF process ID in [1, 63], an OspfRouter, or
             Ospfv3Router object is also accepted.
@@ -687,6 +699,7 @@ class PyaoscxFactory(metaclass=Singleton):
         Get OSPF Router object from switch, this avoids making changes to it.
             Note the __double_leading_underscore that signifies that this is
             meant to be used only inside this module.
+
         :param ospf_id: OSPF process ID in [1,63].
         :param vrf: Vrf (object).
         :return: Materialized OspfRouter (object).
@@ -702,6 +715,7 @@ class PyaoscxFactory(metaclass=Singleton):
         Get OSPFv3 Router object from switch, this avoids making changes to it.
             Note the __double_leading_underscore that signifies that this is
             meant to be used only inside this module.
+
         :param ospfv3_id: OSPFv3 process ID in [1,63].
         :param vrf: Vrf (object).
         :return: Materialized Ospfv3Router (object).
@@ -717,6 +731,7 @@ class PyaoscxFactory(metaclass=Singleton):
         Get OSPFv3 Area object from switch, this avoids making changes to it.
             Note the __double_leading_underscore that signifies that this is
             meant to be used only inside this module.
+
         :param area_id: Unique identifier as a string in the form of x.x.x.x.
         :param ospf_router: OspfRouter (object) or Ospfv3Router (object).
         :return: Materialized Ospfv3Router (object).
@@ -731,6 +746,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create OspfArea object. If values differ from existing object, incoming
             changes will be applied.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to.
         :param ospfv3_id: OSPFv3 process ID in [1,63], an Ospfv3Router object
             is also accepted.
@@ -751,6 +767,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def ospf_interface(self, vrf, ospf_id, area_id, interface_name, **kwargs):
         """
         Create a OspfInterface object.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to. A Vrf
             object is also accepted.
         :param ospf_id: OSPF process ID between numbers 1-63. A OSPF Router is
@@ -790,6 +807,7 @@ class PyaoscxFactory(metaclass=Singleton):
     ):
         """
         Create a OspfInterface object.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to. A Vrf
             object is also accepted.
         :param ospfv3_id: OSPFv3 process ID between numbers 1-63. An OSPFv3
@@ -812,6 +830,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a OspfVlink object. Defaults to using OspfRouter, when providing
             the OSPF process ID.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to. A Vrf
             object is also accepted.
         :param ospf_router: OSPF process ID number in [1,63]. An OSPF Router
@@ -848,6 +867,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def ospfv3_vlink(self, vrf, ospf_router, area_id, peer_router, **kwargs):
         """
         Create a OspfVlink object.
+
         :param vrf: Alphanumeric name of the VRF the OSPF ID belongs to. A Vrf
             object is also accepted.
         :param ospf_router: OSPFv3 process ID number in [1, 63]. An
@@ -876,6 +896,7 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create VLAN and Interface objects to represent VLAN and SVI,
             respectively.
+
         :param vlan_id: Numeric ID of VLAN.
         :param vlan_name: Alphanumeric name of VLAN.
         :param vlan_int_name: Alphanumeric name for the VLAN interface.
@@ -900,6 +921,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def dhcp_relay(self, vrf, port):
         """
         Create a DhcpRelay object.
+
         :param vrf: Alphanumeric name of VRF.
         :param port: Alphanumeric name of Port.
         :return: DhcpRelay object.
@@ -923,6 +945,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def acl(self, list_name, list_type):
         """
         Create an Acl object.
+
         :param list_name: Alphanumeric name of ACL.
         :param list_type: Alphanumeric type of ACL. Type should be one of
             "ipv4," "ipv6," or "mac".
@@ -960,6 +983,7 @@ class PyaoscxFactory(metaclass=Singleton):
     ):
         """
         Create an AclEntry object.
+
         :param list_name: Alphanumeric name of the ACL.
         :param list_type: Type should be one of "ipv4," "ipv6," or "mac".
         :param sequence_num: Integer number of the sequence.
@@ -969,12 +993,12 @@ class PyaoscxFactory(metaclass=Singleton):
         :param protocol: Optional integer IP protocol number.
         :param src_ip: Optional source IP address. Both IPv4 and IPv6 are
             supported. Example:
-                10.10.12.11/255.255.255.255
-                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+            10.10.12.11/255.255.255.255
+            2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
         :param dst_ip: Optional destination IP address. Both IPv4 and IPv6 are
             supported. Example:
-                10.10.12.11/255.255.255.255
-                2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+            10.10.12.11/255.255.255.255
+            2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
         :param dst_l4_port_min: Optional minimum L4 port number in range; used
             in conjunction with dst_l4_port_max.
         :param dst_l4_port_max: Optional maximum L4 port number in range; used
@@ -986,7 +1010,7 @@ class PyaoscxFactory(metaclass=Singleton):
         :param ethertype: Optional integer EtherType number.
         :param kwargs: Optional keyword arguments for more detailed
             configuration.
-        :return acl_entry: A AclEntry object.
+        :return: A AclEntry object.
         """
         # Create Acl object
         acl = self.session.api.get_module(
@@ -1040,6 +1064,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def vrf_address_family(self, vrf, address_family="ipv4_unicast"):
         """
         Create a VrfAddressFamily object with a VRF.
+
         :param vrf: Alphanumeric name of the VRF the Family Address belongs to.
             A Vrf object is also accepted.
         :param address_family: Alphanumeric type of the Address Family. The
@@ -1066,6 +1091,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def aggregate_address(self, vrf, bgp_router_asn, family_type, ip_prefix):
         """
         Create an AggregateAddress object.
+
         :param vrf: Alphanumeric name of the VRF the BGP ASN belongs to. A Vrf
             object is also accepted.
         :param bgp_router_asn: Integer that represents the Autonomous System
@@ -1118,13 +1144,14 @@ class PyaoscxFactory(metaclass=Singleton):
     def static_route(self, vrf, destination_address_prefix):
         """
         Create a StaticRoute object with a VRF.
+
         :param vrf: Name of the VRF on which the static route is to be
             configured. Defaults to default vrf. A Vrf object is also accepted.
         :param destination_address_prefix: String IPv4 or IPv6 destination
             prefix and mask in the address/mask format. Example:
-                '1.1.1.1'
-                or
-                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+            '1.1.1.1'
+            or
+            '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
         :return: StaticRoute object.
         """
         if isinstance(vrf, str):
@@ -1159,19 +1186,20 @@ class PyaoscxFactory(metaclass=Singleton):
         """
         Create a Static Nexthop, with a VRF and a Destination Address related
             to a Static Route.
+
         :param vrf: Name of the VRF on which the static route is to be
             configured. Defaults to "default". A Vrf object is also accepted.
         :param destination_address_prefix: String IPv4 or IPv6 destination
             prefix and mask in the address/mask format. A StaticRoute object
             is also accepted. Example:
-                '1.1.1.1'
-                or
-                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+            '1.1.1.1'
+            or
+            '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
         :param next_hop_ip_address: The IPv4 address or the IPv6 address of
             next hop. Example:
-                '1.1.1.1'
-                or
-                '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
+            '1.1.1.1'
+            or
+            '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
         :param nexthop_type: Specifies whether the static route is a forward,
             blackhole or reject route.
         :param distance: Administrative distance to be used for the next hop in
@@ -1246,6 +1274,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def poe_interface(self, interface):
         """
         Create a PoE Interface object with associated settings.
+
         :param Interface: Alphanumeric name of the Interface the PoE_Interface
             belongs to. An Interface object is also accepted.
         :return: PoE Interface object.
@@ -1270,6 +1299,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def mac(self, vlan, from_id, mac_address):
         """
         Create an Mac object.
+
         :param vlan_id: Numeric ID for VLAN. A Vlan object is also accepted.
         :param from_id: String source of the MAC address.
             Must be "dynamic", "VSX", "static", "VRRP", "port-access-security",
@@ -1297,10 +1327,10 @@ class PyaoscxFactory(metaclass=Singleton):
     def static_mac(self, vlan, port, mac_address):
         """
         Create an StaticMac object.
+
         param vlan_id: Numeric ID for VLAN. A Vlan object is also accepted.
-        :param port: String for the Port's name. Example: 1/1/1.
-        :param mac_address: String MAC address, or netaddr EUI object. Example:
-            '01:02:03:04:05:06'.
+        :param port: String for the Port's name. Example 1/1/1.
+        :param mac_address: String MAC address, or netaddr EUI object.
         :return: StaticMac object.
         """
         if isinstance(vlan, int):
@@ -1329,6 +1359,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def qos(self, name, **kwargs):
         """
         Create a Qos object.
+
         :param name: String representing a user-defined name for a Qos object.
         :return: Returns a Qos object.
         """
@@ -1353,6 +1384,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def qos_cos(self, code_point, **kwargs):
         """
         Gets a QoS COS trust mode object.
+
         :param code_point: Integer to identify an entry a QoS COS trust mode
             object.
         :return: Returns a QoS COS trust mode object.
@@ -1382,6 +1414,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def qos_dscp(self, code_point, **kwargs):
         """
         Retrieves a QoS DSCP trust mode map entry as an object.
+
         :param code_point: Integer to identify an entry a QoS DSCP trust mode
             object.
         :return: Returns a QoS DSCP trust mode object.
@@ -1411,6 +1444,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def queue(self, qos_name, queue_number, **kwargs):
         """
         Create a Queue object.
+
         :param qos_name: String with a user-defined name for a QoS object.
         :param queue_number: Integer representing a queue priority, with zero
             being the lowest priority. The maximum number of queues is
@@ -1447,6 +1481,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def queue_profile(self, name, **kwargs):
         """
         Create a Queue Profile object.
+
         :param name: name of the profile.
         :return: Queue Profile object.
         """
@@ -1467,6 +1502,7 @@ class PyaoscxFactory(metaclass=Singleton):
     def queue_profile_entry(self, queue_number, queue_profile, **kwargs):
         """
         Create a Queue Profile Entry object.
+
         :param queue_number: Number that identifies the entry.
         :param queue_profile: A Queue Profile object.
         :return: Queue Profile Entry object.
@@ -1506,6 +1542,7 @@ class PyaoscxFactory(metaclass=Singleton):
     ):
         """
         Create a Virtual Network ID (VNI).
+
         :param vni_id: VNI identifier.
         :param interface: Attached interface to the VNI.
         :param vni_type: Type of the VNI (for now just vxlan_vni).
@@ -1555,6 +1592,7 @@ class PyaoscxFactory(metaclass=Singleton):
     ):
         """
         Create a Tunnel Endpoint
+
         :param interface: Attached interface for tunnel
         :param network_id: Network identifier
         :param destination: Destination IP

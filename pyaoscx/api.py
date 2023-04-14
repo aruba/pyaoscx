@@ -21,6 +21,7 @@ class API(ABC):
     def create(cls, target_version):
         """
         Translate the version string name to a valid python symbol.
+
         :param cls: API Class object.
         :param target_version: String with the API Version.
         :return api: API object.
@@ -49,6 +50,7 @@ class API(ABC):
     def valid_depth(self, depth):
         """
         Verifies if given depth is valid for the current API version.
+
         :param depth: Integer
         :return valid: Boolean True if depth is valid.
         """
@@ -58,10 +60,11 @@ class API(ABC):
         """
         Method used to obtain the correct format of the objects information
             which depends on the Current API version.
+
         :param obj: PyaoscxModule object.
         :return info: Dictionary in the form of:
             "keepalive_vrf": {
-                "keepalive_name": "Resource uri",
+            "keepalive_name": "Resource uri",
             }.
         """
         key_str = ""
@@ -83,9 +86,10 @@ class API(ABC):
         Given a response_data obtain the indices of said dictionary and return
             them. Get keys should be used for only one element in the
             dictionary.
+
         :param response_data: a dictionary object in the form of:
             {
-                "idx_1,idx_2": "/rest/v10.0X/system/<module>/<idx_1>,<idx_2>",
+            "idx_1,idx_2": "/rest/v10.0X/system/<module>/<idx_1>,<idx_2>",
             }
         :return indices: List of indices.
         """
@@ -100,17 +104,18 @@ class API(ABC):
         """
         Given a response data, create a list of URI items. In this Version the
             data is a dict.
+
         :param data: Dictionary containing URI data in the form of:
             {
-                '<name>': '/rest/v10.0X/system/<module>/<name>',
-                '<name>': '/rest/v10.0X/system/<module>/<name>',
-                '<name>': '/rest/v10.0X/system/<module>/<name>'
+            '<name>': '/rest/v10.0X/system/<module>/<name>',
+            '<name>': '/rest/v10.0X/system/<module>/<name>',
+            '<name>': '/rest/v10.0X/system/<module>/<name>'
             }.
         :return uri_list: a list containing the input dictionary's values.
             Example:
             [
-                '/rest/v10.0X/system/<module>/<name>',
-                '/rest/v10.0X/system/<module>/<name>'
+            '/rest/v10.0X/system/<module>/<name>',
+            '/rest/v10.0X/system/<module>/<name>'
             ].
         """
         uri_list = []
@@ -122,6 +127,7 @@ class API(ABC):
     def get_module_class(self, session, name):
         """
         Get a module's class given a session, and the module's name.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param name: Name of the module's class to be imported.
@@ -169,6 +175,7 @@ class API(ABC):
     def get_module(self, session, module, index_id=None, **kwargs):
         """
         Create a module object given a response data and the module's type.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device
         :param module: Name representing the module which is about to be

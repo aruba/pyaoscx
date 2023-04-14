@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -70,6 +70,7 @@ class BgpRouter(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a BGP Router table entry and
             fill the object with the incoming attributes
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -130,6 +131,7 @@ class BgpRouter(PyaoscxModule):
         """
         Perform a GET call to retrieve all system BGP Routers inside a VRF, and
             create a dictionary containing them.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -170,7 +172,8 @@ class BgpRouter(PyaoscxModule):
             Checks whether the BGP Router exists in the switch. Calls
             self.update() if BGP Router is being updated. Calls self.create()
             if a new BGP Router is being created.
-        :return modified: Boolean, True if object was created or modified.
+
+        :return: Boolean, True if object was created or modified.
         """
         if not self.__parent_vrf.materialized:
             self.__parent_vrf.apply()
@@ -182,7 +185,8 @@ class BgpRouter(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing BGP Router.
-        :return modified: True if Object was modified and a PUT request
+
+        :return: True if Object was modified and a PUT request
             was made.
         """
         bgp_router_data = utils.get_attrs(self, self.config_attrs)
@@ -194,7 +198,8 @@ class BgpRouter(PyaoscxModule):
         """
         Perform a POST call to create a new BGP Router table entry. Only
             returns if no exception is raised.
-        :return modified: Boolean, True if entry was created.
+
+        :return: Boolean, True if entry was created.
         """
         bgp_data = utils.get_attrs(self, self.config_attrs)
         bgp_data["asn"] = self.asn
@@ -216,13 +221,14 @@ class BgpRouter(PyaoscxModule):
     def from_response(cls, session, parent_vrf, response_data):
         """
         Create a BgpRouter object given a response_data related to it.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_vrf: Vrf object where BGP Router is stored.
         :param response_data: The response must be a dictionary of the form:
             {
-                <asn>: "/rest/v10.04/system/vrfs/<name>/bgp_routers/<asn>"
+            <asn>: "/rest/v10.04/system/vrfs/<name>/bgp_routers/<asn>"
             }
         :return: BgpRouter object.
         """
@@ -236,12 +242,13 @@ class BgpRouter(PyaoscxModule):
     def from_uri(cls, session, parent_vrf, uri):
         """
         Create a BgpRouter object given a URI.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_vrf: Vrf object where BGP Router is stored.
         :param uri: a String with a URI.
-        :return index, bgp_obj: tuple containing both the BgpRouter object
+        :return: tuple containing both the BgpRouter object
             and the BGP's asn.
         """
         # Obtain ID from URI
@@ -260,7 +267,8 @@ class BgpRouter(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific BGP Router URI.
-        return: Object's URI.
+
+        :return: Object's URI.
         """
         return self.path
 
@@ -269,7 +277,8 @@ class BgpRouter(PyaoscxModule):
         """
         Method used to obtain correct object format for referencing inside
             other objects.
-        return: Object format depending on the API Version.
+
+        :return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 
@@ -284,6 +293,7 @@ class BgpRouter(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
@@ -297,6 +307,7 @@ class BgpRouter(PyaoscxModule):
         Update references to BGP Neighbors. If a Neighbor with the same IP,
             Interface or group name is found, update the reference to the new
             neighbor, otherwise, add reference to the new neighbor.
+
         :param new_neighbor: Neighbor to add reference to.
         """
         for neighbor in self.neighbors:
@@ -312,6 +323,7 @@ class BgpRouter(PyaoscxModule):
         """
         Update references to BGP Neighbors. If a Neighbor with the same IP,
             Interface or group name is found, delete the reference to it.
+
         :param new_neighbor: Neighbor to add reference to.
         """
         for i in self.neighbors:
@@ -337,6 +349,7 @@ class BgpRouter(PyaoscxModule):
         Perform a POST call to create BGP Neighbors to the associated current
             BGP Router. With l2vpn_evpn being True, this will also apply EVPN
             settings to the BGP neighbor configurations.
+
         :param family_type: Alphanumeric to specify what type of neighbor
             settings to configure. The options are 'ipv4-unicast',
             'ipv6-unicast' and 'l2vpn-evpn'.
@@ -353,7 +366,7 @@ class BgpRouter(PyaoscxModule):
             has send-community enabled.
         :param remote_as: Integer peer ASN.
         :param update_source: Source address for the neighbor session.
-        :return bgp_neighbor_obj: BgpRouter object.
+        :return: BgpRouter object.
         """
         if (
             activate is not None

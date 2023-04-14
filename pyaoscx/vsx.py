@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import logging
@@ -42,6 +42,7 @@ class Vsx(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a VSX table entry and fill the
             class with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -91,11 +92,12 @@ class Vsx(PyaoscxModule):
     def from_uri(cls, session, uri):
         """
         Create a Vsx object given a VSX URI.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param uri: a String with a URI.
-        :return Vsx object.
+        :return: Vsx object.
         """
         return cls(session, uri=uri)
 
@@ -106,7 +108,8 @@ class Vsx(PyaoscxModule):
             configuration. Checks whether the VSX configuration exists in the
             switch. Calls self.update() if VSX configuration being updated.
             Calls self.create() if a new VSX configuration is being created.
-        :return modified: True if object was created or modified.
+
+        :return: True if object was created or modified.
         """
         if self.materialized:
             return self.update()
@@ -134,7 +137,8 @@ class Vsx(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing VSX inside switch.
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         put_data = utils.get_attrs(self, self.config_attrs)
@@ -153,7 +157,8 @@ class Vsx(PyaoscxModule):
         """
         Perform a POST call to create a new VSX. Only returns if no exception
             is raised.
-        return: True if entry was created.
+
+        :return: True if entry was created.
         """
         post_data = utils.get_attrs(self, self.config_attrs)
         if hasattr(self, "keepalive_vrf") and self.keepalive_vrf:
@@ -200,7 +205,8 @@ class Vsx(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific VSX URI.
-        return: Object's URI.
+
+        :return: Object's URI.
         """
         return self.path
 
@@ -214,6 +220,7 @@ class Vsx(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute.
+
         :return: True if the object was recently modified.
         """
         return self.modified

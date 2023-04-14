@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -60,7 +60,8 @@ class Ipv6(PyaoscxModule):
     def __set_interface(self, parent_int):
         """
         Set parent interface as an attribute for the Ipv6 object.
-        :param parent_int a Interface object.
+
+        :param parent_int: a Interface object.
         """
         # Set Parent Interface
         self.__parent_int = parent_int
@@ -78,6 +79,7 @@ class Ipv6(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a IPv6 table entry and fill the
             object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -144,6 +146,7 @@ class Ipv6(PyaoscxModule):
         """
         Perform a GET call to retrieve all system IPv6 addresses inside an
             Interface, and create a dictionary containing them.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
@@ -208,7 +211,8 @@ class Ipv6(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing IPv6 table entry
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         # Variable returned
@@ -257,7 +261,8 @@ class Ipv6(PyaoscxModule):
         """
         Perform a POST call to create a new IPv6 using the object's attributes
             as POST body. Only returns if an exception is not raised.
-        :return modified: Boolean, True if entry was created.
+
+        :return: Boolean, True if entry was created.
         """
         ipv6_data = utils.get_attrs(self, self.config_attrs)
         ipv6_data["address"] = self.address
@@ -313,13 +318,14 @@ class Ipv6(PyaoscxModule):
     def from_response(cls, session, parent_int, response_data):
         """
         Create a IPv6 object given a response_data related to the IP6 address.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_int: parent Interface object where IPv6 is stored
         :param response_data: The response must be a dictionary of the form:
             {
-                <address>: "/rest/v10.04/interface/ip6_addresses/<address>"
+            <address>: "/rest/v10.04/interface/ip6_addresses/<address>"
             }
         :return: IPv6 object.
         """
@@ -331,12 +337,13 @@ class Ipv6(PyaoscxModule):
     def from_uri(cls, session, parent_int, uri):
         """
         Create a Ipv6 object given a URI.
+
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_int: Parent Interface class where IPv6 is stored.
         :param uri: a String with a URI.
-        :return index, ipv6_obj: tuple containing both the Ipv6 Object and
+        :return: tuple containing both the Ipv6 Object and
             the ipv6's address.
         """
         # Obtain ID from URI
@@ -355,7 +362,8 @@ class Ipv6(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific IPv6 URI.
-        return: Object's URI.
+
+        :return: Object's URI.
         """
         if self._uri is None:
             self._uri = "{0}{1}/{2}".format(
@@ -371,7 +379,8 @@ class Ipv6(PyaoscxModule):
         """
         Method used to obtain correct object format for referencing inside
             other objects.
-        return: Object format depending on the API Version.
+
+        :return: Object format depending on the API Version.
         """
         return self.session.api.get_index(self)
 

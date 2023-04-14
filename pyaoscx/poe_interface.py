@@ -1,4 +1,4 @@
-# (C) Copyright 2021-2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2021-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import logging
@@ -21,6 +21,7 @@ class PoEInterface(PyaoscxModule):
     def __init__(self, session, parent_interface, **kwargs):
         """
         Create an instance of PoEInterface Class.
+
         :param session: pyaoscx.Session object used to represent a logical
             connection to the device.
         :param parent_interface: parent Inferface object where PoE is stored.
@@ -53,6 +54,7 @@ class PoEInterface(PyaoscxModule):
         """
         Perform a GET call to retrieve data for a PoE Interface table entry and
             fill the object with the incoming attributes.
+
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
         :param selector: Alphanumeric option to select specific information to
@@ -71,8 +73,8 @@ class PoEInterface(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Apply an update of values of this PoE Interface.
-        Calls self.update() to apply changes to an existing PoE Interface.
+        Apply an update of values of this PoE Interface. Calls self.update()
+            to apply changes to an existing PoE Interface.
         """
         modified = False
         if self.materialized:
@@ -86,7 +88,8 @@ class PoEInterface(PyaoscxModule):
     def update(self):
         """
         Perform a PUT call to apply changes to an existing PoE Interface.
-        :return modified: True if Object was modified and a PUT request was
+
+        :return: True if Object was modified and a PUT request was
             made.
         """
         poe_interface_data = utils.get_attrs(self, self.config_attrs)
@@ -98,18 +101,30 @@ class PoEInterface(PyaoscxModule):
 
     @PyaoscxModule.connected
     def create(self):
+        """
+        Not needed for PoEInterface
+        """
         pass
 
     @PyaoscxModule.connected
     def delete(self):
+        """
+        Not needed for PoEInterface
+        """
         pass
 
     @PyaoscxModule.connected
     def get_all(self):
+        """
+        Not needed for PoEInterface
+        """
         pass
 
     @classmethod
     def from_uri(cls):
+        """
+        Not needed for PoEInterface
+        """
         pass
 
     def __str__(self):
@@ -119,7 +134,8 @@ class PoEInterface(PyaoscxModule):
     def get_uri(self):
         """
         Method used to obtain the specific PoE Interface URI.
-        return: Object's URI.
+
+        :return: Object URI.
         """
         uri = "{0}{1}".format(self.session.resource_prefix, self.path)
 
@@ -140,6 +156,7 @@ class PoEInterface(PyaoscxModule):
     def was_modified(self):
         """
         Getter method for the __modified attribute.
+
         :return: Boolean True if the object was recently modified.
         """
         return self.modified
@@ -149,6 +166,7 @@ class PoEInterface(PyaoscxModule):
     def allocate_by_method(self):
         """
         Getter method for the allocate_by_method attribute.
+
         :return: String value for method.
         """
         return self.config["allocate_by_method"]
@@ -173,6 +191,7 @@ class PoEInterface(PyaoscxModule):
     def assigned_class(self):
         """
         Getter method for the cfg_assigned_class attribute.
+
         :return: String value for assigned class.
         """
         return self.config["cfg_assigned_class"]
@@ -196,6 +215,7 @@ class PoEInterface(PyaoscxModule):
     def priority(self):
         """
         Getter method for the priority attribute.
+
         :return: String value for priority.
         """
         return self.config["priority"]
@@ -220,6 +240,7 @@ class PoEInterface(PyaoscxModule):
     def power_enabled(self):
         """
         Getter method for admin_disabled attribute.
+
         :return: Bool value for priority.
         """
         return not self.config["admin_disable"]
@@ -237,6 +258,7 @@ class PoEInterface(PyaoscxModule):
     def pd_class_override(self):
         """
         Getter method for pd_class_override attribute.
+
         :return: Bool value for pd_class_override.
         """
         return self.config["pd_class_override"]
@@ -254,6 +276,7 @@ class PoEInterface(PyaoscxModule):
     def pre_standard_detect(self):
         """
         Getter method for pre_standard_detect attribute.
+
         :return: Bool value for pre_standard_detect.
         """
         return self.config["pre_standard_detect"]

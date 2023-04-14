@@ -1,7 +1,7 @@
-pyaoscx.system module
+pyaoscx.device module
 =====================
 
-.. automodule:: pyaoscx.system
+.. automodule:: pyaoscx.device
    :members:
    :undoc-members:
    :show-inheritance:
