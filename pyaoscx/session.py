@@ -211,7 +211,6 @@ class Session:
             s.proxies["no_proxy"] = o.hostname
 
         try:
-            print(base_url + "login")
             response = s.post(
                 base_url + "login",
                 data=login_data,
