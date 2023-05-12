@@ -129,7 +129,7 @@ class PyaoscxFactory(metaclass=Singleton):
         )
         try:
             # Try to create the interface
-            interface_obj.create()
+            interface_obj.apply()
 
         except GenericOperationError:
             # The GenericOperationError is risen if the POST request was
