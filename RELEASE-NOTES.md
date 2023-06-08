@@ -1,3 +1,10 @@
+# 2.4.1
+
+## Notable Changes
+
+* Minor fix for Session
+  * Remove printing of login resource URI
+
 # 2.4.0
 
 ## Notable Changes

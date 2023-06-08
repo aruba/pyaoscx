@@ -23,7 +23,7 @@ copyright = "2019-2023, HPE Aruba"
 author = "HPE Aruba"
 
 # The full version, including alpha/beta/rc tags
-release = "2.4.0"
+release = "2.4.1"
 
 
 # -- General configuration ---------------------------------------------------
