@@ -169,10 +169,10 @@ class Dns(PyaoscxModule):
         """
         # Delete the dns settings inside the VRF
         self.dns_domain_name = None
-        self.dns_domain_list = None
-        self.dns_name_servers = None
-        self.dns_host_v4_address_mapping = None
-        self.dns_host_v6_address_mapping = None
+        self.dns_domain_list = {}
+        self.dns_name_servers = {}
+        self.dns_host_v4_address_mapping = {}
+        self.dns_host_v6_address_mapping = {}
 
         # Make changes
         return self.apply()
@@ -258,10 +258,10 @@ class Dns(PyaoscxModule):
     def setup_dns(
         self,
         domain_name=None,
-        domain_list=None,
-        domain_servers=None,
-        host_v4_address_mapping=None,
-        host_v6_address_mapping=None,
+        domain_list={},
+        domain_servers={},
+        host_v4_address_mapping={},
+        host_v6_address_mapping={},
     ):
         """
         Setup DNS client configuration within a Vrf object.
@@ -300,52 +300,59 @@ class Dns(PyaoscxModule):
             self.dns_domain_name = domain_name
 
         if domain_list is not None:
-            self.dns_domain_list = domain_list
+            for k, v in domain_list.items():
+                self.dns_domain_list[str(k)] = v
 
         if domain_servers is not None:
-            self.dns_name_servers = domain_servers
+            for k, v in domain_servers.items():
+                self.dns_name_servers[str(k)] = v
 
         if host_v4_address_mapping is not None:
-            self.dns_host_v4_address_mapping = host_v4_address_mapping
+            for k, v in host_v4_address_mapping.items():
+                self.dns_host_v4_address_mapping[k] = v
 
         if host_v6_address_mapping is not None:
-            self.dns_host_v6_address_mapping = host_v6_address_mapping
+            for k, v in host_v6_address_mapping.items():
+                self.dns_host_v6_address_mapping[k] = v
 
         return self.apply()
 
     def delete_dns(
         self,
         domain_name=None,
-        domain_list=None,
-        domain_servers=None,
-        host_v4_address_mapping=None,
-        host_v6_address_mapping=None,
+        domain_list={},
+        domain_servers={},
+        host_v4_address_mapping={},
+        host_v6_address_mapping={},
     ):
         """
         Delete DNS client configuration within a Vrf object.
 
         :param domain_name: If value is not None, it is deleted.
-        :param domain_list: If value is not None, it is deleted.
-        :param domain_servers: If value is not None, it is deleted.
-        :param host_v4_address_mapping: If value is not None, it is deleted.
-        :param host_v6_address_mapping: If value is not None, it is deleted.
+        :param domain_list: If value is not an empty dictionary, it is
+            deleted only the value required.
+        :param domain_servers: If value is not an empty dictionary, it is
+            deleted only the value required.
+        :param host_v4_address_mapping: If value is not an empty dictionary, it
+            is deleted only the value required.
+        :param host_v6_address_mapping: If value is not an empty dictionary, it
+            is deleted only the value required.
         :return: Returns True if modified.
         """
         # Update Values
-
         if domain_name is not None:
             self.dns_domain_name = None
 
-        if domain_list != {}:
-            self.dns_domain_list = {}
+        for k, v in domain_list.items():
+            del self.dns_domain_list[str(k)]
 
-        if domain_servers != {}:
-            self.dns_name_servers = {}
+        for k, v in domain_servers.items():
+            del self.dns_name_servers[str(k)]
 
-        if host_v4_address_mapping != {}:
-            self.dns_host_v4_address_mapping = {}
+        for k, v in host_v4_address_mapping.items():
+            del self.dns_host_v4_address_mapping[k]
 
-        if host_v6_address_mapping != {}:
-            self.dns_host_v6_address_mapping = {}
+        for k, v in host_v6_address_mapping.items():
+            del self.dns_host_v6_address_mapping[k]
 
         return self.apply()
