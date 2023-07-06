@@ -5,8 +5,6 @@ import json
 import logging
 import re
 
-from random import randint
-
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 
@@ -47,7 +45,7 @@ class ACL(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
         # Set an initial random version
-        self._update_version()
+        self.cfg_version = 0
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -129,6 +127,7 @@ class ACL(PyaoscxModule):
                 self.session, "AclEntry"
             )
             self.cfg_aces = list(AclEntry.get_all(self.session, self).values())
+            self.__original_attributes["cfg_aces"] = self.cfg_aces[:]
         return True
 
     @classmethod
@@ -196,42 +195,31 @@ class ACL(PyaoscxModule):
         # Variable returned
         modified = False
 
-        acl_data = utils.get_attrs(self, self.config_attrs)
+        # The version should change every time the ACL (or any of
+        # its entries) change so that it is written to hardware
+        self._update_version()
+        acl_data = {}
+        acl_data["cfg_version"] = self.cfg_version
 
-        # Compare dictionaries
-        if acl_data == self.__original_attributes:
-            # Object was not modified
-            modified = False
+        post_data = json.dumps(acl_data)
 
-        else:
-            # The version should change every time the ACL (or any of
-            # its entries) change so that it is written to hardware
-            self._update_version()
-            acl_data["cfg_version"] = self.cfg_version
+        uri = "{0}/{1}{2}{3}".format(
+            ACL.base_uri,
+            self.name,
+            self.session.api.compound_index_separator,
+            self.list_type,
+        )
+        try:
+            response = self.session.request("PUT", uri, data=post_data)
 
-            post_data = json.dumps(acl_data)
+        except Exception as e:
+            raise ResponseError("PUT", e)
 
-            uri = "{0}/{1}{2}{3}".format(
-                ACL.base_uri,
-                self.name,
-                self.session.api.compound_index_separator,
-                self.list_type,
-            )
-            try:
-                response = self.session.request("PUT", uri, data=post_data)
+        if not utils._response_ok(response, "PUT"):
+            raise GenericOperationError(response.text, response.status_code)
 
-            except Exception as e:
-                raise ResponseError("PUT", e)
-
-            if not utils._response_ok(response, "PUT"):
-                raise GenericOperationError(
-                    response.text, response.status_code
-                )
-
-            logging.info("SUCCESS: Updating %s", self)
-            # Set new original attributes
-            self.__original_attributes = acl_data
-            modified = True
+        logging.info("SUCCESS: Updating %s", self)
+        modified = True
         return modified
 
     @PyaoscxModule.connected
@@ -242,9 +230,10 @@ class ACL(PyaoscxModule):
 
         :return modified: Boolean, True if entry was created.
         """
-        acl_data = utils.get_attrs(self, self.config_attrs)
+        acl_data = {}
         acl_data["name"] = self.name
         acl_data["list_type"] = self.list_type
+        acl_data["cfg_version"] = 0
 
         post_data = json.dumps(acl_data)
 
@@ -390,8 +379,7 @@ class ACL(PyaoscxModule):
             change, the new configuration won't get to the hardware.
         """
 
-        new_cfg_version = randint(-9007199254740991, 9007199254740991)
-
+        new_cfg_version = self.cfg_version + 1
         if self.materialized:
             if hasattr(self, "cfg_version"):
                 logging.warning(

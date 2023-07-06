@@ -6,7 +6,7 @@ import logging
 import re
 
 from copy import deepcopy
-from random import randint
+
 from urllib.parse import quote_plus, unquote_plus
 from warnings import warn
 
@@ -239,7 +239,7 @@ class Interface(PyaoscxModule):
             self.vlan_trunks = vlan_trunks
 
         # Set all ACLs
-        from pyaoscx.acl import ACL
+        ACL = self.session.api.get_module_class(self.session, "ACL")
 
         if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
@@ -619,52 +619,74 @@ class Interface(PyaoscxModule):
         if "aclmac_in_cfg" in iface_data and self.aclmac_in_cfg:
             # Set values in correct form
             iface_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
+            iface_data[
+                "aclmac_in_cfg_version"
+            ] = self.aclmac_in_cfg.cfg_version
 
         if "aclmac_out_cfg" in iface_data and self.aclmac_out_cfg:
             # Set values in correct form
             iface_data[
                 "aclmac_out_cfg"
             ] = self.aclmac_out_cfg.get_info_format()
+            iface_data[
+                "aclmac_out_cfg_version"
+            ] = self.aclmac_out_cfg.cfg_version
 
         if "aclv4_in_cfg" in iface_data and self.aclv4_in_cfg:
             # Set values in correct form
             iface_data["aclv4_in_cfg"] = self.aclv4_in_cfg.get_info_format()
+            iface_data["aclv4_in_cfg_version"] = self.aclv4_in_cfg.cfg_version
 
         if "aclv4_out_cfg" in iface_data and self.aclv4_out_cfg:
             # Set values in correct form
             iface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
+            iface_data["aclv4_out_cfg_version"] = self.aclv4_in_cfg.cfg_version
 
         if "aclv4_routed_in_cfg" in iface_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
             iface_data[
                 "aclv4_routed_in_cfg"
             ] = self.aclv4_routed_in_cfg.get_info_format()
+            iface_data[
+                "aclv4_routed_in_cfg_version"
+            ] = self.aclv4_routed_in_cfg.cfg_version
 
         if "aclv4_routed_out_cfg" in iface_data and self.aclv4_routed_out_cfg:
             # Set values in correct form
             iface_data[
                 "aclv4_routed_out_cfg"
             ] = self.aclv4_routed_out_cfg.get_info_format()
+            iface_data[
+                "aclv4_routed_out_cfg_version"
+            ] = self.aclv4_routed_out_cfg.cfg_version
 
         if "aclv6_in_cfg" in iface_data and self.aclv6_in_cfg:
             # Set values in correct form
             iface_data["aclv6_in_cfg"] = self.aclv6_in_cfg.get_info_format()
+            iface_data["aclv6_in_cfg_version"] = self.aclv6_in_cfg.cfg_version
 
         if "aclv6_out_cfg" in iface_data and self.aclv6_out_cfg:
             # Set values in correct form
             iface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
+            iface_data["aclv6_out_cfg_version"] = self.aclv6_in_cfg.cfg_version
 
         if "aclv6_routed_in_cfg" in iface_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
             iface_data[
                 "aclv6_routed_in_cfg"
             ] = self.aclv6_routed_in_cfg.get_info_format()
+            iface_data[
+                "aclv6_routed_in_cfg_version"
+            ] = self.aclv6_routed_in_cfg.cfg_version
 
         if "aclv6_routed_out_cfg" in iface_data and self.aclv6_routed_out_cfg:
             # Set values in correct form
             iface_data[
                 "aclv6_routed_out_cfg"
             ] = self.aclv6_routed_out_cfg.get_info_format()
+            iface_data[
+                "aclv6_routed_out_cfg_version"
+            ] = self.aclv6_routed_out_cfg.cfg_version
 
         uri = "{0}/{1}".format(Interface.base_uri, self.percents_name)
 
@@ -2104,29 +2126,12 @@ class Interface(PyaoscxModule):
         # Get the current version
         acl_obj.get()
 
-        new_cfg_version = randint(-9007199254740991, 9007199254740991)
-
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
-            if (
-                hasattr(self, "aclv6_in_cfg_version")
-                and self.aclv6_in_cfg_version is None
-            ):
-                self.aclv6_in_cfg_version = new_cfg_version
         elif list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
-            if (
-                hasattr(self, "aclv4_in_cfg_version")
-                and self.aclv4_in_cfg_version is None
-            ):
-                self.aclv4_in_cfg_version = new_cfg_version
         elif list_type == "mac":
             self.aclmac_in_cfg = acl_obj
-            if (
-                hasattr(self, "aclmac_in_cfg_version")
-                and self.aclmac_in_cfg_version is None
-            ):
-                self.aclmac_in_cfg_version = new_cfg_version
 
         # Apply changes
         return self.apply()
@@ -2149,29 +2154,12 @@ class Interface(PyaoscxModule):
         # Get the current version
         acl_obj.get()
 
-        new_cfg_version = randint(-9007199254740991, 9007199254740991)
-
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
-            if (
-                hasattr(self, "aclv6_out_cfg_version")
-                and self.aclv6_out_cfg_version is None
-            ):
-                self.aclv6_out_cfg_version = new_cfg_version
         elif list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
-            if (
-                hasattr(self, "aclv4_out_cfg_version")
-                and self.aclv4_out_cfg_version is None
-            ):
-                self.aclv4_out_cfg_version = new_cfg_version
         elif list_type == "mac":
             self.aclmac_out_cfg = acl_obj
-            if (
-                hasattr(self, "aclmac_out_cfg_version")
-                and self.aclmac_out_cfg_version is None
-            ):
-                self.aclmac_out_cfg_version = new_cfg_version
 
         # Routing
         self.routing = True

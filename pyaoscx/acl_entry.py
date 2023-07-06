@@ -257,7 +257,7 @@ class AclEntry(PyaoscxModule):
         :return modified: Boolean, True if object was created or modified.
         """
         if not self.__parent_acl.materialized:
-            self.__parent_acl.apply()
+            self.__parent_acl.get()
 
         modified = False
 
@@ -346,6 +346,7 @@ class AclEntry(PyaoscxModule):
             modified = True
 
         if modified:
+            self.__parent_acl.get()
             self.__parent_acl.apply()
 
         self.__modified = modified
@@ -395,7 +396,7 @@ class AclEntry(PyaoscxModule):
 
         # Get all object's data
         self.get()
-
+        self.__parent_acl.get()
         self.__parent_acl.apply()
 
         # Object was created, means modified
@@ -424,6 +425,7 @@ class AclEntry(PyaoscxModule):
         for acl_entry in self.__parent_acl.cfg_aces:
             if acl_entry.sequence_number == self.sequence_number:
                 self.__parent_acl.cfg_aces.remove(acl_entry)
+        self.__parent_acl.get()
         self.__parent_acl.apply()
 
         # Delete object attributes
@@ -626,13 +628,16 @@ class AclEntry(PyaoscxModule):
         """
         Setter method for the src_ip attribute.
         """
-        version = utils.get_ip_version(new_src_ip)
-        if version != self.__parent_acl.list_type:
-            raise VerificationError(
-                "Version does not match the IP"
-                "version type in {}".format(self.__parent_acl.name)
-            )
-        self._src_ip = utils.fix_ip_mask(new_src_ip,version)
+        if new_src_ip:
+            version = utils.get_ip_version(new_src_ip)
+            if version != self.__parent_acl.list_type:
+                raise VerificationError(
+                    "Version does not match the IP"
+                    "version type in {}".format(self.__parent_acl.name)
+                )
+            self._src_ip = utils.fix_ip_mask(new_src_ip, version)
+        else:
+            self._src_ip = None
 
     @property
     def dst_ip(self):
@@ -648,10 +653,13 @@ class AclEntry(PyaoscxModule):
         """
         Setter method for the dst_ip attribute.
         """
-        version = utils.get_ip_version(new_dst_ip)
-        if version != self.__parent_acl.list_type:
-            raise VerificationError(
-                "Version does not match the IP"
-                "version type in {}".format(self.__parent_acl.name)
-            )
-        self._dst_ip = utils.fix_ip_mask(new_dst_ip,version)
+        if new_dst_ip:
+            version = utils.get_ip_version(new_dst_ip)
+            if version != self.__parent_acl.list_type:
+                raise VerificationError(
+                    "Version does not match the IP"
+                    "version type in {}".format(self.__parent_acl.name)
+                )
+            self._dst_ip = utils.fix_ip_mask(new_dst_ip, version)
+        else:
+            self._dst_ip = None
