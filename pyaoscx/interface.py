@@ -951,7 +951,9 @@ class Interface(PyaoscxModule):
             else:
                 self.vlan_mode = "native-untagged"
 
-            if not trunk_allowed_all:
+            if trunk_allowed_all:
+                self.vlan_trunks = []
+            else:
                 # Set VLAN Trunks
                 if vlan_ids_list is not None:
                     self.vlan_trunks = []
