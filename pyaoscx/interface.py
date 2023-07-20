@@ -496,6 +496,18 @@ class Interface(PyaoscxModule):
         """
         Perform DELETE call to delete Interface table entry.
         """
+        if "lacp-aggregation-key" in self.other_config:
+            aggregation_key = self.other_config["lacp-aggregation-key"]
+
+            lag = self.session.api.get_module(
+                self.session, "Interface", "lag{}".format(aggregation_key)
+            )
+            try:
+                lag.get()
+                lag.remove_port_from_lag(self.name)
+            except Exception as e:
+                print(str(e))
+
         if not self.__is_special_type:
             self.initialize_interface_entry()
         else:
