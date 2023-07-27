@@ -232,8 +232,6 @@ class Interface(PyaoscxModule):
             for uri in uri_list:
                 # Create a Vlan object
                 vlan_id, vlan = Vlan.from_uri(self.session, uri)
-                # Materialize VLAN
-                vlan.get()
                 # Add VLAN to dictionary
                 vlan_trunks.append(vlan)
             # Set list as VLANs
