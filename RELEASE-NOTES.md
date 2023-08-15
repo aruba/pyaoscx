@@ -1,3 +1,13 @@
+# 2.5.0
+
+## Notable Changes
+
+* Added support for LAG interface
+* Added support for DNS configuration
+* Added enhancements to VLAN module
+  * New attributes: voice, igmp snooping and vsx-sync
+* Bugfixes for Interface module related to vlan trunks
+
 # 2.4.1
 
 ## Notable Changes
@@ -15,6 +25,8 @@
 * Fixed bugs for DHCP Relay class
 * Added function to get firmware status
 * Fully tested Port Security functionality
+* Fixed OSPF active interface functionality
+* Fixed readthedocs autogeneration
 * New modules supported and fully tested:
   * mac.py
   * poe_interface.py
