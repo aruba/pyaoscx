@@ -608,12 +608,6 @@ class Interface(PyaoscxModule):
             formated_vlans = {}
             # Set VLANs into correct form
             for element in self.vlan_trunks:
-                # Verify object is materialized
-                if not element.materialized:
-                    raise VerificationError(
-                        "Vlan {0}".format(element),
-                        "Object inside vlan trunks not materialized",
-                    )
                 formated_element = element.get_info_format()
                 formated_vlans.update(formated_element)
 
@@ -969,7 +963,6 @@ class Interface(PyaoscxModule):
                     self.vlan_trunks = []
                     for vlan in vlan_ids_list:
                         vlan_obj = Vlan(self.session, vlan)
-                        vlan_obj.get()
                         self.vlan_trunks.append(vlan_obj)
 
         # Set description
@@ -1459,8 +1452,6 @@ class Interface(PyaoscxModule):
                 vlan_obj = self.session.api.get_module(
                     self.session, "Vlan", vlan
                 )
-                vlan_obj.get()
-
                 self.vlan_trunks.append(vlan_obj)
 
         self.routing = False
