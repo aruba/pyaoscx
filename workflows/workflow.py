@@ -1,3 +1,5 @@
+import urllib3
+
 from pyaoscx.session import Session
 from pyaoscx.pyaoscx_factory import PyaoscxFactory
 from pyaoscx.vlan import Vlan
@@ -6,6 +8,8 @@ from pyaoscx.interface import Interface
 # There are two approaches to workflows, both using the session.
 version = "10.04"
 switch_ip = "172.25.0.2"
+
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 s = Session(switch_ip, version)
 s.open("admin", "admin")
 
@@ -79,7 +83,7 @@ try:
     lag.admin = "down"
     lag.routing = False
     lag.vlan_trunks = [vlan_1]
-    lag.lacp = "passive"
+    lag.lacp_mode = "passive"
     lag.other_config["mclag_enabled"] = False
     lag.other_config["lacp-fallback"] = False
     lag.vlan_mode = "native-untagged"
@@ -99,9 +103,9 @@ try:
 
     # Create the Interface object
     lag2 = factory.interface("lag2")
+    lag2.admin_state = "up"
     modified = lag2.configure_l2(
         description="Created using imperative method",
-        admin="up",
         vlan_mode="native-untagged",
         vlan_tag=1,
         trunk_allowed_all=True,
