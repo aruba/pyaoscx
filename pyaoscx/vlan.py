@@ -205,7 +205,7 @@ class Vlan(PyaoscxModule):
         """
 
         vlan_data = utils.get_attrs(self, self.config_attrs)
-        if self.vsx_sync:
+        if self.vsx_sync is not None:
             vlan_data["vsx_sync"] = self.vsx_sync
         if hasattr(self, "voice"):
             vlan_data["voice"] = self.voice
@@ -238,7 +238,7 @@ class Vlan(PyaoscxModule):
 
         # Get all VLAN data given by the user
         vlan_data = utils.get_attrs(self, self.config_attrs)
-        if self.vsx_sync:
+        if self.vsx_sync is not None:
             vlan_data["vsx_sync"] = self.vsx_sync
         if hasattr(self, "voice"):
             vlan_data["voice"] = self.voice
