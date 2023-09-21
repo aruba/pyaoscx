@@ -19,6 +19,7 @@ Submodules
    pyaoscx.firmware
    pyaoscx.interface
    pyaoscx.ipv6
+   pyaoscx.lldp_neighbor
    pyaoscx.mac
    pyaoscx.ospf_area
    pyaoscx.ospf_interface

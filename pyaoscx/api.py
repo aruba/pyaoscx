@@ -155,6 +155,7 @@ class API(ABC):
             "StaticRoute": "static_route",
             "StaticNexthop": "static_nexthop",
             "PoEInterface": "poe_interface",
+            "LLDPNeighbor": "lldp_neighbor",
             "Mac": "mac",
             "StaticMac": "static_mac",
             "Qos": "qos",
