@@ -56,6 +56,7 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             "software_info",
             "software_version",
             "qos_defaults",
+            "lldp_mgmt_neighbor_info",
         ]
 
         configurable_attrs = [
