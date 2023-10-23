@@ -1828,6 +1828,18 @@ class Interface(PyaoscxModule):
         # Apply changes
         return self.apply()
 
+    def delete_active_gateway(self):
+        """
+        Deelte only IPv4 settings on a VLAN Interface.
+
+        :return: True if object was changed.
+        """
+
+        self.vsx_virtual_gw_mac_v4 = None
+        self.vsx_virtual_ip4 = []
+
+        return self.apply()
+
     def configure_l3_ipv4_port(
         self, ip_address=None, port_desc=None, vrf="default"
     ):
