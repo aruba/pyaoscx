@@ -1,3 +1,9 @@
+# 2.5.1
+
+## Notable Changes
+
+* Added support for LLDP neighbors
+
 # 2.5.0
 
 ## Notable Changes
