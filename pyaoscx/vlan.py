@@ -3,10 +3,10 @@
 
 import json
 import logging
-from random import randint
 import re
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.device import Device
@@ -212,17 +212,47 @@ class Vlan(PyaoscxModule):
         if hasattr(self, "mgmd_enable"):
             vlan_data["mgmd_enable"] = self.mgmd_enable
         # Set all ACLs
-        if "aclmac_in_cfg" in vlan_data and self.aclmac_in_cfg is not None:
+        if "aclmac_in_cfg" in vlan_data and self.aclmac_in_cfg:
             # Set values in correct form
+            self.aclmac_in_cfg.get()
             vlan_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
+            vlan_data[
+                "aclmac_in_cfg_version"
+            ] = self.aclmac_in_cfg.cfg_version
 
-        if "aclv4_in_cfg" in vlan_data and self.aclv4_in_cfg is not None:
+        if "aclmac_out_cfg" in vlan_data and self.aclmac_out_cfg:
             # Set values in correct form
+            self.aclmac_out_cfg.get()
+            vlan_data[
+                "aclmac_out_cfg"
+            ] = self.aclmac_out_cfg.get_info_format()
+            vlan_data[
+                "aclmac_out_cfg_version"
+            ] = self.aclmac_out_cfg.cfg_version
+
+        if "aclv4_in_cfg" in vlan_data and self.aclv4_in_cfg:
+            # Set values in correct form
+            self.aclv4_in_cfg.get()
             vlan_data["aclv4_in_cfg"] = self.aclv4_in_cfg.get_info_format()
+            vlan_data["aclv4_in_cfg_version"] = self.aclv4_in_cfg.cfg_version
 
-        if "aclv6_in_cfg" in vlan_data and self.aclv6_in_cfg is not None:
+        if "aclv4_out_cfg" in vlan_data and self.aclv4_out_cfg:
             # Set values in correct form
+            self.aclv4_out_cfg.get()
+            vlan_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
+            vlan_data["aclv4_out_cfg_version"] = self.aclv4_in_cfg.cfg_version
+
+        if "aclv6_in_cfg" in vlan_data and self.aclv6_in_cfg:
+            # Set values in correct form
+            self.aclv6_in_cfg.get()
             vlan_data["aclv6_in_cfg"] = self.aclv6_in_cfg.get_info_format()
+            vlan_data["aclv6_in_cfg_version"] = self.aclv6_in_cfg.cfg_version
+
+        if "aclv6_out_cfg" in vlan_data and self.aclv6_out_cfg:
+            # Set values in correct form
+            self.aclv6_out_cfg.get()
+            vlan_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
+            vlan_data["aclv6_out_cfg_version"] = self.aclv6_in_cfg.cfg_version
 
         return self._put_data(vlan_data)
 
@@ -248,7 +278,7 @@ class Vlan(PyaoscxModule):
             self.id = int(self.id)
         vlan_data["id"] = self.id
         vlan_data["name"] = (
-            self.name if self.name else "VLAN {}". format(str(self.id))
+            self.name if self.name else "VLAN {}".format(str(self.id))
         )
         return self._post_data(vlan_data)
 
@@ -437,6 +467,7 @@ class Vlan(PyaoscxModule):
         # Apply changes inside switch
         return self.apply()
 
+    @PyaoscxModule.deprecated
     def attach_acl_in(self, acl_name, list_type):
         """
         Update ACL IN values inside a Vlan object.
@@ -453,26 +484,15 @@ class Vlan(PyaoscxModule):
 
         if list_type == "ipv6":
             self.aclv6_in_cfg = acl_obj
-            if self.aclv6_in_cfg_version is None:
-                self.aclv6_in_cfg_version = randint(
-                    -9007199254740991, 9007199254740991
-                )
         if list_type == "ipv4":
             self.aclv4_in_cfg = acl_obj
-            if self.aclv4_in_cfg_version is None:
-                self.aclv4_in_cfg_version = randint(
-                    -9007199254740991, 9007199254740991
-                )
         if list_type == "mac":
             self.aclmac_in_cfg = acl_obj
-            if self.aclmac_in_cfg_version is None:
-                self.aclmac_in_cfg_version = randint(
-                    -9007199254740991, 9007199254740991
-                )
 
         # Apply changes
         return self.apply()
 
+    @PyaoscxModule.deprecated
     def attach_acl_out(self, acl_name, list_type):
         """
         Update ACL OUT values inside a Vlan object.
@@ -489,26 +509,15 @@ class Vlan(PyaoscxModule):
 
         if list_type == "ipv6":
             self.aclv6_out_cfg = acl_obj
-            if self.aclv6_out_cfg_version is None:
-                self.aclv6_out_cfg_version = randint(
-                    -9007199254740991, 9007199254740991
-                )
         if list_type == "ipv4":
             self.aclv4_out_cfg = acl_obj
-            if self.aclv4_out_cfg_version is None:
-                self.aclv4_out_cfg_version = randint(
-                    -9007199254740991, 9007199254740991
-                )
         if list_type == "mac":
             self.aclmac_out_cfg = acl_obj
-            if self.aclmac_out_cfg_version is None:
-                self.aclmac_out_cfg_version = randint(
-                    -9007199254740991, 9007199254740991
-                )
 
         # Apply changes
         return self.apply()
 
+    @PyaoscxModule.deprecated
     def detach_acl_in(self, acl_name, list_type):
         """
         Detach an ACL from a VLAN.
@@ -531,6 +540,7 @@ class Vlan(PyaoscxModule):
         # Apply changes
         return self.apply()
 
+    @PyaoscxModule.deprecated
     def detach_acl_out(self, acl_name, list_type):
         """
         Detach an ACL from a VLAN.
@@ -551,6 +561,90 @@ class Vlan(PyaoscxModule):
             self.aclmac_out_cfg_version = None
 
         # Apply changes
+        return self.apply()
+
+    @PyaoscxModule.materialized
+    def set_acl(self, acl_name, list_type, direction):
+        """
+        Attach ACL to a VLAN
+
+        :param acl_name: The name of the ACL.
+        :param list_type: The type of the ACL (mac, ipv4 or ipv6).
+        :param direction: The direction of the ACL (in, out, routed-in,
+            routed-out)
+        :return: True if the object was changed
+        """
+        valid_types = ["mac", "ipv4", "ipv6"]
+        valid_dirs = ["in", "out"]
+        if list_type not in valid_types:
+            raise ParameterError(
+                "Invalid list_type {0}, valid types are: {1}".format(
+                    list_type, ", ".join(valid_types)
+                )
+            )
+        if direction not in valid_dirs:
+            raise ParameterError(
+                "Invalid direction {0}, valid directions are {1}".format(
+                    direction, ", ".join(valid_dirs)
+                )
+            )
+        # Create Acl object
+        acl_obj = self.session.api.get_module(
+            self.session, "ACL", index_id=acl_name, list_type=list_type
+        )
+        acl_attr = "acl{0}_{1}_cfg".format(
+            list_type.replace("ip", ""), direction.replace("-", "_")
+        )
+
+        if hasattr(self, acl_attr):
+            setattr(self, acl_attr, acl_obj)
+        else:
+            raise ParameterError(
+                "ACL {0} {1} not supported in this platform".format(
+                    list_type, direction
+                )
+            )
+
+        return self.apply()
+
+    @PyaoscxModule.materialized
+    def clear_acl(self, list_type, direction):
+        """
+        Removes ACL from a VLAN
+
+        :param list_type: The type of the ACL (mac, ipv4 or ipv6).
+        :param direction: The direction of the ACL (in, out, routed-in,
+            routed-out)
+        :return: True if the object was changed
+        """
+        valid_types = ["mac", "ipv4", "ipv6"]
+        valid_dirs = ["in", "out"]
+        if list_type not in valid_types:
+            raise ParameterError(
+                "Invalid list_type {0}, valid types are: {1}".format(
+                    list_type, ", ".join(valid_types)
+                )
+            )
+        if direction not in valid_dirs:
+            raise ParameterError(
+                "Invalid direction {0}, valid directions are {1}".format(
+                    direction, ", ".join(valid_dirs)
+                )
+            )
+        acl_attr = "acl{0}_{1}_cfg".format(
+            list_type.replace("ip", ""), direction.replace("-", "_")
+        )
+
+        if hasattr(self, acl_attr):
+            setattr(self, acl_attr, None)
+            setattr(self, acl_attr + "_version", None)
+        else:
+            raise ParameterError(
+                "ACL {0} {1} not supported in this platform".format(
+                    list_type, direction
+                )
+            )
+
         return self.apply()
 
     def get_mac(self, from_id, mac_address):

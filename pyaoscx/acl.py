@@ -5,6 +5,8 @@ import json
 import logging
 import re
 
+from pyaoscx.device import Device
+from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 
@@ -28,6 +30,9 @@ class ACL(PyaoscxModule):
 
     def __init__(self, session, name, list_type, uri=None, **kwargs):
         self.session = session
+        device = Device(self.session)
+        device.get(selector="status")
+        self.capabilities = device.capabilities[:]
         # Assign IDs
         self.name = name
         self.list_type = list_type
@@ -299,7 +304,7 @@ class ACL(PyaoscxModule):
         list_type = acl_arr[1]
         name = acl_arr[0]
 
-        return ACL(session, name, list_type)
+        return cls(session, name, list_type)
 
     @classmethod
     def from_uri(cls, session, uri):
@@ -396,6 +401,31 @@ class ACL(PyaoscxModule):
                 )
 
         self.cfg_version = new_cfg_version
+
+    @property
+    def list_type(self):
+        """
+        Getter method for the list_type attribute.
+
+        :return: String value for type.
+        """
+        return self._type
+
+    @list_type.setter
+    def list_type(self, new_type):
+        """
+        Setter method for the list_type attribute.
+        """
+        valid_types = ["ipv4", "ipv6"]
+        if "classifier_class_mac" in self.capabilities:
+            valid_types.append("mac")
+        if new_type not in valid_types:
+            raise ParameterError(
+                "Invalid class type {0} valid types are: {1}".format(
+                    new_type, ", ".join(valid_types)
+                )
+            )
+        self._type = new_type
 
     ####################################################################
     # IMPERATIVE FUNCTIONS
