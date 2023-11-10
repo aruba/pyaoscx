@@ -155,7 +155,7 @@ class Vrf(PyaoscxModule):
 
         device = Device(self.session)
         if not device.materialized:
-            device.get()
+            device.get(selector="status")
 
         # Clean BGP Router settings
         if "bgp" in device.capabilities and self.bgp_routers == []:

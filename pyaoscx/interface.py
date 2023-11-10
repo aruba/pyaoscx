@@ -2212,7 +2212,7 @@ class Interface(PyaoscxModule):
         self.port_security["enable"] = True
 
         device = Device(self.session)
-        device.get()
+        device.get(selector="status")
         max_clients = device.capacities[
             "port_access_port_security_max_client_limit"
         ]

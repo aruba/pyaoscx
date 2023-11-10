@@ -259,7 +259,7 @@ class Vlan(PyaoscxModule):
     @vsx_sync.setter
     def vsx_sync(self, new_vsx_sync):
         device = Device(self.session)
-        device.get()
+        device.get(selector="status")
         if "vsx" not in device.capabilities:
             raise VerificationError(
                 "vsx_sync is not supported on this platform"
