@@ -1622,3 +1622,20 @@ class PyaoscxFactory(metaclass=Singleton):
             tep.apply()
 
         return tep
+
+    def object_group(self, name, group_type):
+        """
+        Create an Object Group
+        :param name: Name of Object Group
+        :param group_type: Type of Object Group (ipv4, ipv6, l4port)
+        """
+        group_obj = self.session.api.get_module(
+            self.session, "ObjectGroup", index_id=name, object_type=group_type
+        )
+        try:
+            group_obj.get()
+        except GenericOperationError:
+            pass
+        finally:
+            group_obj.apply()
+        return group_obj

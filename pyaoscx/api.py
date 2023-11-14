@@ -143,6 +143,7 @@ class API(ABC):
             "BgpRouter": "bgp_router",
             "BgpNeighbor": "bgp_neighbor",
             "VrfAddressFamily": "vrf_address_family",
+            "ObjectGroup": "object_group",
             "OspfRouter": "ospf_router",
             "Ospfv3Router": "ospfv3_router",
             "OspfVlink": "ospf_virtual_link",

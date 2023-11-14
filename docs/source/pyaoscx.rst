@@ -21,6 +21,7 @@ Submodules
    pyaoscx.ipv6
    pyaoscx.lldp_neighbor
    pyaoscx.mac
+   pyaoscx.object_group
    pyaoscx.ospf_area
    pyaoscx.ospf_interface
    pyaoscx.ospf_router
