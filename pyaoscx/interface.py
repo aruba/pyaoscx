@@ -1328,7 +1328,9 @@ class Interface(PyaoscxModule):
                 if i == 0:
                     self.ip4_address = ipv4[i]
                 else:
-                    self.ip4_address_secondary.append(ipv4[i])
+                    #Check if there is already the same ip4_address_secondary configured
+                    if ipv4[i] not in self.ip4_address_secondary:
+                        self.ip4_address_secondary.append(ipv4[i])
         # If IPv4 is empty, delete
         elif ipv4 == []:
             self.ip4_address = None
@@ -1338,7 +1340,6 @@ class Interface(PyaoscxModule):
             self.description = description
 
         # Set all remaining attributes to create a loopback
-
         # when configuring a loopback interface, it must be powered on
         self.admin_state = "up"
 
