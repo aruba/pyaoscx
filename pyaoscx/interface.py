@@ -402,7 +402,7 @@ class Interface(PyaoscxModule):
         return name, interface_obj
 
     @classmethod
-    def get_facts(cls, session):
+    def get_facts(cls, session, depth=None):
         """
         Perform a GET call to retrieve all Interfaces and their data.
 
@@ -415,7 +415,11 @@ class Interface(PyaoscxModule):
         logging.info("Retrieving the switch interfaces facts")
 
         # Set depth
-        interface_depth = session.api.default_facts_depth
+        interface_depth = depth or session.api.default_facts_depth
+
+        if not session.api.valid_depth(interface_depth):
+            interface_depth = session.api.default_facts_depth
+            raise Exception("ERROR: Depth should be {0}".format(interface_depth))
 
         # Build URI
         uri = "{0}?depth={1}".format(Interface.base_uri, interface_depth)
