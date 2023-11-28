@@ -2,12 +2,158 @@
 # Apache License 2.0
 
 import os
+import re
+
 from ipaddress import ip_interface
+from netaddr import mac_eui48
+from netaddr import EUI as MacAddress
+from netaddr.core import AddrFormatError
 from requests_toolbelt.multipart.encoder import MultipartEncoder
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.parameter_error import ParameterError
+
+ethertypes = {
+    "aarp": 0x80F3,
+    "appletalk": 0x809B,
+    "arp": 0x0806,
+    "fcoe": 0x8906,
+    "fcoe-init": 0x8914,
+    "ip": 0x0800,
+    "ipv6": 0x86DD,
+    "ipx-arpa": 0x8137,
+    "ipx-non-arpa": 0x8138,
+    "is-is": 0x22F4,
+    "lldp": 0x88CC,
+    "mpls-multicast": 0x8847,
+    "mpls-unicast": 0x8848,
+    "q-in-q": 0x9100,
+    "rbridge": 0x8946,
+    "trill": 0x22F3,
+    "wake-on-lan": 0x0842,
+}
+
+ip_protocols = {
+    "ah": 51,
+    "esp": 50,
+    "gre": 47,
+    "icmp": 1,
+    "icmpv6": 58,
+    "igmp": 2,
+    "ospf": 89,
+    "pim": 103,
+    "sctp": 132,
+    "tcp": 6,
+    "udp": 17,
+}
+
+dscp = {
+    "AF11": 10,
+    "AF12": 12,
+    "AF13": 14,
+    "AF21": 18,
+    "AF22": 20,
+    "AF23": 22,
+    "AF31": 26,
+    "AF32": 28,
+    "AF33": 30,
+    "AF41": 34,
+    "AF42": 36,
+    "AF43": 38,
+    "CS0": 0,
+    "CS1": 8,
+    "CS2": 16,
+    "CS3": 24,
+    "CS4": 32,
+    "CS5": 40,
+    "CS6": 48,
+    "CS7": 56,
+    "EF": 46,
+}
+
+icmp_types = {
+    "echo-reply": 0,
+    "destination-unreachable": 3,
+    "source-quench": 4,
+    "redirect": 5,
+    "echo": 8,
+    "router-advertisement": 9,
+    "router-selection": 10,
+    "time-exceeded": 11,
+    "parameter-problem": 12,
+    "timestamp": 13,
+    "timestamp-reply": 14,
+    "information-request": 15,
+    "information-reply": 16,
+    "address-mask-request": 17,
+    "address-mask-reply": 18,
+    "traceroute": 30,
+    "extended-echo": 42,
+    "extended-echo-reply": 43,
+}
+
+icmpv6_types = {
+    "destination-unreachable": 1,
+    "packet-too-big": 2,
+    "time-exceeded": 3,
+    "parameter-problem": 4,
+    "echo": 128,
+    "echo-reply": 129,
+    "multicast-listener-query": 130,
+    "multicast-listener-report": 131,
+    "multicast-listener-done": 132,
+    "router-solicitation": 133,
+    "router-advertisement": 134,
+    "neighbor-solicitation": 135,
+    "neighbor-advertisement": 136,
+    "redirect-message": 137,
+    "router-renumbering": 138,
+    "icmp-node-information-query": 139,
+    "icmp-node-information-response": 140,
+    "mobile-prefix-solicitation": 146,
+    "mobile-prefix-advertisement": 147,
+    "duplicate-address-request-code-suffix": 157,
+    "duplicate-address-confirmation-code-suffix": 158,
+    "extended-echo": 160,
+    "extended-echo-reply": 161,
+}
+
+l4_ports = {
+    "ftp-data": 20,
+    "ftp": 21,
+    "ssh": 22,
+    "telnet": 23,
+    "smtp": 25,
+    "tacacs": 49,
+    "dns": 53,
+    "dhcp-server": 67,
+    "dhcp-client": 68,
+    "tftp": 69,
+    "http": 80,
+    "https": 443,
+    "pop3": 110,
+    "nntp": 119,
+    "ntp": 123,
+    "dce-rpc": 135,
+    "netbios-ns": 137,
+    "netbios-dgm": 138,
+    "netbios-ssn": 139,
+    "snmp": 161,
+    "snmp-trap": 162,
+    "bgp": 179,
+    "ldap": 389,
+    "microsoft-ds": 445,
+    "isakmp": 500,
+    "syslog": 514,
+    "imap4": 585,
+    "radius": 1812,
+    "radius-acct": 1813,
+    "iscsi": 3260,
+    "rdp": 3389,
+    "nat-t": 4500,
+    "vxlan": 4789,
+}
 
 
 def create_attrs(obj, data_dictionary):
@@ -322,8 +468,125 @@ def get_ip_version(ip):
     :return: String with the IP version. Can be either ipv4 or ipv6.
     """
     try:
+        if "/" in ip:
+            ip_parts = iter(ip.split("/"))
+            ip_addr = next(ip_parts)
+            ip_mask = next(ip_parts)
+            if not ip_mask.isnumeric():
+                ip_mask = (
+                    ipv6_netmask_to_cidr(ip_mask)
+                    if ":" in ip_mask
+                    else ipv4_netmask_to_cidr(ip_mask)
+                )
+                ip = ip_addr + "/" + str(ip_mask)
         ip_net = ip_interface(ip)
         return "ipv{0}".format(ip_net.version)
-    except ValueError as intr:
+    except Exception as intr:
         msg = "Invalid IP: {0}".format(intr)
         raise ParameterError(msg)
+
+
+def cidr_to_ipv4_netmask(cidr):
+    """
+    Convert CIDR mask format (/X) to net mask (/X.X.X.X)
+    :param: CIDR mask to convert
+    :return: String with IPv4 netmask
+    """
+    cidr = int(cidr)
+    mask = (0xFFFFFFFF >> (32 - cidr)) << (32 - cidr)
+    return (
+        str((0xFF000000 & mask) >> 24)
+        + "."
+        + str((0x00FF0000 & mask) >> 16)
+        + "."
+        + str((0x0000FF00 & mask) >> 8)
+        + "."
+        + str((0x000000FF & mask))
+    )
+
+
+def ipv4_netmask_to_cidr(netmask):
+    """
+    Convert net mask (/X.X.X.X) to CIDR mask format (/X)
+    :param: Net mask to convert
+    :return: CIDR mask
+    """
+    return sum([bin(int(x)).count("1") for x in netmask.split(".")])
+
+
+def cidr_to_ipv6_netmask(cidr):
+    """
+    Convert CIDR mask format (/X) to net mask (/X:X:X:X)
+    :param: CIDR mask to convert
+    :return: String with IPv6 netmask
+    """
+    cidr = int(cidr)
+    all_bits = (2 << 127) - 1
+    off_set = 128 - cidr
+    raw_mask = hex(all_bits >> off_set << off_set)
+    raw_mask = raw_mask.replace("0x", "").replace("L", "")
+    mask_bytes = re.findall("....", raw_mask)
+    new_mask = ":".join(mask_bytes)
+    new_mask = new_mask.replace(":0000", "")
+    if len(new_mask) < 39:
+        new_mask += "::"
+    return new_mask
+
+
+def ipv6_netmask_to_cidr(netmask):
+    """
+    Convert net mask (/X:X:X:X) to CIDR mask format (/X)
+    :param: Net mask to convert
+    :return: CIDR mask
+    """
+    return sum(
+        [
+            bin(int("0x{0}".format(x if x != "" else "0"), 16)).count("1")
+            for x in netmask.split(":")
+        ]
+    )
+
+
+def fix_ip_mask(ip_address, version):
+    """
+    Fix Ip address mask in CIDR format to net mask
+    :param ip_address: IP address with format (A.B.C.D/X)
+    :param version: IP version (ipv4 or ipv6)
+    :return: String with IP address with format (A.B.C.D/X.X.X.X)
+    """
+    if "/" in ip_address:
+        ip_parts = iter(ip_address.split("/"))
+        ip_addr = next(ip_parts)
+        ip_mask = next(ip_parts)
+        if ip_mask.isnumeric():
+            ip_mask = (
+                cidr_to_ipv4_netmask(ip_mask)
+                if version == "ipv4"
+                else cidr_to_ipv6_netmask(ip_mask)
+            )
+    else:  # host mask
+        ip_addr = ip_address
+        ip_mask = (
+            "255.255.255.255"
+            if version == "ipv4"
+            else "ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff"
+        )
+    return ip_addr + "/" + ip_mask
+
+
+def validate_mac_address(mac_addr):
+    """
+    Validate the correct formats for MAC address
+    param: MAC address with any EUI format
+
+    return: string with MAC address the format (XX:XX:XX:XX:XX:XX)
+    """
+    mac_format = mac_eui48
+    mac_format.word_sep = ":"
+
+    try:
+        mac = MacAddress(mac_addr, dialect=mac_format)
+    except AddrFormatError as exc:
+        raise ParameterError("Invalid MAC address") from exc
+
+    return str(mac)
