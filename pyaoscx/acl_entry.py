@@ -516,7 +516,7 @@ class AclEntry(PyaoscxModule):
             ):
                 l4_port = acl_entry_data[l4_attr]
                 if l4_port in utils.l4_ports:
-                    acl_entry_data[l4_attr] = utils.l4_ports[l4_attr]
+                    acl_entry_data[l4_attr] = utils.l4_ports[l4_port]
                 else:
                     raise ParameterError(
                         "Unknown L4 port {0}, valid ports are: {1}".format(
