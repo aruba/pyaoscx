@@ -5,7 +5,7 @@ import os
 import re
 
 from ipaddress import ip_interface
-from netaddr import mac_eui48
+from netaddr import mac_cisco
 from netaddr import EUI as MacAddress
 from netaddr.core import AddrFormatError
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -34,6 +34,8 @@ ethertypes = {
     "wake-on-lan": 0x0842,
 }
 
+r_ethertypes = {v: k for k, v in ethertypes.items()}
+
 ip_protocols = {
     "ah": 51,
     "esp": 50,
@@ -47,6 +49,8 @@ ip_protocols = {
     "tcp": 6,
     "udp": 17,
 }
+
+r_ip_protocols = {v: k for k, v in ip_protocols.items()}
 
 dscp = {
     "AF11": 10,
@@ -72,6 +76,8 @@ dscp = {
     "EF": 46,
 }
 
+r_dscp = {v: k for k, v in dscp.items()}
+
 icmp_types = {
     "echo-reply": 0,
     "destination-unreachable": 3,
@@ -92,6 +98,8 @@ icmp_types = {
     "extended-echo": 42,
     "extended-echo-reply": 43,
 }
+
+r_icmp_types = {v: k for k, v in icmp_types.items()}
 
 icmpv6_types = {
     "destination-unreachable": 1,
@@ -118,6 +126,8 @@ icmpv6_types = {
     "extended-echo": 160,
     "extended-echo-reply": 161,
 }
+
+r_icmpv6_types = {v: k for k, v in icmpv6_types.items()}
 
 l4_ports = {
     "ftp-data": 20,
@@ -154,6 +164,8 @@ l4_ports = {
     "nat-t": 4500,
     "vxlan": 4789,
 }
+
+r_l4_ports = {v: k for k, v in l4_ports.items()}
 
 
 def create_attrs(obj, data_dictionary):
@@ -579,14 +591,12 @@ def validate_mac_address(mac_addr):
     Validate the correct formats for MAC address
     param: MAC address with any EUI format
 
-    return: string with MAC address the format (XX:XX:XX:XX:XX:XX)
+    return: string with MAC address the format (XXXX.XXXX.XXXX)
     """
-    mac_format = mac_eui48
-    mac_format.word_sep = ":"
-
     try:
-        mac = MacAddress(mac_addr, dialect=mac_format)
+        mac = MacAddress(mac_addr)
+        mac.dialect = mac_cisco
     except AddrFormatError as exc:
-        raise ParameterError("Invalid MAC address") from exc
+        raise ParameterError("Invalid MAC address: {0}".format(exc))
 
     return str(mac)
