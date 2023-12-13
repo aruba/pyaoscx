@@ -644,7 +644,7 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv4_out_cfg.get()
             iface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
-            iface_data["aclv4_out_cfg_version"] = self.aclv4_in_cfg.cfg_version
+            iface_data["aclv4_out_cfg_version"] = self.aclv4_out_cfg.cfg_version
 
         if "aclv4_routed_in_cfg" in iface_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
@@ -676,7 +676,7 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv6_out_cfg.get()
             iface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
-            iface_data["aclv6_out_cfg_version"] = self.aclv6_in_cfg.cfg_version
+            iface_data["aclv6_out_cfg_version"] = self.aclv6_out_cfg.cfg_version
 
         if "aclv6_routed_in_cfg" in iface_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
