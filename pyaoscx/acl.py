@@ -52,6 +52,14 @@ class ACL(PyaoscxModule):
         # Set an initial random version
         self.cfg_version = 0
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, ACL)
+            and self.session == other.session
+            and self.name == other.name
+            and self.list_type == other.list_type
+        )
+
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """

@@ -111,10 +111,22 @@ class AclEntry(PyaoscxModule):
         # Attribute dictionary used to manage the original data
         # obtained from the GET
         self.__original_attributes = {}
-        if "src_ip" in kwargs:
-            self.src_ip = kwargs.pop("src_ip")
-        if "dst_ip" in kwargs:
-            self.dst_ip = kwargs.pop("dst_ip")
+        for new_attr in [
+            "src_ip",
+            "dst_ip",
+            "protocol",
+            "src_mac",
+            "dst_mac",
+            "dscp",
+            "ethertype",
+            "icmp_type",
+            "src_l4_port_min",
+            "src_l4_port_max",
+            "dst_l4_port_min",
+            "dst_l4_port_max",
+        ]:
+            if new_attr in kwargs:
+                setattr(self, new_attr, kwargs.pop(new_attr))
 
         # Checking against C&C
         _exclude_args = []
@@ -137,7 +149,7 @@ class AclEntry(PyaoscxModule):
             _exclude_args.extend(self.cap_pcp)
         if "classifier_ace_tos" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_tos)
-        if "classifier_ce_ttl" not in parent_acl.capabilities:
+        if "classifier_ace_ttl" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_ttl)
         if "action" not in kwargs or kwargs["action"] == "permit":
             if "classifier_acl_log_permit" not in parent_acl.capabilities:
@@ -159,6 +171,14 @@ class AclEntry(PyaoscxModule):
         utils.set_creation_attrs(self, **kwargs)
         # Attribute used to know if object was changed recently
         self.__modified = False
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, AclEntry)
+            and self.session == other.session
+            and self.sequence_number == other.sequence_number
+            and self.base_uri == other.base_uri
+        )
 
     def __set_acl(self, parent_acl):
         """
@@ -226,7 +246,22 @@ class AclEntry(PyaoscxModule):
             raise GenericOperationError(response.text, response.status_code)
 
         data = json.loads(response.text)
-
+        for new_attr in [
+            "src_ip",
+            "dst_ip",
+            "protocol",
+            "src_mac",
+            "dst_mac",
+            "dscp",
+            "ethertype",
+            "icmp_type",
+            "src_l4_port_min",
+            "src_l4_port_max",
+            "dst_l4_port_min",
+            "dst_l4_port_max",
+        ]:
+            if new_attr in data:
+                setattr(self, new_attr, data.pop(new_attr))
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
 
@@ -423,106 +458,31 @@ class AclEntry(PyaoscxModule):
         """
         acl_entry_data = utils.get_attrs(self, self.config_attrs)
         acl_entry_data["sequence_number"] = self.sequence_number
-        if self.src_ip:
-            acl_entry_data["src_ip"] = self.src_ip
-        if self.dst_ip:
-            acl_entry_data["dst_ip"] = self.dst_ip
 
-        acl_type = self.__parent_acl.list_type
-        if "src_mac" in acl_entry_data:
-            if acl_type != "mac":
-                raise ParameterError(
-                    "Invalid source mac address for class type {0}".format(
-                        acl_type
-                    )
-                )
-            acl_entry_data["src_mac"] = utils.validate_mac_address(
-                acl_entry_data["src_mac"]
-            )
+        for new_attr in [
+            "src_ip",
+            "dst_ip",
+            "protocol",
+        ]:
+            new_value = getattr(self, new_attr)
+            if new_value != "any":
+                acl_entry_data[new_attr] = new_value
 
-        if "dst_mac" in acl_entry_data:
-            if acl_type != "mac":
-                raise ParameterError(
-                    "Invalid dest mac address for class type {0}".format(
-                        acl_type
-                    )
-                )
-            acl_entry_data["dst_mac"] = utils.validate_mac_address(
-                acl_entry_data["dst_mac"]
-            )
-
-        if "protocol" in acl_entry_data and isinstance(
-            acl_entry_data["protocol"], str
-        ):
-            proto = acl_entry_data["protocol"]
-            if proto in ["ip", "any", "ipv6", ""]:
-                del acl_entry_data["protocol"]
-            elif proto in utils.ip_protocols:
-                protocol_num = utils.ip_protocols[proto]
-                acl_entry_data["protocol"] = protocol_num
-            else:
-                raise ParameterError(
-                    "Unknown IP protocol {0}, valid protocols: {1}".format(
-                        proto, ", ".join(utils.ip_protocols)
-                    )
-                )
-        if "dscp" in acl_entry_data and isinstance(
-            acl_entry_data["dscp"], str
-        ):
-            dscp = acl_entry_data["dscp"]
-            if dscp in utils.dscp:
-                acl_entry_data["dscp"] = utils.dscp[dscp]
-            else:
-                raise ParameterError(
-                    "Invalid DSCP {0} - valid DSCP values are: {1}".format(
-                        dscp, ", ".join(utils.dscp)
-                    )
-                )
-        if "icmp_type" in acl_entry_data and isinstance(
-            acl_entry_data["icmp_type"], str
-        ):
-            icmp_type = acl_entry_data["icmp_type"]
-            icmp_types_dict = (
-                utils.icmp_types if acl_type == "ipv4" else utils.icmpv6_types
-            )
-            if icmp_type in icmp_types_dict:
-                acl_entry_data["icmp_type"] = icmp_types_dict[icmp_type]
-            else:
-                raise ParameterError(
-                    "Invalid ICMP Type {0} - valid types are: {1}".format(
-                        icmp_type, ", ".join(icmp_types_dict)
-                    )
-                )
-        if "ethertype" in acl_entry_data and isinstance(
-            acl_entry_data["ethertype"], str
-        ):
-            ethertype = acl_entry_data["ethertype"]
-            if ethertype in utils.ethertypes:
-                acl_entry_data["ethertype"] = utils.ethertypes[ethertype]
-            else:
-                raise ParameterError(
-                    "Unknown Ethertype {0} - valid ethertypes are: {1}".format(
-                        ethertype, ", ".join(utils.ethertypes)
-                    )
-                )
-        for l4_attr in [
+        for new_attr in [
+            "src_mac",
+            "dst_mac",
+            "dscp",
+            "ethertype",
+            "icmp_type",
             "src_l4_port_min",
             "src_l4_port_max",
             "dst_l4_port_min",
             "dst_l4_port_max",
         ]:
-            if l4_attr in acl_entry_data and isinstance(
-                acl_entry_data[l4_attr], str
-            ):
-                l4_port = acl_entry_data[l4_attr]
-                if l4_port in utils.l4_ports:
-                    acl_entry_data[l4_attr] = utils.l4_ports[l4_port]
-                else:
-                    raise ParameterError(
-                        "Unknown L4 port {0}, valid ports are: {1}".format(
-                            l4_port, ", ".join(utils.l4_ports)
-                        )
-                    )
+            new_value = getattr(self, new_attr)
+            if new_value:
+                acl_entry_data[new_attr] = new_value
+
         for group_param in self.cap_grp:
             if group_param in acl_entry_data:
                 group_obj = acl_entry_data[group_param]
@@ -764,29 +724,77 @@ class AclEntry(PyaoscxModule):
         return self.apply()
 
     @property
+    def src_mac(self):
+        """
+        Getter for src_mac attribute
+
+        :return: Source MAC address
+        """
+        return self._src_mac if hasattr(self, "_src_mac") else None
+
+    @src_mac.setter
+    def src_mac(self, new_src_mac):
+        """
+        Setter for src_mac attribute
+        """
+        if new_src_mac:
+            acl_type = self.__parent_acl.list_type
+            if acl_type != "mac":
+                raise ParameterError(
+                    "MAC Address not allowed for ACL type {0}".format(acl_type)
+                )
+            self._src_mac = utils.validate_mac_address(new_src_mac)
+        else:
+            self._src_mac = None
+
+    @property
+    def dst_mac(self):
+        """
+        Getter for dst_mac attribute
+
+        :return: Destination MAC address
+        """
+        return self._dst_mac if hasattr(self, "_dst_mac") else None
+
+    @dst_mac.setter
+    def dst_mac(self, new_dst_mac):
+        """
+        Setter for dst_mac attribute
+        """
+        if new_dst_mac:
+            acl_type = self.__parent_acl.list_type
+            if acl_type != "mac":
+                raise ParameterError(
+                    "MAC Address not allowed for ACL type {0}".format(acl_type)
+                )
+            self._dst_mac = utils.validate_mac_address(new_dst_mac)
+        else:
+            self._dst_mac = None
+
+    @property
     def src_ip(self):
         """
         Getter method for source ip attribute.
 
         :return: String value for src_ip.
         """
-        return self._src_ip if hasattr(self, "_src_ip") else None
+        return self._src_ip if hasattr(self, "_src_ip") else "any"
 
     @src_ip.setter
     def src_ip(self, new_src_ip):
         """
         Setter method for the src_ip attribute.
         """
-        if new_src_ip:
+        if new_src_ip and new_src_ip.lower() != "any":
             version = utils.get_ip_version(new_src_ip)
             if version != self.__parent_acl.list_type:
                 raise VerificationError(
-                    "Version does not match the IP"
+                    "Version does not match the IP "
                     "version type in {}".format(self.__parent_acl.name)
                 )
             self._src_ip = utils.fix_ip_mask(new_src_ip, version)
         else:
-            self._src_ip = None
+            self._src_ip = "any"
 
     @property
     def dst_ip(self):
@@ -795,20 +803,246 @@ class AclEntry(PyaoscxModule):
 
         :return: String value for dst_ip.
         """
-        return self._dst_ip if hasattr(self, "_dst_ip") else None
+        return self._dst_ip if hasattr(self, "_dst_ip") else "any"
 
     @dst_ip.setter
     def dst_ip(self, new_dst_ip):
         """
         Setter method for the dst_ip attribute.
         """
-        if new_dst_ip:
+        if new_dst_ip and new_dst_ip.lower() != "any":
             version = utils.get_ip_version(new_dst_ip)
             if version != self.__parent_acl.list_type:
                 raise VerificationError(
-                    "Version does not match the IP"
+                    "Version does not match the IP "
                     "version type in {}".format(self.__parent_acl.name)
                 )
             self._dst_ip = utils.fix_ip_mask(new_dst_ip, version)
         else:
-            self._dst_ip = None
+            self._dst_ip = "any"
+
+    @property
+    def dscp(self):
+        """
+        Getter method for DSCP attribute.
+
+        :return: DSCP value, integer or String
+        """
+        return self._dscp if hasattr(self, "_dscp") else None
+
+    @dscp.setter
+    def dscp(self, new_dscp):
+        """
+        Setter method for the dscp attribute.
+        """
+        if isinstance(new_dscp, str):
+            if new_dscp not in utils.dscp:
+                raise ParameterError(
+                    "Invalid DSCP {0} - valid DSCP values are: {1}".format(
+                        new_dscp, ", ".join(utils.dscp)
+                    )
+                )
+            self._dscp = utils.dscp[new_dscp]
+        else:
+            self._dscp = new_dscp
+
+    @property
+    def protocol(self):
+        """
+        Getter method for protocol attribute
+
+        :return: protocol value, integer or string
+        """
+        return self._protocol if hasattr(self, "_protocol") else "any"
+
+    @protocol.setter
+    def protocol(self, new_proto):
+        """
+        Setter method for protocol attribute
+        """
+        if isinstance(new_proto, str):
+            if new_proto in ["ip", "any", "ipv6", ""]:
+                self._protocol = "any"
+            elif new_proto in utils.ip_protocols:
+                self._protocol = utils.ip_protocols[new_proto]
+            else:
+                raise ParameterError(
+                    "Unknown IP protocol {0}, valid protocols: {1}".format(
+                        new_proto, ", ".join(utils.ip_protocols)
+                    )
+                )
+        else:
+            self._protocol = new_proto
+
+    @property
+    def icmp_type(self):
+        """
+        Getter for icmp_type attribute
+
+        :return: Icmp type value, string or integer
+        """
+        return self._icmp_type if hasattr(self, "_icmp_type") else None
+
+    @icmp_type.setter
+    def icmp_type(self, new_icmp_type):
+        acl_type = self.__parent_acl.list_type
+        icmp_types_dict = (
+            utils.icmp_types if acl_type == "ipv4" else utils.icmpv6_types
+        )
+        if isinstance(new_icmp_type, str):
+            if new_icmp_type in icmp_types_dict:
+                self._icmp_type = icmp_types_dict[new_icmp_type]
+            else:
+                raise ParameterError(
+                    "Invalid ICMP Type {0} - valid types are: {1}".format(
+                        new_icmp_type, ", ".join(icmp_types_dict)
+                    )
+                )
+        else:
+            self._icmp_type = new_icmp_type
+
+    @property
+    def ethertype(self):
+        """
+        Getter for ethertype attribute
+
+        :return: Ethertype value, integer or string
+        """
+        return self._ethertype if hasattr(self, "_ethertype") else None
+
+    @ethertype.setter
+    def ethertype(self, new_ethertype):
+        """
+        Setter for ethertype attribute
+        """
+        if isinstance(new_ethertype, str):
+            if new_ethertype in utils.ethertypes:
+                self._ethertype = utils.ethertypes[new_ethertype]
+            else:
+                raise ParameterError(
+                    "Unknown Ethertype {0} - valid ethertypes are: {1}".format(
+                        new_ethertype, ", ".join(utils.ethertypes)
+                    )
+                )
+        else:
+            self._ethertype = new_ethertype
+
+    @property
+    def src_l4_port_min(self):
+        """
+        Getter for src_l4_port_min attribute
+
+        :return: Source minimum L4 port
+        """
+        return (
+            self._src_l4_port_min
+            if hasattr(self, "_src_l4_port_min")
+            else None
+        )
+
+    @src_l4_port_min.setter
+    def src_l4_port_min(self, new_l4_port):
+        """
+        Setter for src_l4_port_min attribute
+        """
+        if isinstance(new_l4_port, str):
+            if new_l4_port in utils.l4_ports:
+                self._src_l4_port_min = utils.l4_ports[new_l4_port]
+            else:
+                raise ParameterError(
+                    "Unknown L4 port {0}, valid ports are: {1}".format(
+                        new_l4_port, ", ".join(utils.l4_ports)
+                    )
+                )
+        else:
+            self._src_l4_port_min = new_l4_port
+
+    @property
+    def src_l4_port_max(self):
+        """
+        Getter for src_l4_port_max attribute
+
+        :return: Source maximum L4 port
+        """
+        return (
+            self._src_l4_port_max
+            if hasattr(self, "_src_l4_port_max")
+            else None
+        )
+
+    @src_l4_port_max.setter
+    def src_l4_port_max(self, new_l4_port):
+        """
+        Setter for src_l4_port_max attribute
+        """
+        if isinstance(new_l4_port, str):
+            if new_l4_port in utils.l4_ports:
+                self._src_l4_port_max = utils.l4_ports[new_l4_port]
+            else:
+                raise ParameterError(
+                    "Unknown L4 port {0}, valid ports are: {1}".format(
+                        new_l4_port, ", ".join(utils.l4_ports)
+                    )
+                )
+        else:
+            self._src_l4_port_max = new_l4_port
+
+    @property
+    def dst_l4_port_min(self):
+        """
+        Getter for dst_l4_port_min attribute
+
+        :return: Destination minimum L4 port
+        """
+        return (
+            self._dst_l4_port_min
+            if hasattr(self, "_dst_l4_port_min")
+            else None
+        )
+
+    @dst_l4_port_min.setter
+    def dst_l4_port_min(self, new_l4_port):
+        """
+        Setter for dst_l4_port_min attribute
+        """
+        if isinstance(new_l4_port, str):
+            if new_l4_port in utils.l4_ports:
+                self._dst_l4_port_min = utils.l4_ports[new_l4_port]
+            else:
+                raise ParameterError(
+                    "Unknown L4 port {0}, valid ports are: {1}".format(
+                        new_l4_port, ", ".join(utils.l4_ports)
+                    )
+                )
+        else:
+            self._dst_l4_port_min = new_l4_port
+
+    @property
+    def dst_l4_port_max(self):
+        """
+        Getter for dst_l4_port_max attribute
+
+        :return: Destination maximum L4 port
+        """
+        return (
+            self._dst_l4_port_max
+            if hasattr(self, "_dst_l4_port_max")
+            else None
+        )
+
+    @dst_l4_port_max.setter
+    def dst_l4_port_max(self, new_l4_port):
+        """
+        Setter for src_l4_port_max attribute
+        """
+        if isinstance(new_l4_port, str):
+            if new_l4_port in utils.l4_ports:
+                self._dst_l4_port_max = utils.l4_ports[new_l4_port]
+            else:
+                raise ParameterError(
+                    "Unknown L4 port {0}, valid ports are: {1}".format(
+                        new_l4_port, ", ".join(utils.l4_ports)
+                    )
+                )
+        else:
+            self._dst_l4_port_max = new_l4_port

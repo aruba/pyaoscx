@@ -50,6 +50,14 @@ class Session:
         self.resource_prefix = "/rest/v{0}/".format(self.api)
         self.__username = self.__password = ""
 
+    def __eq__(self, other):
+        return (
+            isinstance(other, Session)
+            and self.ip == other.ip
+            and str(self.api) == str(other.api)
+            and self.__username == other.__username
+        )
+
     def cookies(self):
         """
         Return the cookie stored in the requests' session.

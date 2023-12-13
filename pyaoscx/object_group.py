@@ -53,6 +53,7 @@ class ObjectGroup(PyaoscxModule):
     def __eq__(self, other):
         return (
             isinstance(other, ObjectGroup)
+            and self.session == other.session
             and self.name == other.name
             and self.object_type == other.object_type
         )
