@@ -2389,3 +2389,59 @@ class Interface(PyaoscxModule):
                     )
         self.user_config.update(_user_config)
         return self.apply()
+
+    @PyaoscxModule.materialized
+    def configure_spanning_tree(
+        self,
+        admin_edge_port_enable=None,
+        bpdu_filter_enable=None,
+        bpdu_guard_enable=None,
+        link_type=None,
+        loop_guard_enable=None,
+        root_guard_enable=None,
+    ):
+        """
+        Configure the Interface Spanning Tree Settings.
+
+        :param admin_edge_port_enable: Boolean to set admin type: admin-edge or
+            admin-network (default)
+        :param bpdu_filter_enable: Boolean to set BPDU filter (disable by
+            default)
+        :param bpdu_guard_enable: Boolean to set BPDU guard (disable
+            by default)
+        :param link_type: string to set link-type (auto/point_to_point/shared)
+            (auto by default)
+        :param loop_guard_enable: Boolean to set Loop guard (disable
+            by default)
+        :param root_guard_enable: Boolean to set Root guard (disable
+            by default)
+        :return: True if object changed.
+        """
+
+        if hasattr(self, "routing") and self.routing:
+            raise VerificationError(
+                "Configuring Spanning Tree is allowed only on bridged ports."
+            )
+
+        _stp_config = {}
+
+        if admin_edge_port_enable is not None:
+            _stp_config["admin_edge_port_enable"] = admin_edge_port_enable
+
+        if bpdu_filter_enable is not None:
+            _stp_config["bpdu_filter_enable"] = bpdu_filter_enable
+
+        if bpdu_guard_enable is not None:
+            _stp_config["bpdu_guard_enable"] = bpdu_guard_enable
+
+        if loop_guard_enable is not None:
+            _stp_config["loop_guard_enable"] = loop_guard_enable
+
+        if root_guard_enable is not None:
+            _stp_config["root_guard_enable"] = root_guard_enable
+
+        if link_type is not None:
+            _stp_config["link_type"] = link_type
+
+        self.stp_config.update(_stp_config)
+        return self.apply()
