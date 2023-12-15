@@ -59,10 +59,11 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             "lldp_mgmt_neighbor_info",
         ]
 
-        selector = selector or self.session.api.default_selector
-        uri = "system?depth={0}&selector={1}".format(
-            self.session.api.default_depth, selector
-        )
+        uri = "system?depth={0}".format(self.session.api.default_depth)
+        if selector:
+            uri += "&selector={0}".format(selector)
+        else:
+            uri += "&attributes={0}".format(",".join(non_configurable_attrs))
 
         try:
             response = self.session.request("GET", uri)
