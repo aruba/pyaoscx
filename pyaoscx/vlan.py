@@ -240,7 +240,7 @@ class Vlan(PyaoscxModule):
             # Set values in correct form
             self.aclv4_out_cfg.get()
             vlan_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
-            vlan_data["aclv4_out_cfg_version"] = self.aclv4_in_cfg.cfg_version
+            vlan_data["aclv4_out_cfg_version"] = self.aclv4_out_cfg.cfg_version
 
         if "aclv6_in_cfg" in vlan_data and self.aclv6_in_cfg:
             # Set values in correct form
@@ -252,7 +252,7 @@ class Vlan(PyaoscxModule):
             # Set values in correct form
             self.aclv6_out_cfg.get()
             vlan_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
-            vlan_data["aclv6_out_cfg_version"] = self.aclv6_in_cfg.cfg_version
+            vlan_data["aclv6_out_cfg_version"] = self.aclv6_out_cfg.cfg_version
 
         return self._put_data(vlan_data)
 
