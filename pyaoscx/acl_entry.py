@@ -197,17 +197,11 @@ class AclEntry(PyaoscxModule):
             self.__parent_acl.list_type,
         )
 
-        # Verify acl_entry doesn't exist already inside acl
-        for acl_entry in self.__parent_acl.cfg_aces:
-            if acl_entry.sequence_number == self.sequence_number:
-                # Make list element point to current object
-                acl_entry = self
-            else:
-                # Add self to cfg_aces list in parent acl
-                self.__parent_acl.cfg_aces.append(self)
+        if self.sequence_number not in self.__parent_acl.cfg_aces:
+            self.__parent_acl.cfg_aces[self.sequence_number] = self
 
     @PyaoscxModule.connected
-    def get(self, depth=None, selector=None):
+    def get(self, depth=None, selector="configuration"):
         """
         Perform a GET call to retrieve data for an ACL Entry table entry and
             fill the object with the incoming attributes.
@@ -245,7 +239,18 @@ class AclEntry(PyaoscxModule):
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
 
-        data = json.loads(response.text)
+        get_data = json.loads(response.text)
+        orig_data = {k: v for k, v in get_data.items() if v is not None}
+        ObjectGroup = self.session.api.get_module_class(
+            self.session, "ObjectGroup"
+        )
+        for grp_attr in self.cap_grp:
+            if grp_attr in orig_data:
+                obj_grp = ObjectGroup.from_response(
+                    self.session, orig_data[grp_attr]
+                )
+                orig_data[grp_attr] = obj_grp
+        data = orig_data.copy()
         for new_attr in [
             "src_ip",
             "dst_ip",
@@ -272,20 +277,8 @@ class AclEntry(PyaoscxModule):
                 self, data, "config_attrs", ["sequence_number"]
             )
 
-        ObjectGroup = self.session.api.get_module_class(
-            self.session, "ObjectGroup"
-        )
-        for grp_attr in self.cap_grp:
-            if hasattr(self, grp_attr):
-                obj_grp_ref = getattr(self, grp_attr)
-                if obj_grp_ref and isinstance(obj_grp_ref, dict):
-                    obj_grp = ObjectGroup.from_response(
-                        self.session, obj_grp_ref
-                    )
-                    setattr(self, grp_attr, obj_grp)
-
         # Set original attributes
-        self.__original_attributes = data
+        self.__original_attributes.update(orig_data)
         # Remove ID
         if "sequence_number" in self.__original_attributes:
             self.__original_attributes.pop("sequence_number")
@@ -309,11 +302,12 @@ class AclEntry(PyaoscxModule):
             and an ACL Entry objects as values.
         """
         logging.info("Retrieving all %s data from switch", cls.__name__)
-        uri = "{0}/{1}{2}{3}/cfg_aces".format(
+        uri = "{0}/{1}{2}{3}/cfg_aces?depth={4}".format(
             parent_acl.base_uri,
             parent_acl.name,
             session.api.compound_index_separator,
             parent_acl.list_type,
+            session.api.default_facts_depth,
         )
 
         try:
@@ -327,17 +321,26 @@ class AclEntry(PyaoscxModule):
         data = json.loads(response.text)
 
         acl_entry_dict = {}
-        # Get all URI elements in the form of a list
-        uri_list = session.api.get_uri_from_data(data)
 
-        for uri in uri_list:
-            # Create a AclEntry object and adds it to parent acl list
-            sequence_number, acl_entry = AclEntry.from_uri(
-                session, parent_acl, uri
-            )
-            # Load all acl_entry data from within the Switch
-            acl_entry.get()
-            acl_entry_dict[sequence_number] = acl_entry
+        ObjectGroup = session.api.get_module_class(session, "ObjectGroup")
+        for ace_seq_num, ace_dict in data.items():
+            # Create a AclEntry object and setting attributes from response
+            ace_seq_num = int(ace_seq_num)
+            ace_kwargs = {k: v for k, v in ace_dict.items() if v is not None}
+            del ace_kwargs["sequence_number"]
+            orig_keys = list(ace_kwargs.keys())
+            for grp_attr in cls.cap_grp:
+                if grp_attr in ace_kwargs:
+                    obj_grp = ObjectGroup.from_response(
+                        session, ace_kwargs[grp_attr]
+                    )
+                    ace_kwargs[grp_attr] = obj_grp
+            ace_obj = cls(session, ace_seq_num, parent_acl, **ace_kwargs)
+            ace_orig = utils.get_attrs(ace_obj, orig_keys)
+            ace_obj.__original_attributes.update(ace_orig)
+            ace_obj.config_attrs = list(ace_orig.keys())
+            ace_obj.materialized = True
+            acl_entry_dict[ace_seq_num] = ace_obj
 
         return acl_entry_dict
 
@@ -358,21 +361,15 @@ class AclEntry(PyaoscxModule):
         modified = False
 
         remote_ace = AclEntry(
-            self.session, self.sequence_number, self.__parent_acl
+            self.session,
+            self.sequence_number,
+            self.__parent_acl,
+            **self.__original_attributes
         )
 
-        try:
-            # Should get all configurable attributes, not just the one that
-            # are available for writing
-            remote_ace.get(selector="configuration")
-        except GenericOperationError:
-            # If the get fails, the ACE doesn't exist, so a simple
-            # create will suffice
-            logging.info("%s for %s will be created", self, self.__parent_acl)
+        if not self.materialized:
             modified = self.create()
         else:
-            self._extract_missing_parameters_from(remote_ace)
-            # Get was successful, so the ACE already exists
             if PyaoscxModule._is_replace_required(
                 current=remote_ace,
                 replacement=self,
@@ -531,9 +528,8 @@ class AclEntry(PyaoscxModule):
         logging.info("SUCCESS: Deleting %s", self)
 
         # Delete back reference from ACL
-        for acl_entry in self.__parent_acl.cfg_aces:
-            if acl_entry.sequence_number == self.sequence_number:
-                self.__parent_acl.cfg_aces.remove(acl_entry)
+        del self.__parent_acl.cfg_aces[self.sequence_number]
+
         self.__parent_acl.get()
         self.__parent_acl.apply()
 

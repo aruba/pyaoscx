@@ -313,6 +313,7 @@ class PyaoscxModule(ABC):
                 # current lacks, so a replacement is required
                 if getattr(replacement, param_name) is not None:
                     return True
+        return False
 
     def _extract_missing_parameters_from(self, other):
         """

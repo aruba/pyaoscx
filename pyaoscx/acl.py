@@ -26,8 +26,6 @@ class ACL(PyaoscxModule):
 
     indices = ["name", "list_type"]
 
-    cfg_aces = ListDescriptor("cfg_aces")
-
     def __init__(self, session, name, list_type, uri=None, **kwargs):
         self.session = session
         device = Device(self.session)
@@ -46,7 +44,7 @@ class ACL(PyaoscxModule):
         # Set arguments needed for correct creation
         utils.set_creation_attrs(self, **kwargs)
         # Use to manage ACL Entries
-        self.cfg_aces = []
+        self.cfg_aces = {}
         # Attribute used to know if object was changed recently
         self.__modified = False
         # Set an initial random version
@@ -132,15 +130,11 @@ class ACL(PyaoscxModule):
         # Information is loaded from the Device
         self.materialized = True
 
-        # Clean ACL Entries settings
-        if self.cfg_aces == []:
-            # Set ACL Entries if any
-            # Adds ACL Entries to parent ACL already
-            AclEntry = self.session.api.get_module_class(
-                self.session, "AclEntry"
-            )
-            self.cfg_aces = list(AclEntry.get_all(self.session, self).values())
-            self.__original_attributes["cfg_aces"] = self.cfg_aces[:]
+        # Set ACL Entries if any
+        AclEntry = self.session.api.get_module_class(
+            self.session, "AclEntry"
+        )
+        self.cfg_aces = AclEntry.get_all(self.session, self)
         return True
 
     @classmethod
@@ -587,7 +581,7 @@ class ACL(PyaoscxModule):
         self.get()
 
         # Delete all entries
-        self.cfg_aces = []
+        self.cfg_aces = {}
 
         # ACL Entries deleted
         # Object modified
