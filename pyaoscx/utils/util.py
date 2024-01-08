@@ -600,3 +600,188 @@ def validate_mac_address(mac_addr):
         raise ParameterError("Invalid MAC address: {0}".format(exc))
 
     return str(mac)
+
+
+def set_acl(pyaoscx_module, acl_name, list_type, direction):
+    """
+    Attach ACL to an interface or vlan
+
+    :param pyaoscx_module: Pyaoscx module (interface or vlan)
+    :param acl_name: The name of the ACL.
+    :param list_type: The type of the ACL (mac, ipv4 or ipv6).
+    :param direction: The direction of the ACL (in, out, routed-in,
+        routed-out)
+    :return: True if the object was changed
+    """
+    Interface = pyaoscx_module.session.api.get_module_class(
+        pyaoscx_module.session, "Interface"
+    )
+    Vlan = pyaoscx_module.session.api.get_module_class(
+        pyaoscx_module.session, "Vlan"
+    )
+    is_interface = isinstance(pyaoscx_module, Interface)
+    is_vlan = isinstance(pyaoscx_module, Vlan)
+
+    if not is_interface and not is_vlan:
+        raise ParameterError("Pyaoscx module must be Interface or Vlan")
+
+    valid_types = ["mac", "ipv4", "ipv6"]
+    valid_dirs = ["in", "out", "routed-in", "routed-out"]
+    if list_type not in valid_types:
+        raise ParameterError(
+            "Invalid list_type {0}, valid types are: {1}".format(
+                list_type, ", ".join(valid_types)
+            )
+        )
+    if direction not in valid_dirs:
+        raise ParameterError(
+            "Invalid direction {0}, valid directions are {1}".format(
+                direction, ", ".join(valid_dirs)
+            )
+        )
+    if is_interface:
+        intf_type = (
+            "port" if pyaoscx_module.type is None else pyaoscx_module.type
+        )
+    else:
+        intf_type = "vlan"
+    gen_type = list_type.replace("ip", "")
+    if is_interface and intf_type == "vlan" and "routed" not in direction:
+        raise ParameterError(
+            "Direction {0} not valid for VLAN Interfaces".format(direction)
+        )
+    # Create Acl object
+    acl_obj = pyaoscx_module.session.api.get_module(
+        pyaoscx_module.session, "ACL", index_id=acl_name, list_type=list_type
+    )
+    acl_obj.get()
+    capability_prefix = "classifier_acl_{0}_".format(gen_type)
+
+    # Verify direction capabilities
+    needed_caps = []
+    if "routed" in direction:
+        suffix = direction.replace("-", "_")
+        needed_caps.append(capability_prefix + suffix)
+        suffix = suffix.replace("routed", "routed_{0}".format(intf_type))
+        needed_caps.append(capability_prefix + suffix)
+    else:
+        suffix = intf_type + "_" + direction
+        needed_caps.append(capability_prefix + suffix)
+
+    if [cap for cap in needed_caps if cap in acl_obj.capabilities] == []:
+        raise ParameterError(
+            "{0}: ACL {1} {2} not supported in this platform".format(
+                pyaoscx_module.name, list_type, direction
+            )
+        )
+    gen_dir = "ingress" if direction in ["in", "routed-in"] else "egress"
+
+    acl_attr = "acl{0}_{1}_cfg".format(gen_type, direction.replace("-", "_"))
+    # Validate previous acl against acl object
+    prev_acl = getattr(pyaoscx_module, acl_attr)
+    if prev_acl == acl_obj:
+        return False
+
+    for ace in acl_obj.cfg_aces.values():
+        if hasattr(ace, "protocol"):
+            # Verify special capabilities for protocols AH (51) and ESP (50)
+            ah_cap = "classifier_ace_{0}_ah_{1}".format(gen_type, gen_dir)
+            esp_cap = "classifier_ace_esp_egress"
+            proto = ace.protocol
+            if proto == 51 and ah_cap not in acl_obj.capabilities:
+                raise ParameterError(
+                    "{0}: Protocol AH not supported for {1}".format(
+                        pyaoscx_module.name, gen_dir
+                    )
+                )
+            if (
+                proto == 50
+                and gen_dir == "egress"
+                and esp_cap not in acl_obj.capabilities
+            ):
+                raise ParameterError(
+                    "{0}: Protocol ESP not supported for {1}".format(
+                        pyaoscx_module.name, gen_dir
+                    )
+                )
+        # Verify capabilities for egress
+        if gen_dir == "egress":
+            if hasattr(ace, "fragment") and ace.fragment:
+                cap_frg = "classifier_acl_{0}_frg_egress".format(gen_type)
+                if (
+                    "classifier_ace_frg_egress" not in acl_obj.capabilities
+                    and cap_frg not in acl_obj.capabilities
+                ):
+                    raise ParameterError(
+                        (
+                            "{0}: {1} ACLS fragments"
+                            " not supported for egress"
+                        ).format(pyaoscx_module.name, acl_obj.list_type)
+                    )
+            if hasattr(ace, "log") and ace.log:
+                cap_log = "classifier_acl_log_{0}_egress".format(ace.action)
+                if cap_log not in acl_obj.capabilities:
+                    raise ParameterError(
+                        (
+                            "{0}: Logging of ACL {1}"
+                            " not supported for egress"
+                        ).format(pyaoscx_module.name, ace.action)
+                    )
+            if (
+                gen_type == "v4"
+                and "classifier_ace_v4_tcp_flg_egress"
+                not in acl_obj.capabilities
+            ):
+                for tcp_flag in ace.cap_tcp_flags:
+                    if hasattr(ace, tcp_flag) and getattr(ace, tcp_flag):
+                        raise ParameterError(
+                            "{0}: TCP Flags not supported for egress".format(
+                                pyaoscx_module.name
+                            )
+                        )
+    setattr(pyaoscx_module, acl_attr, acl_obj)
+
+    return pyaoscx_module.apply()
+
+
+def clear_acl(pyaoscx_module, list_type, direction):
+    """
+    Removes ACL from an interface or vlan
+
+    :param pyaoscx_module: Pyaoscx module (interface or vlan)
+    :param list_type: The type of the ACL (mac, ipv4 or ipv6).
+    :param direction: The direction of the ACL (in, out, routed-in,
+        routed-out)
+    :return: True if the object was changed
+    """
+    valid_types = ["mac", "ipv4", "ipv6"]
+    valid_dirs = ["in", "out", "routed-in", "routed-out"]
+    if list_type not in valid_types:
+        raise ParameterError(
+            "Invalid list_type {0}, valid types are: {1}".format(
+                list_type, ", ".join(valid_types)
+            )
+        )
+    if direction not in valid_dirs:
+        raise ParameterError(
+            "Invalid direction {0}, valid directions are {1}".format(
+                direction, ", ".join(valid_dirs)
+            )
+        )
+    acl_attr = "acl{0}_{1}_cfg".format(
+        list_type.replace("ip", ""), direction.replace("-", "_")
+    )
+
+    if hasattr(pyaoscx_module, acl_attr):
+        if getattr(pyaoscx_module, acl_attr) is None:
+            return False
+        setattr(pyaoscx_module, acl_attr, None)
+        setattr(pyaoscx_module, acl_attr + "_version", 0)
+    else:
+        raise ParameterError(
+            "{0}: ACL {1} {2} not supported in this platform".format(
+                pyaoscx_module.name, list_type, direction
+            )
+        )
+
+    return pyaoscx_module.apply()

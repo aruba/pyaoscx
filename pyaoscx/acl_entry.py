@@ -137,8 +137,15 @@ class AclEntry(PyaoscxModule):
             _exclude_args.extend(self.cap_ecn)
         if "classifier_ace_frg" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_frg)
-        if "classifier_ace_tcp_flags" not in parent_acl.capabilities:
+        if "classifier_ace_tcp_flags" not in parent_acl.capabilities or (
+            parent_acl.list_type == "ipv6"
+            and "classifier_ace_v6_tcp_flg" not in parent_acl.capabilities
+        ):
             _exclude_args.extend(self.cap_tcp_flags)
+        if "classifier_ace_tcp_flg_cwr" not in parent_acl.capabilities:
+            _exclude_args.append("tcp_cwr")
+        if "classifier_ace_tcp_flg_ece" not in parent_acl.capabilities:
+            _exclude_args.append("tcp_ece")
         if "classifier_class_mac" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_mac)
         if "classifier_ace_pre" not in parent_acl.capabilities:

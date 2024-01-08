@@ -644,7 +644,9 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv4_out_cfg.get()
             iface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
-            iface_data["aclv4_out_cfg_version"] = self.aclv4_out_cfg.cfg_version
+            iface_data[
+                "aclv4_out_cfg_version"
+            ] = self.aclv4_out_cfg.cfg_version
 
         if "aclv4_routed_in_cfg" in iface_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
@@ -676,7 +678,9 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv6_out_cfg.get()
             iface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
-            iface_data["aclv6_out_cfg_version"] = self.aclv6_out_cfg.cfg_version
+            iface_data[
+                "aclv6_out_cfg_version"
+            ] = self.aclv6_out_cfg.cfg_version
 
         if "aclv6_routed_in_cfg" in iface_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
@@ -2097,38 +2101,7 @@ class Interface(PyaoscxModule):
             routed-out)
         :return: True if the object was changed
         """
-        valid_types = ["mac", "ipv4", "ipv6"]
-        valid_dirs = ["in", "out", "routed-in", "routed-out"]
-        if list_type not in valid_types:
-            raise ParameterError(
-                "Invalid list_type {0}, valid types are: {1}".format(
-                    list_type, ", ".join(valid_types)
-                )
-            )
-        if direction not in valid_dirs:
-            raise ParameterError(
-                "Invalid direction {0}, valid directions are {1}".format(
-                    direction, ", ".join(valid_dirs)
-                )
-            )
-        # Create Acl object
-        acl_obj = self.session.api.get_module(
-            self.session, "ACL", index_id=acl_name, list_type=list_type
-        )
-        acl_attr = "acl{0}_{1}_cfg".format(
-            list_type.replace("ip", ""), direction.replace("-", "_")
-        )
-
-        if hasattr(self, acl_attr):
-            setattr(self, acl_attr, acl_obj)
-        else:
-            raise ParameterError(
-                "{0}: ACL {1} {2} not supported in this platform".format(
-                    self.name, list_type, direction
-                )
-            )
-
-        return self.apply()
+        return utils.set_acl(self, acl_name, list_type, direction)
 
     @PyaoscxModule.materialized
     def clear_acl(self, list_type, direction):
@@ -2140,35 +2113,7 @@ class Interface(PyaoscxModule):
             routed-out)
         :return: True if the object was changed
         """
-        valid_types = ["mac", "ipv4", "ipv6"]
-        valid_dirs = ["in", "out", "routed-in", "routed-out"]
-        if list_type not in valid_types:
-            raise ParameterError(
-                "Invalid list_type {0}, valid types are: {1}".format(
-                    list_type, ", ".join(valid_types)
-                )
-            )
-        if direction not in valid_dirs:
-            raise ParameterError(
-                "Invalid direction {0}, valid directions are {1}".format(
-                    direction, ", ".join(valid_dirs)
-                )
-            )
-        acl_attr = "acl{0}_{1}_cfg".format(
-            list_type.replace("ip", ""), direction.replace("-", "_")
-        )
-
-        if hasattr(self, acl_attr):
-            setattr(self, acl_attr, None)
-            setattr(self, acl_attr + "_version", None)
-        else:
-            raise ParameterError(
-                "{0}: ACL {1} {2} not supported in this platform".format(
-                    self.name, list_type, direction
-                )
-            )
-
-        return self.apply()
+        return utils.clear_acl(self, list_type, direction)
 
     @PyaoscxModule.deprecated
     def update_acl_in(self, acl_name, list_type):
