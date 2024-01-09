@@ -101,7 +101,7 @@ class Vlan(PyaoscxModule):
             self._original_attributes.pop("macs")
 
         # Set all ACLs
-        from pyaoscx.acl import ACL
+        ACL = self.session.api.get_module_class(self.session, "ACL")
 
         if hasattr(self, "aclmac_in_cfg") and self.aclmac_in_cfg is not None:
             # Create Acl object
@@ -110,6 +110,13 @@ class Vlan(PyaoscxModule):
             acl.get()
             self.aclmac_in_cfg = acl
 
+        if hasattr(self, "aclmac_out_cfg") and self.aclmac_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclmac_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclmac_out_cfg = acl
+
         if hasattr(self, "aclv4_in_cfg") and self.aclv4_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv4_in_cfg)
@@ -117,12 +124,26 @@ class Vlan(PyaoscxModule):
             acl.get()
             self.aclv4_in_cfg = acl
 
+        if hasattr(self, "aclv4_out_cfg") and self.aclv4_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv4_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv4_out_cfg = acl
+
         if hasattr(self, "aclv6_in_cfg") and self.aclv6_in_cfg is not None:
             # Create Acl object
             acl = ACL.from_response(self.session, self.aclv6_in_cfg)
             # Materialize Acl object
             acl.get()
             self.aclv6_in_cfg = acl
+
+        if hasattr(self, "aclv6_out_cfg") and self.aclv6_out_cfg is not None:
+            # Create Acl object
+            acl = ACL.from_response(self.session, self.aclv6_out_cfg)
+            # Materialize Acl object
+            acl.get()
+            self.aclv6_out_cfg = acl
 
         # Clean MACs
         if not self.macs:
