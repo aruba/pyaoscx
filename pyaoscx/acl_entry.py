@@ -131,16 +131,20 @@ class AclEntry(PyaoscxModule):
         # Checking against C&C
         _exclude_args = []
         _not_supported = []
+        if parent_acl.list_type == "ipv6":
+            if "classifier_ace_v6_ttl" not in parent_acl.capabilities:
+                _exclude_args.append("ttl")
+            if "classifier_ace_v6_vlan_id" not in parent_acl.capabilities:
+                _exclude_args.append("vlan")
+            if "classifier_ace_v6_tcp_flg" not in parent_acl.capabilities:
+                _exclude_args.extend(self.cap_tcp_flags)
         if "classifier_ace_dscp" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_dscp)
         if "classifier_ace_ecn" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_ecn)
         if "classifier_ace_frg" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_frg)
-        if "classifier_ace_tcp_flags" not in parent_acl.capabilities or (
-            parent_acl.list_type == "ipv6"
-            and "classifier_ace_v6_tcp_flg" not in parent_acl.capabilities
-        ):
+        if "classifier_ace_tcp_flags" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_tcp_flags)
         if "classifier_ace_tcp_flg_cwr" not in parent_acl.capabilities:
             _exclude_args.append("tcp_cwr")
@@ -170,7 +174,10 @@ class AclEntry(PyaoscxModule):
                 _not_supported.append(arg)
         if _not_supported != []:
             raise ParameterError(
-                "Parameters not supported by this platform: {0}".format(
+                "{0}/{1} - Entry {2}: Parameters not supported: {3}".format(
+                    parent_acl.name,
+                    parent_acl.list_type,
+                    sequence_number,
                     ", ".join(_not_supported)
                 )
             )

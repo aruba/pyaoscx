@@ -639,10 +639,14 @@ def set_acl(pyaoscx_module, acl_name, list_type, direction):
                 direction, ", ".join(valid_dirs)
             )
         )
+    is_l3 = False
     if is_interface:
         intf_type = (
             "port" if pyaoscx_module.type is None else pyaoscx_module.type
         )
+        if intf_type == "tunnel":
+            intf_type = "tunnels"
+        is_l3 = pyaoscx_module.routing
     else:
         intf_type = "vlan"
     gen_type = list_type.replace("ip", "")
@@ -659,18 +663,31 @@ def set_acl(pyaoscx_module, acl_name, list_type, direction):
 
     # Verify direction capabilities
     needed_caps = []
-    if "routed" in direction:
+    need_check_dir = False
+    if direction == "in" and intf_type == "subinterface":
+        suffix = "subinterface_in"
+        needed_caps.append(capability_prefix + suffix)
+        need_check_dir = True
+    elif direction == "out":
+        suffix = intf_type + "_out"
+        needed_caps.append(capability_prefix + suffix)
+        if is_l3:
+            suffix = "routed_" + intf_type + "_out"
+            needed_caps.append(capability_prefix + suffix)
+        need_check_dir = True
+    elif "routed" in direction:
         suffix = direction.replace("-", "_")
         needed_caps.append(capability_prefix + suffix)
         suffix = suffix.replace("routed", "routed_{0}".format(intf_type))
         needed_caps.append(capability_prefix + suffix)
-    else:
-        suffix = intf_type + "_" + direction
-        needed_caps.append(capability_prefix + suffix)
+        need_check_dir = True
 
-    if [cap for cap in needed_caps if cap in acl_obj.capabilities] == []:
+    if (
+        need_check_dir
+        and [cap for cap in needed_caps if cap in acl_obj.capabilities] == []
+    ):
         raise ParameterError(
-            "{0}: ACL {1} {2} not supported in this platform".format(
+            "{0}: ACL {1} {2} could not be applied".format(
                 pyaoscx_module.name, list_type, direction
             )
         )
@@ -688,7 +705,11 @@ def set_acl(pyaoscx_module, acl_name, list_type, direction):
             ah_cap = "classifier_ace_{0}_ah_{1}".format(gen_type, gen_dir)
             esp_cap = "classifier_ace_esp_egress"
             proto = ace.protocol
-            if proto == 51 and ah_cap not in acl_obj.capabilities:
+            if (
+                proto == 51
+                and (gen_type != "v6" or gen_dir == "egress")
+                and ah_cap not in acl_obj.capabilities
+            ):
                 raise ParameterError(
                     "{0}: Protocol AH not supported for {1}".format(
                         pyaoscx_module.name, gen_dir
