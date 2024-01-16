@@ -5,7 +5,7 @@ import os
 import re
 
 from ipaddress import ip_interface
-from netaddr import mac_cisco
+from netaddr import mac_cisco, mac_unix_expanded
 from netaddr import EUI as MacAddress
 from netaddr.core import AddrFormatError
 from requests_toolbelt.multipart.encoder import MultipartEncoder
@@ -586,16 +586,21 @@ def fix_ip_mask(ip_address, version):
     return ip_addr + "/" + ip_mask
 
 
-def validate_mac_address(mac_addr):
+def validate_mac_address(mac_addr, cisco_format=False):
     """
     Validate the correct formats for MAC address
-    param: MAC address with any EUI format
 
-    return: string with MAC address the format (XXXX.XXXX.XXXX)
+    :param mac_addr: MAC address with any EUI format
+    :param format: Flag to indicate if CISCO format is used
+    :return: string with MAC address the format (XXXX.XXXX.XXXX)
+        or (XX:XX:XX:XX:XX:XX)
     """
     try:
         mac = MacAddress(mac_addr)
-        mac.dialect = mac_cisco
+        if cisco_format:
+            mac.dialect = mac_cisco
+        else:
+            mac.dialect = mac_unix_expanded
     except AddrFormatError as exc:
         raise ParameterError("Invalid MAC address: {0}".format(exc))
 

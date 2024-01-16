@@ -780,7 +780,7 @@ class AclEntry(PyaoscxModule):
                 raise ParameterError(
                     "MAC Address not allowed for ACL type {0}".format(acl_type)
                 )
-            self._src_mac = utils.validate_mac_address(new_src_mac)
+            self._src_mac = utils.validate_mac_address(new_src_mac, cisco_format=True)
         else:
             self._src_mac = None
 
@@ -804,7 +804,7 @@ class AclEntry(PyaoscxModule):
                 raise ParameterError(
                     "MAC Address not allowed for ACL type {0}".format(acl_type)
                 )
-            self._dst_mac = utils.validate_mac_address(new_dst_mac)
+            self._dst_mac = utils.validate_mac_address(new_dst_mac, cisco_format=True)
         else:
             self._dst_mac = None
 
