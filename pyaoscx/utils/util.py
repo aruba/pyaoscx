@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2024 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import os
@@ -642,7 +642,9 @@ def set_acl(pyaoscx_module, acl_name, list_type, direction):
     is_l3 = False
     if is_interface:
         intf_type = (
-            "port" if pyaoscx_module.type is None else pyaoscx_module.type
+            "port"
+            if pyaoscx_module.type in [None, "lag"]
+            else pyaoscx_module.type
         )
         if intf_type == "tunnel":
             intf_type = "tunnels"
@@ -700,6 +702,13 @@ def set_acl(pyaoscx_module, acl_name, list_type, direction):
         return False
 
     for ace in acl_obj.cfg_aces.values():
+        if intf_type == "vlan" and hasattr(ace, "vlan") and ace.vlan:
+            raise ParameterError(
+                "{0}: VLAN ID cannot be used in an ACL applied to VLAN".format(
+                    pyaoscx_module.name
+                )
+            )
+
         if hasattr(ace, "protocol"):
             # Verify special capabilities for protocols AH (51) and ESP (50)
             ah_cap = "classifier_ace_{0}_ah_{1}".format(gen_type, gen_dir)

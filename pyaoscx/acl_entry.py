@@ -1,4 +1,4 @@
-# (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2019-2024 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 import json
@@ -53,6 +53,12 @@ class AclEntry(PyaoscxModule):
     cap_tos = ["tos"]
     cap_ttl = ["ttl"]
     cap_log = ["log"]
+    cap_l4_port = [
+        "dst_l4_port_max",
+        "dst_l4_port_min",
+        "src_l4_port_max",
+        "src_l4_port_min",
+    ]
 
     # These parameters cannot be changed once the ACE is created
     # If any of them is set for update the entire ACE must be
@@ -63,8 +69,6 @@ class AclEntry(PyaoscxModule):
             "action",
             "count",
             "dst_ip",
-            "dst_l4_port_max",
-            "dst_l4_port_min",
             "ethertype",
             "icmp_code",
             "icmp_type",
@@ -72,10 +76,9 @@ class AclEntry(PyaoscxModule):
             "protocol",
             "sequence_number",
             "src_ip",
-            "src_l4_port_max",
-            "src_l4_port_min",
             "vlan",
         ]
+        + cap_l4_port
         + cap_dscp
         + cap_ecn
         + cap_frg
@@ -150,8 +153,6 @@ class AclEntry(PyaoscxModule):
             _exclude_args.append("tcp_cwr")
         if "classifier_ace_tcp_flg_ece" not in parent_acl.capabilities:
             _exclude_args.append("tcp_ece")
-        if "classifier_class_mac" not in parent_acl.capabilities:
-            _exclude_args.extend(self.cap_mac)
         if "classifier_ace_pre" not in parent_acl.capabilities:
             _exclude_args.extend(self.cap_pre)
         if "classifier_acl_object_group" not in parent_acl.capabilities:
@@ -169,6 +170,22 @@ class AclEntry(PyaoscxModule):
             if "classifier_acl_log_deny" not in parent_acl.capabilities:
                 _exclude_args.extend(self.cap_log)
 
+        if (
+            parent_acl.list_type == "ipv4"
+            and "protocol" in kwargs
+            and kwargs["protocol"] in ["ah", "51", 51]
+            and "classifier_ace_v4_ah_ingress" not in parent_acl.capabilities
+            and "classifier_ace_v4_ah_egress" not in parent_acl.capabilities
+        ):
+            _not_supported.append("protocol: 'ah'")
+        if (
+            "protocol" in kwargs
+            and kwargs["protocol"] in ["sctp", "132", 132]
+            and [l4_parm for l4_parm in self.cap_l4_port if l4_parm in kwargs]
+            != []
+            and "classifier_ace_sctp_l4_port" not in parent_acl.capabilities
+        ):
+            _not_supported.append("protocol: 'sctp' with L4 src/dst")
         for arg in _exclude_args:
             if arg in kwargs:
                 _not_supported.append(arg)
@@ -178,7 +195,7 @@ class AclEntry(PyaoscxModule):
                     parent_acl.name,
                     parent_acl.list_type,
                     sequence_number,
-                    ", ".join(_not_supported)
+                    ", ".join(_not_supported),
                 )
             )
         # Set arguments needed for correct creation
