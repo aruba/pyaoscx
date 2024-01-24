@@ -114,6 +114,7 @@ class AclEntry(PyaoscxModule):
         # Attribute dictionary used to manage the original data
         # obtained from the GET
         self.__original_attributes = {}
+        eval_args = {}
         for new_attr in [
             "src_ip",
             "dst_ip",
@@ -129,7 +130,8 @@ class AclEntry(PyaoscxModule):
             "dst_l4_port_max",
         ]:
             if new_attr in kwargs:
-                setattr(self, new_attr, kwargs.pop(new_attr))
+                setattr(self, new_attr, kwargs[new_attr])
+                eval_args[new_attr] = kwargs.pop(new_attr)
 
         # Checking against C&C
         _exclude_args = []
@@ -172,26 +174,28 @@ class AclEntry(PyaoscxModule):
 
         if (
             parent_acl.list_type == "ipv4"
-            and "protocol" in kwargs
-            and kwargs["protocol"] in ["ah", "51", 51]
+            and "protocol" in eval_args
+            and eval_args["protocol"] in ["ah", "51", 51]
             and "classifier_ace_v4_ah_ingress" not in parent_acl.capabilities
             and "classifier_ace_v4_ah_egress" not in parent_acl.capabilities
         ):
-            _not_supported.append("protocol: 'ah'")
+            _not_supported.append("protocol='ah'")
         if (
-            "protocol" in kwargs
-            and kwargs["protocol"] in ["sctp", "132", 132]
-            and [l4_parm for l4_parm in self.cap_l4_port if l4_parm in kwargs]
+            "protocol" in eval_args
+            and eval_args["protocol"] in ["sctp", "132", 132]
+            and [
+                l4_parm for l4_parm in self.cap_l4_port if l4_parm in eval_args
+            ]
             != []
             and "classifier_ace_sctp_l4_port" not in parent_acl.capabilities
         ):
-            _not_supported.append("protocol: 'sctp' with L4 src/dst")
+            _not_supported.append("protocol='sctp' with L4 src/dst")
         for arg in _exclude_args:
             if arg in kwargs:
                 _not_supported.append(arg)
         if _not_supported != []:
             raise ParameterError(
-                "{0}/{1} - Entry {2}: Parameters not supported: {3}".format(
+                "[ACL {0}/{1} - Entry {2}] Parameters not supported: {3}".format(
                     parent_acl.name,
                     parent_acl.list_type,
                     sequence_number,
