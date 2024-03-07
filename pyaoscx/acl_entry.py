@@ -362,7 +362,8 @@ class AclEntry(PyaoscxModule):
             # Create a AclEntry object and setting attributes from response
             ace_seq_num = int(ace_seq_num)
             ace_kwargs = {k: v for k, v in ace_dict.items() if v is not None}
-            del ace_kwargs["sequence_number"]
+            if "sequence_number" in ace_kwargs:
+                del ace_kwargs["sequence_number"]
             orig_keys = list(ace_kwargs.keys())
             for grp_attr in cls.cap_grp:
                 if grp_attr in ace_kwargs:
