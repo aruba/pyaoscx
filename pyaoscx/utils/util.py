@@ -648,7 +648,11 @@ def set_acl(pyaoscx_module, acl_name, list_type, direction):
         )
         if intf_type == "tunnel":
             intf_type = "tunnels"
-        is_l3 = pyaoscx_module.routing
+        is_l3 = (
+            hasattr(pyaoscx_module, "routing")
+            and pyaoscx_module.routing
+            or pyaoscx_module.type == "vlan"
+        )
     else:
         intf_type = "vlan"
     gen_type = list_type.replace("ip", "")
