@@ -96,6 +96,20 @@ class AclEntry(PyaoscxModule):
     # able to read the schema. It is required when extracting
     # parameters to create copies.
     mutable_parameter_names = ["comment"]
+    setter_attr = [
+        "src_ip",
+        "dst_ip",
+        "protocol",
+        "src_mac",
+        "dst_mac",
+        "dscp",
+        "ethertype",
+        "icmp_type",
+        "src_l4_port_min",
+        "src_l4_port_max",
+        "dst_l4_port_min",
+        "dst_l4_port_max",
+    ]
 
     def __init__(
         self, session, sequence_number, parent_acl, uri=None, **kwargs
@@ -115,20 +129,7 @@ class AclEntry(PyaoscxModule):
         # obtained from the GET
         self.__original_attributes = {}
         eval_args = {}
-        for new_attr in [
-            "src_ip",
-            "dst_ip",
-            "protocol",
-            "src_mac",
-            "dst_mac",
-            "dscp",
-            "ethertype",
-            "icmp_type",
-            "src_l4_port_min",
-            "src_l4_port_max",
-            "dst_l4_port_min",
-            "dst_l4_port_max",
-        ]:
+        for new_attr in self.setter_attr:
             if new_attr in kwargs:
                 setattr(self, new_attr, kwargs[new_attr])
                 eval_args[new_attr] = kwargs.pop(new_attr)
@@ -570,6 +571,10 @@ class AclEntry(PyaoscxModule):
         self.__parent_acl.apply()
 
         # Delete object attributes
+        for attr in self.setter_attr:
+            if attr in self.config_attrs:
+                self.config_attrs.remove(attr)
+
         utils.delete_attrs(self, self.config_attrs)
 
     @classmethod
