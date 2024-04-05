@@ -595,16 +595,24 @@ def validate_mac_address(mac_addr, cisco_format=False):
     :return: string with MAC address the format (XXXX.XXXX.XXXX)
         or (XX:XX:XX:XX:XX:XX)
     """
+    mac_mask = ""
+    if "/" in mac_addr:
+        mac_addr = next(iter(mac_addr.split("/")))
     try:
         mac = MacAddress(mac_addr)
         if cisco_format:
+            # ACL and Classifiers use CISCO format
             mac.dialect = mac_cisco
+            # MAC addresses need a mask
+            # that is the format required in REST
+            mac_mask = "/ffff.ffff.ffff"
         else:
+            # In general, REST resources use UNIX format
             mac.dialect = mac_unix_expanded
     except AddrFormatError as exc:
         raise ParameterError("Invalid MAC address: {0}".format(exc))
 
-    return str(mac)
+    return str(mac) + mac_mask
 
 
 def set_acl(pyaoscx_module, acl_name, list_type, direction):
