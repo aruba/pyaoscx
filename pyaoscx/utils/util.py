@@ -786,7 +786,15 @@ def set_acl(pyaoscx_module, acl_name, list_type, direction):
                                 pyaoscx_module.name
                             )
                         )
+
+    # Finally set the ACL, also version number needs to be updated
     setattr(pyaoscx_module, acl_attr, acl_obj)
+    attr_version = getattr(pyaoscx_module, acl_attr + "_version")
+    setattr(
+        pyaoscx_module,
+        acl_attr + "_version",
+        attr_version + 1 if attr_version else 1,
+    )
 
     return pyaoscx_module.apply()
 
