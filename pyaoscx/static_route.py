@@ -7,15 +7,15 @@ import re
 
 from urllib.parse import quote_plus, unquote_plus
 
+from pyaoscx.device import Device
+
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 
+from pyaoscx.pyaoscx_module import PyaoscxModule
+
 from pyaoscx.utils import util as utils
 from pyaoscx.utils.list_attributes import ListDescriptor
-
-from pyaoscx.static_nexthop import StaticNexthop
-
-from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
 class StaticRoute(PyaoscxModule):
@@ -30,6 +30,11 @@ class StaticRoute(PyaoscxModule):
     def __init__(self, session, prefix, parent_vrf, uri=None, **kwargs):
 
         self.session = session
+        # Need to check capabilities to verify
+        # switch is BFD capable
+        device = Device(session)
+        device.get(selector="status")
+        self.capabilities = device.capabilities[:]
         # Assign IP
         self.prefix = unquote_plus(prefix)
         self.reference_address = quote_plus(self.prefix)
@@ -140,6 +145,9 @@ class StaticRoute(PyaoscxModule):
             self.__original_attributes.pop("static_nexthops")
 
         # Clean Static Nexthops settings
+        StaticNexthop = self.session.api.get_module_class(
+            self.session, "StaticNexthop"
+        )
         if self.static_nexthops == []:
             # Set Static Nexthops if any
             # Adds Static Nexthop to parent Vrf object

@@ -126,13 +126,11 @@ class StaticNexthop(PyaoscxModule):
         # If the Static Route has a port inside the switch
         if "port" in data and self.port:
             port_response = self.port
-            interface_cls = self.session.api.get_module(
-                self.session, "Interface", ""
+            Interface = self.session.api.get_module_class(
+                self.session, "Interface"
             )
             # Set port as a Interface Object
-            self.port = interface_cls.from_response(
-                self.session, port_response
-            )
+            self.port = Interface.from_response(self.session, port_response)
             # Materialize port
             self.port.get()
 
@@ -228,6 +226,12 @@ class StaticNexthop(PyaoscxModule):
         if hasattr(self, "port") and self.port:
             static_nexthop_data["port"] = self.port.get_info_format()
 
+        if (
+            "bfd" not in self.__parent_static_route.capabilities
+            and "bfd_enable" in static_nexthop_data
+        ):
+            del static_nexthop_data["bfd_enable"]
+
         uri = "{0}/{1}".format(self.base_uri, self.id)
 
         # Compare dictionaries
@@ -272,6 +276,12 @@ class StaticNexthop(PyaoscxModule):
         # Get port uri
         if hasattr(self, "port") and self.port:
             static_nexthop_data["port"] = self.port.get_info_format()
+
+        if (
+            "bfd" not in self.__parent_static_route.capabilities
+            and "bfd_enable" in static_nexthop_data
+        ):
+            del static_nexthop_data["bfd_enable"]
 
         post_data = json.dumps(static_nexthop_data)
 
