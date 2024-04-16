@@ -496,17 +496,19 @@ class AclEntry(PyaoscxModule):
         for new_attr in [
             "src_ip",
             "dst_ip",
+            "src_mac",
+            "dst_mac",
             "protocol",
+            "ethertype",
         ]:
             new_value = getattr(self, new_attr)
-            if new_value != "any":
+            if new_value == "any":
+                acl_entry_data.pop(new_attr, None)
+            else:
                 acl_entry_data[new_attr] = new_value
 
         for new_attr in [
-            "src_mac",
-            "dst_mac",
             "dscp",
-            "ethertype",
             "icmp_type",
             "src_l4_port_min",
             "src_l4_port_max",
@@ -767,22 +769,24 @@ class AclEntry(PyaoscxModule):
 
         :return: Source MAC address
         """
-        return self._src_mac if hasattr(self, "_src_mac") else None
+        return self._src_mac if hasattr(self, "_src_mac") else "any"
 
     @src_mac.setter
     def src_mac(self, new_src_mac):
         """
         Setter for src_mac attribute
         """
-        if new_src_mac:
+        if new_src_mac and new_src_mac.lower() != "any":
             acl_type = self.__parent_acl.list_type
             if acl_type != "mac":
                 raise ParameterError(
                     "MAC Address not allowed for ACL type {0}".format(acl_type)
                 )
-            self._src_mac = utils.validate_mac_address(new_src_mac, cisco_format=True)
+            self._src_mac = utils.validate_mac_address(
+                new_src_mac, cisco_format=True
+            )
         else:
-            self._src_mac = None
+            self._src_mac = "any"
 
     @property
     def dst_mac(self):
@@ -791,22 +795,24 @@ class AclEntry(PyaoscxModule):
 
         :return: Destination MAC address
         """
-        return self._dst_mac if hasattr(self, "_dst_mac") else None
+        return self._dst_mac if hasattr(self, "_dst_mac") else "any"
 
     @dst_mac.setter
     def dst_mac(self, new_dst_mac):
         """
         Setter for dst_mac attribute
         """
-        if new_dst_mac:
+        if new_dst_mac and new_dst_mac.lower() != "any":
             acl_type = self.__parent_acl.list_type
             if acl_type != "mac":
                 raise ParameterError(
                     "MAC Address not allowed for ACL type {0}".format(acl_type)
                 )
-            self._dst_mac = utils.validate_mac_address(new_dst_mac, cisco_format=True)
+            self._dst_mac = utils.validate_mac_address(
+                new_dst_mac, cisco_format=True
+            )
         else:
-            self._dst_mac = None
+            self._dst_mac = "any"
 
     @property
     def src_ip(self):
@@ -898,7 +904,7 @@ class AclEntry(PyaoscxModule):
         Setter method for protocol attribute
         """
         if isinstance(new_proto, str):
-            if new_proto in ["ip", "any", "ipv6", ""]:
+            if new_proto.lower() in ["ip", "any", "ipv6", ""]:
                 self._protocol = "any"
             elif new_proto in utils.ip_protocols:
                 self._protocol = utils.ip_protocols[new_proto]
@@ -945,7 +951,7 @@ class AclEntry(PyaoscxModule):
 
         :return: Ethertype value, integer or string
         """
-        return self._ethertype if hasattr(self, "_ethertype") else None
+        return self._ethertype if hasattr(self, "_ethertype") else "any"
 
     @ethertype.setter
     def ethertype(self, new_ethertype):
@@ -953,6 +959,8 @@ class AclEntry(PyaoscxModule):
         Setter for ethertype attribute
         """
         if isinstance(new_ethertype, str):
+            if new_ethertype.lower() == "any":
+                self._ethertype = "any"
             if new_ethertype in utils.ethertypes:
                 self._ethertype = utils.ethertypes[new_ethertype]
             else:

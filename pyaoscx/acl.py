@@ -11,7 +11,6 @@ from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 
 from pyaoscx.utils import util as utils
-from pyaoscx.utils.list_attributes import ListDescriptor
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
@@ -418,12 +417,10 @@ class ACL(PyaoscxModule):
         """
         Setter method for the list_type attribute.
         """
-        valid_types = ["ipv4", "ipv6"]
-        if "classifier_class_mac" in self.capabilities:
-            valid_types.append("mac")
+        valid_types = ["mac", "ipv4", "ipv6"]
         if new_type not in valid_types:
             raise ParameterError(
-                "Invalid class type {0} valid types are: {1}".format(
+                "Invalid ACL type {0} valid types are: {1}".format(
                     new_type, ", ".join(valid_types)
                 )
             )
