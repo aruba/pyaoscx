@@ -961,7 +961,7 @@ class AclEntry(PyaoscxModule):
         if isinstance(new_ethertype, str):
             if new_ethertype.lower() == "any":
                 self._ethertype = "any"
-            if new_ethertype in utils.ethertypes:
+            elif new_ethertype in utils.ethertypes:
                 self._ethertype = utils.ethertypes[new_ethertype]
             else:
                 raise ParameterError(
