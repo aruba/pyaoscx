@@ -1,3 +1,15 @@
+# 2.6.0
+
+## Notable Changes
+
+* Enhancements for ACL functionality
+  * New functions for ACL attaching (interface, vlan)
+  * Ports and protocols can be set by name, like in CLI
+  * Validations of MAC and IP address
+  * Validations of capabilities
+  * New class to handle Object Groups
+* Fixes for issues found internally
+
 # 2.5.1
 
 ## Notable Changes

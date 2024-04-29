@@ -19,11 +19,11 @@ sys.path.insert(0, os.path.abspath("../.."))
 # -- Project information -----------------------------------------------------
 
 project = "pyaoscx"
-copyright = "2019-2023, HPE Aruba"
+copyright = "2019-2024, HPE Aruba"
 author = "HPE Aruba"
 
 # The full version, including alpha/beta/rc tags
-release = "2.5.1"
+release = "2.6.0"
 
 
 # -- General configuration ---------------------------------------------------
