@@ -3,7 +3,7 @@
 These modules are written for AOS-CX API v10.04 and later. These scripts are written for devices running AOS-CX firmware
 version 10.04 or greater.
 
-See the [Release Notes](RELEASE-NOTES.md) for more information.
+See the [Release Notes](https://github.com/aruba/pyaoscx/blob/master/RELEASE-NOTES.md) for more information.
 
 Please note that pyaoscx v2 is **not** backwards compatible for pyaoscx v1 and earlier, so please specify the correct
 version when using pyaoscx in requirements.txt files
@@ -12,7 +12,7 @@ It is also important to note that the latest code commits on the Master branch i
 releases and tags, so please be aware of this when cloning the repo versus doing a `pip install pyaoscx`
 
 ## Structure
-Detailed information about the structure and design can be found in the [Design document](pyaoscx/DESIGN.md).
+Detailed information about the structure and design can be found in the [Design document](https://github.com/aruba/pyaoscx/blob/master/pyaoscx/DESIGN.md).
 
 * REST API call functions are found in the modules in /pyaoscx.
 * REST API call functions are combined into other functions that emulate low-level processes. These low-level process functions are also placed in files in /pyaoscx.
@@ -21,7 +21,7 @@ Detailed information about the structure and design can be found in the [Design 
 
 ## How to contribute
 
-Please see the accompanying [CONTRIBUTING.md](CONTRIBUTING.md) file for guidelines on how to contribute to this repository.
+Please see the accompanying [CONTRIBUTING.md](https://github.com/aruba/pyaoscx/blob/master/CONTRIBUTING.md) file for guidelines on how to contribute to this repository.
 
 ## Git Workflow
 
