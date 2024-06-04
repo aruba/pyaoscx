@@ -1734,6 +1734,20 @@ class Interface(PyaoscxModule):
             )
 
     @property
+    def ip_mtu_value(self):
+        return "1500" if self.ip_mtu is None else self.ip_mtu
+
+    @ip_mtu_value.setter
+    def ip_mtu_value(self, new_ip_mtu):
+        """
+        Set the IP MTU value
+
+        :param ip_mtu: new IP MTU value
+        """
+        self.user_config["mtu"] = new_ip_mtu
+        self.ip_mtu = new_ip_mtu
+
+    @property
     def lacp_mode(self):
         return self.lacp if self.lacp is not None else "disabled"
 
