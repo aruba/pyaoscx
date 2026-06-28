@@ -165,6 +165,8 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "SFlow": "sflow",
+            "SFlowCollector": "sflow_collector",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
