@@ -165,6 +165,9 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "AaaServerGroup": "aaa_server_group",
+            "RadiusServer": "radius_server",
+            "TacacsServer": "tacacs_server",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
