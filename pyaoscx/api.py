@@ -165,6 +165,8 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "BgpCommunityFilter": "bgp_community_filter",
+            "BgpCommunityFilterEntry": "bgp_community_filter_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
