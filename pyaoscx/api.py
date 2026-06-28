@@ -165,6 +165,8 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "TrafficInsight": "traffic_insight",
+            "TrafficInsightMonitor": "traffic_insight_monitor",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
