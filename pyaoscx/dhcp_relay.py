@@ -313,9 +313,12 @@ class DhcpRelay(PyaoscxModule):
         :return: tuple containing both the indices and
             DhcpRelay object.
         """
-        # Obtain ID from URI
+        # Obtain ID from URI. The two indices (vrf and port) are joined by
+        # the compound index separator (a comma), not a slash: the port name
+        # itself is percent-encoded in the URI (for example "1%2F1%2F3"), so
+        # splitting on "/" never matches.
         index_pattern = re.compile(
-            r"(.*)dhcp_relays/(?P<index1>.+)/(?P<index2>.+)"
+            r"(.*)dhcp_relays/(?P<index1>[^,]+),(?P<index2>.+)"
         )
         vrf = index_pattern.match(uri).group("index1")
         port = index_pattern.match(uri).group("index2")
