@@ -165,6 +165,10 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "MacsecPolicy": "macsec_policy",
+            "MkaPolicy": "mka_policy",
+            "Keychain": "keychain",
+            "KeychainKey": "keychain_key",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
