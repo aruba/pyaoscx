@@ -176,6 +176,9 @@ class API(ABC):
             "RouteMapEntry": "route_map_entry",
             "PbrActionList": "pbr_action_list",
             "PbrActionListEntry": "pbr_action_list_entry",
+            "AaaServerGroup": "aaa_server_group",
+            "RadiusServer": "radius_server",
+            "TacacsServer": "tacacs_server",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
