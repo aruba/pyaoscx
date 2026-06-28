@@ -173,6 +173,8 @@ class API(ABC):
             "PrefixListEntry": "prefix_list_entry",
             "RouteMap": "route_map",
             "RouteMapEntry": "route_map_entry",
+            "PbrActionList": "pbr_action_list",
+            "PbrActionListEntry": "pbr_action_list_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
