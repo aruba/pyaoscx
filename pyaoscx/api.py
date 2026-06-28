@@ -165,6 +165,8 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "BgpAspathFilter": "bgp_aspath_filter",
+            "BgpAspathFilterEntry": "bgp_aspath_filter_entry",
             "PrefixList": "prefix_list",
             "PrefixListEntry": "prefix_list_entry",
             "RouteMap": "route_map",
