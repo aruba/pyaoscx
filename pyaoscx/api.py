@@ -165,6 +165,9 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "IpslaSource": "ipsla_source",
+            "IpslaResponder": "ipsla_responder",
+            "IpslaTrackObject": "ipsla_track_object",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
