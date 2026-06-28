@@ -150,6 +150,7 @@ class API(ABC):
             "OspfArea": "ospf_area",
             "OspfInterface": "ospf_interface",
             "DhcpRelay": "dhcp_relay",
+            "UdpBcastForwarderServer": "udp_bcast_forwarder_server",
             "ACL": "acl",
             "AclEntry": "acl_entry",
             "AggregateAddress": "aggregate_address",
