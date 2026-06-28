@@ -165,6 +165,9 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "IpfixFlowRecord": "ipfix_flow_record",
+            "IpfixFlowExporter": "ipfix_flow_exporter",
+            "IpfixFlowMonitor": "ipfix_flow_monitor",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
