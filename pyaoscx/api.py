@@ -165,6 +165,8 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "PbrActionList": "pbr_action_list",
+            "PbrActionListEntry": "pbr_action_list_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
