@@ -167,6 +167,8 @@ class API(ABC):
             "QueueProfileEntry": "queue_profile_entry",
             "PrefixList": "prefix_list",
             "PrefixListEntry": "prefix_list_entry",
+            "RouteMap": "route_map",
+            "RouteMapEntry": "route_map_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
