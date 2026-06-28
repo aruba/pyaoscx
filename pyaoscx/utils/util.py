@@ -226,6 +226,11 @@ def delete_attrs(obj, attr_list):
     """
     for attr in attr_list:
         if hasattr(obj, attr):
+            # Skip class-level data descriptors such as read-only properties:
+            # they are not instance attributes and delattr would raise
+            # AttributeError ("property ... has no deleter").
+            if isinstance(getattr(type(obj), attr, None), property):
+                continue
             delattr(obj, attr)
 
 
