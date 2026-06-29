@@ -165,6 +165,8 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "NtpKey": "ntp_key",
+            "NtpAssociation": "ntp_association",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
