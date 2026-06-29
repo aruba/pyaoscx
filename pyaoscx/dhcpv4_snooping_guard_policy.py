@@ -162,6 +162,34 @@ class Dhcpv4SnoopingGuardPolicy(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
+        Create the entry with a POST, or update it if it already exists.
+        """
+        pending = utils.get_attrs(self, self.config_attrs)
+        try:
+            self.get()
+            exists = True
+        except GenericOperationError:
+            exists = False
+        if exists:
+            for key, value in pending.items():
+                setattr(self, key, value)
+                if key not in self.config_attrs:
+                    self.config_attrs.append(key)
+            return self.update()
+        config_data = dict(pending)
+        config_data["authentication_method"] = self.authentication_method
+        post_data = json.dumps(config_data)
+        try:
+            response = self.session.request(
+                "POST", self.base_uri, data=post_data
+            )
+        except Exception as e:
+            raise ResponseError("POST", e)
+        if not utils._response_ok(response, "POST"):
+            raise GenericOperationError(response.text, response.status_code)
+        logging.info("SUCCESS: Adding %s", self)
+        self.get()
+        return True
         Perform a POST call to create a new policy. Only returns if no
             exception is raised.
 
