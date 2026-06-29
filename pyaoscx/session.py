@@ -42,12 +42,14 @@ class Session:
             else {"http": proxy, "https": proxy}
         )
         self.scheme = "https"
-        self.version_path = "rest/v{0}/".format(self.api)
+        _prefix = "latest" if str(api) == "latest" \
+            else "v{0}".format(self.api)
+        self.version_path = "rest/{0}/".format(_prefix)
 
         # TODO: remove base_url once all modules use the internal
         # request methods
-        self.base_url = "https://{0}/rest/v{1}/".format(self.ip, self.api)
-        self.resource_prefix = "/rest/v{0}/".format(self.api)
+        self.base_url = "https://{0}/rest/{1}/".format(self.ip, _prefix)
+        self.resource_prefix = "/rest/{0}/".format(_prefix)
         self.__username = self.__password = ""
 
     def __eq__(self, other):
@@ -84,7 +86,7 @@ class Session:
 
         # From base url retrieve the ip address and the version
         url_pattern = re.compile(
-            r"https://(?P<ip_address>.+)/rest/v(?P<version>.+)/"
+            r"https://(?P<ip_address>.+)/rest/v?(?P<version>.+)/"
         )
         match = url_pattern.match(base_url)
         if match:

@@ -28,6 +28,16 @@ class API(ABC):
         """
         version_name = "v" + target_version.replace(".", "_")
 
+        if target_version == "latest":
+            # Resolve "latest" to the newest shipped API version.
+            from pkgutil import iter_modules
+            from pyaoscx import rest
+            versions = sorted(
+                m.name for m in iter_modules(rest.__path__)
+                if m.name.startswith("v10_")
+            )
+            version_name = versions[-1] if versions else "v10_09"
+
         try:
             # Import the appropriate API class based on the name.
             target_module = "pyaoscx.rest.{0}.api".format(version_name)
