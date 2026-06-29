@@ -164,6 +164,7 @@ class API(ABC):
             "RadiusDynamicAuthorization": "radius_dynamic_authorization",
             "RadiusDynamicAuthorizationClient": "radius_dynamic_authorization_client",
             "AaaAccountingAttributes": "aaa_accounting_attributes",
+            "AaaServerGroupPrio": "aaa_server_group_prio",
             "LLDPNeighbor": "lldp_neighbor",
             "Mac": "mac",
             "StaticMac": "static_mac",
