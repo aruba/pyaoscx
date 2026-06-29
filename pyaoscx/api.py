@@ -156,6 +156,8 @@ class API(ABC):
             "StaticRoute": "static_route",
             "StaticNexthop": "static_nexthop",
             "PoEInterface": "poe_interface",
+            "RadiusDynamicAuthorization": "radius_dynamic_authorization",
+            "RadiusDynamicAuthorizationClient": "radius_dynamic_authorization_client",
             "LLDPNeighbor": "lldp_neighbor",
             "Mac": "mac",
             "StaticMac": "static_mac",
