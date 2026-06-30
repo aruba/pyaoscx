@@ -166,6 +166,8 @@ class API(ABC):
             "AaaAccountingAttributes": "aaa_accounting_attributes",
             "AaaServerGroupPrio": "aaa_server_group_prio",
             "Aaa": "aaa",
+            "PortAccessCdpGroup": "port_access_device_group",
+            "PortAccessLldpGroup": "port_access_device_group",
             "LLDPNeighbor": "lldp_neighbor",
             "Mac": "mac",
             "StaticMac": "static_mac",
