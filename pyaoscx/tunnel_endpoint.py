@@ -76,11 +76,11 @@ class TunnelEndpoint(PyaoscxModule):
         # this is common for all PyaoscxModule derived classes
         self._get_and_copy_data(depth, selector, self.indices)
         self.materialized = True
-        vni_urls = self.network_id
-        vni_url = vni_urls[next(iter(vni_urls))]
-        Vni = self.session.api.get_module_class(self.session, "Vni")
-        _, vni = Vni.from_uri(self.session, self.interface, vni_url)
-        self.network_id = vni
+        # A Tunnel Endpoint can flood several VNIs, so network_id is kept as
+        # the full {vni_key: uri} map instead of being collapsed to a single
+        # VNI object. Callers that need VNI objects can resolve the URIs.
+        if not isinstance(self.network_id, dict):
+            self.network_id = {}
         return True
 
     @classmethod
@@ -129,6 +129,24 @@ class TunnelEndpoint(PyaoscxModule):
             return self.update()
         return self.create()
 
+    def _network_id_payload(self):
+        """
+        Serialize the network_id attribute into the {vni_key: uri} map the
+            REST API expects. Accepts a single VNI object, a list/tuple/set of
+            VNI objects, or an already-built {vni_key: uri} map.
+
+        :return: Dictionary in {vni_key: uri} form.
+        """
+        nid = self.network_id
+        if isinstance(nid, dict):
+            return dict(nid)
+        if isinstance(nid, (list, tuple, set)):
+            payload = {}
+            for vni in nid:
+                payload.update(self.session.api.get_index(vni))
+            return payload
+        return self.session.api.get_index(nid)
+
     @PyaoscxModule.connected
     def update(self):
         """
@@ -138,7 +156,7 @@ class TunnelEndpoint(PyaoscxModule):
             made.
         """
         tep_data = {}
-        tep_data["network_id"] = self.network_id.get_info_format()
+        tep_data["network_id"] = self._network_id_payload()
         self.__modified = self._put_data(tep_data)
         return self.__modified
 
@@ -154,7 +172,7 @@ class TunnelEndpoint(PyaoscxModule):
         tep_data = {}
         tep_data["destination"] = self.destination
         tep_data["interface"] = self.interface.get_info_format()
-        tep_data["network_id"] = self.network_id.get_info_format()
+        tep_data["network_id"] = self._network_id_payload()
         tep_data["origin"] = self.origin
         tep_data["vrf"] = self.vrf.get_info_format()
 
