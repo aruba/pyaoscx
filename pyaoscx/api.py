@@ -204,6 +204,7 @@ class API(ABC):
             "RadiusDynauthProxyProfile": "radius_dynauth_proxy_profile",
             "RadiusProxyClientGroup": "radius_proxy_client_group",
             "RadiusProxyProfile": "radius_proxy_profile",
+            "RadiusConfigAttribute": "radius_config_attribute",
         }
         if name not in module_names:
             raise ParameterError(
