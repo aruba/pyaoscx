@@ -167,6 +167,7 @@ class API(ABC):
             "QueueProfileEntry": "queue_profile_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
+            "RadiusConfigAttribute": "radius_config_attribute",
         }
         if name not in module_names:
             raise ParameterError(
