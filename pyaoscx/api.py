@@ -198,6 +198,7 @@ class API(ABC):
             "Vni": "vni",
             "User": "user",
             "Stp": "stp",
+            "EvpnVlanAwareBundle": "evpn_vlan_aware_bundle",
         }
         if name not in module_names:
             raise ParameterError(
