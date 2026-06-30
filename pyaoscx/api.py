@@ -167,6 +167,9 @@ class API(ABC):
             "QueueProfileEntry": "queue_profile_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
+            "RadiusDynauthProxyServer": "radius_dynauth_proxy_server",
+            "RadiusDynauthProxyClientGroup": "radius_dynauth_proxy_client_group",
+            "RadiusDynauthProxyProfile": "radius_dynauth_proxy_profile",
         }
         if name not in module_names:
             raise ParameterError(
