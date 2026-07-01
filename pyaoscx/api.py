@@ -207,6 +207,8 @@ class API(ABC):
             "RadiusProxyClientGroup": "radius_proxy_client_group",
             "RadiusProxyProfile": "radius_proxy_profile",
             "RadiusConfigAttribute": "radius_config_attribute",
+            "ClientProbeProfile": "client_probe_profile",
+            "ClientProbeProfileEntry": "client_probe_profile_entry",
         }
         if name not in module_names:
             raise ParameterError(
