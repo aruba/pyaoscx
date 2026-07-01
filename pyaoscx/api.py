@@ -165,6 +165,11 @@ class API(ABC):
             "Queue": "queue",
             "QueueProfile": "queue_profile",
             "QueueProfileEntry": "queue_profile_entry",
+            "Snmpv3User": "snmpv3_user",
+            "SnmpCommunity": "snmp_community",
+            "SnmpView": "snmp_view",
+            "SnmpViewEntry": "snmp_view_entry",
+            "SnmpTrap": "snmp_trap",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
