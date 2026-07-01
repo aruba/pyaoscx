@@ -167,6 +167,8 @@ class API(ABC):
             "QueueProfileEntry": "queue_profile_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
+            "Evpn": "evpn",
+            "EvpnVlan": "evpn_vlan",
         }
         if name not in module_names:
             raise ParameterError(
@@ -193,6 +195,8 @@ class API(ABC):
             )
         elif module == "Vsx":
             return self._create_vsx(module_class, session, **kwargs)
+        elif module == "Evpn":
+            return module_class(session, **kwargs)
         else:
             return module_class(session, index_id, **kwargs)
 
