@@ -321,6 +321,49 @@ class Configuration:
         # Return result
         return success
 
+    def set_auto_checkpoint(self, minutes):
+        """
+        Perform a POST request to arm the auto-checkpoint (confirmed commit)
+            timer. If the configuration is not confirmed before the timer
+            expires the switch automatically rolls it back.
+
+        :param minutes: Auto-checkpoint timer interval in minutes (1-60).
+        :return: True if success.
+        """
+        try:
+            response = self.session.request(
+                "POST",
+                "configs/autocheckpoint",
+                data=json.dumps({"minutes": minutes}),
+            )
+        except Exception as e:
+            raise ResponseError("POST", e)
+
+        # This endpoint returns 200 (not the usual 201) on success.
+        if response.status_code not in (200, 201):
+            raise GenericOperationError(response.text, response.status_code)
+
+        return True
+
+    def confirm_auto_checkpoint(self):
+        """
+        Perform a PUT request to confirm the running configuration and end the
+            auto-checkpoint (confirmed commit) timer.
+
+        :return: True if success.
+        """
+        try:
+            response = self.session.request(
+                "PUT", "configs/autocheckpoint", data=json.dumps({})
+            )
+        except Exception as e:
+            raise ResponseError("PUT", e)
+
+        if not utils._response_ok(response, "PUT"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        return True
+
     def setup_mgmt_nameservers_dns(self, primary=None, secondary=None):
         """
         Setup primary and secondary name servers on a mgmt interface.
