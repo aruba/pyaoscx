@@ -1,3 +1,11 @@
+# Unreleased
+
+## Notable Changes
+
+* Added REST API version modules for v10.13 and v10.16, enabling sessions and
+  resources that require those API versions (for example, IPFIX, Traffic
+  Insight, MACsec policies, and client probe profiles).
+
 # 2.6.0
 
 ## Notable Changes
