@@ -1,4 +1,4 @@
-# (C) Copyright 2022 Hewlett Packard Enterprise Development LP.
+# (C) Copyright 2024 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
 from datetime import date
@@ -13,7 +13,7 @@ class v10_16(API):
     """
 
     def __init__(self):
-        self.release_date = date(2024, 12, 6)
+        self.release_date = date(2024, 10, 25)
         self.version = "10.16"
         self.default_selector = "writable"
         self.default_depth = 1
