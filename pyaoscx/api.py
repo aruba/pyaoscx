@@ -167,6 +167,8 @@ class API(ABC):
             "QueueProfileEntry": "queue_profile_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
+            "Container": "container",
+            "ContainerIsolatedNetwork": "container_isolated_network",
         }
         if name not in module_names:
             raise ParameterError(

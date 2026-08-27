@@ -7,6 +7,8 @@ from pyaoscx.exceptions.verification_error import VerificationError
 from pyaoscx.utils import util as utils
 
 from pyaoscx.configuration import Configuration
+from pyaoscx.container import Container
+from pyaoscx.container_isolated_network import ContainerIsolatedNetwork
 from pyaoscx.dns import Dns
 
 
@@ -1639,3 +1641,87 @@ class PyaoscxFactory(metaclass=Singleton):
         finally:
             group_obj.apply()
         return group_obj
+
+    def container_isolated_network(
+        self, name, vlan_id=None, ipv4_address=None
+    ):
+        """
+        Create a ContainerIsolatedNetwork object. If a network with this
+            name already exists on the switch, it will be retrieved. Otherwise
+            a new one will be created.
+
+        :param name: Alphanumeric name of the isolated network.
+        :param vlan_id: Integer VLAN ID to associate with this network.
+        :param ipv4_address: IPv4 address with prefix for the network,
+            e.g. "192.168.10.99/24".
+        :return: ContainerIsolatedNetwork object.
+        """
+        net = ContainerIsolatedNetwork(
+            self.session,
+            name,
+            vlan=vlan_id,
+            ipv4_address=ipv4_address,
+        )
+
+        try:
+            net.get()
+            if vlan_id is not None:
+                net.vlan = vlan_id
+            if ipv4_address is not None:
+                net.ipv4_address = ipv4_address
+            net.apply()
+        except GenericOperationError:
+            net.apply()
+
+        return net
+
+    def container(
+        self,
+        name,
+        image_location=None,
+        isolated_network_name=None,
+        vrf="default",
+        allow_unsigned_image=False,
+        enable=False,
+    ):
+        """
+        Create a Container object. If a container with this name already
+            exists on the switch, it will be retrieved. Otherwise a new one
+            will be created.
+
+        :param name: Alphanumeric name of the container.
+        :param image_location: URL of the container image to download.
+        :param isolated_network_name: Name of the isolated network to attach
+            the container to. A ContainerIsolatedNetwork object is also
+            accepted.
+        :param vrf: Name of the VRF used to download the image.
+            Defaults to "default".
+        :param allow_unsigned_image: Boolean, whether to allow unsigned
+            container images. Defaults to False.
+        :param enable: Boolean, whether the container should be enabled.
+            Defaults to False.
+        :return: Container object.
+        """
+        ctr = Container(
+            self.session,
+            name,
+            image_location=image_location,
+            isolated_network=isolated_network_name,
+            vrf=vrf,
+            allow_unsigned_image=allow_unsigned_image,
+            enable=enable,
+        )
+
+        try:
+            ctr.get()
+            if image_location is not None:
+                ctr.image_location = image_location
+            if isolated_network_name is not None:
+                ctr.isolated_network = isolated_network_name
+            if enable is not None:
+                ctr.enable = enable
+            ctr.apply()
+        except GenericOperationError:
+            ctr.apply()
+
+        return ctr
