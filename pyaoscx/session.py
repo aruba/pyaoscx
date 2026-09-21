@@ -31,7 +31,7 @@ class Session:
         '2001:db8::11/ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff'
     """
 
-    def __init__(self, ip_address, api, proxy=None):
+    def __init__(self, ip_address, api, proxy=None, login_api=None):
 
         self.api = API.create(api)
         self.ip = ip_address
@@ -48,6 +48,13 @@ class Session:
         # request methods
         self.base_url = "https://{0}/rest/v{1}/".format(self.ip, self.api)
         self.resource_prefix = "/rest/v{0}/".format(self.api)
+        # Some versions expose resources without exposing login/logout: the
+        # container endpoints need v10.17+, but only v10.09 answers a login.
+        self.login_url = (
+            self.base_url
+            if login_api is None
+            else "https://{0}/rest/v{1}/".format(self.ip, login_api)
+        )
         self.__username = self.__password = ""
 
     def __eq__(self, other):
@@ -145,7 +152,7 @@ class Session:
         self.__password = password
         try:
             self.s = Session.login(
-                self.base_url,
+                self.login_url,
                 username,
                 password,
                 use_proxy,
@@ -179,7 +186,7 @@ class Session:
             within the session, no parameters are required.
         """
         if self.connected:
-            Session.logout(s=self.s, url=self.base_url)
+            Session.logout(s=self.s, url=self.login_url)
 
     @classmethod
     def login(
@@ -216,7 +223,11 @@ class Session:
         o = requests.utils.urlparse(base_url)
 
         if use_proxy is False:
-            s.proxies["no_proxy"] = o.hostname
+            # trust_env also disables reading HTTP_PROXY/HTTPS_PROXY from the
+            # environment, which otherwise sends switch traffic to a proxy
+            # that has no route to the management network.
+            s.trust_env = False
+            s.proxies = {"http": None, "https": None, "no_proxy": o.hostname}
 
         try:
             response = s.post(
@@ -337,7 +348,10 @@ class Session:
         )
         return uri
 
-    def request(self, operation, path, params=None, data=None, verify=False):
+    def request(
+        self, operation, path, params=None, data=None, verify=False,
+        timeout=None,
+    ):
         """
         Perform a Request to the switch.
 
@@ -346,6 +360,8 @@ class Session:
         :param params: Extra request parameters.
         :param data: Data to send in the resquest.
         :param verify: If session should verify.
+        :param timeout: Optional Requests connect/read timeout in seconds.
+            None preserves the existing unbounded request behavior.
         :return: response object from the request.
         """
         operations = {
@@ -361,12 +377,14 @@ class Session:
                 " Use any of {1}".format(operation, list(operations.keys))
             )
 
+        request_options = {} if timeout is None else {"timeout": timeout}
         return operations[operation](
             self._build_uri(path),
             verify=verify,
             params=params,
             data=data,
             proxies=self.proxy,
+            **request_options
         )
 
     @classmethod
