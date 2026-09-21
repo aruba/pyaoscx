@@ -1665,13 +1665,15 @@ class PyaoscxFactory(metaclass=Singleton):
 
         try:
             net.get()
+        except GenericOperationError as error:
+            if error.response_code != 404:
+                raise
+        else:
             if vlan_id is not None:
                 net.vlan = vlan_id
             if ipv4_address is not None:
                 net.ipv4_address = ipv4_address
-            net.apply()
-        except GenericOperationError:
-            net.apply()
+        net.apply()
 
         return net
 
@@ -1680,9 +1682,9 @@ class PyaoscxFactory(metaclass=Singleton):
         name,
         image_location=None,
         isolated_network_name=None,
-        vrf="default",
-        allow_unsigned_image=False,
-        enable=False,
+        vrf=None,
+        allow_unsigned_image=None,
+        enable=None,
     ):
         """
         Create a Container object. If a container with this name already
@@ -1695,33 +1697,33 @@ class PyaoscxFactory(metaclass=Singleton):
             the container to. A ContainerIsolatedNetwork object is also
             accepted.
         :param vrf: Name of the VRF used to download the image.
-            Defaults to "default".
+            None preserves an existing value; creation uses "default".
         :param allow_unsigned_image: Boolean, whether to allow unsigned
-            container images. Defaults to False.
+            images. None preserves an existing value; creation uses False.
         :param enable: Boolean, whether the container should be enabled.
-            Defaults to False.
+            None preserves an existing value; creation uses False.
         :return: Container object.
         """
-        ctr = Container(
-            self.session,
-            name,
-            image_location=image_location,
-            isolated_network=isolated_network_name,
-            vrf=vrf,
-            allow_unsigned_image=allow_unsigned_image,
-            enable=enable,
-        )
+        settings = {
+            "image_location": image_location,
+            "isolated_network": isolated_network_name,
+            "vrf": vrf,
+            "allow_unsigned_image": allow_unsigned_image,
+            "enable": enable,
+        }
+        settings = {
+            key: value for key, value in settings.items() if value is not None
+        }
+        ctr = Container(self.session, name, **settings)
 
         try:
             ctr.get()
-            if image_location is not None:
-                ctr.image_location = image_location
-            if isolated_network_name is not None:
-                ctr.isolated_network = isolated_network_name
-            if enable is not None:
-                ctr.enable = enable
-            ctr.apply()
-        except GenericOperationError:
-            ctr.apply()
+        except GenericOperationError as error:
+            if error.response_code != 404:
+                raise
+        else:
+            for attribute, value in settings.items():
+                setattr(ctr, attribute, value)
+        ctr.apply()
 
         return ctr

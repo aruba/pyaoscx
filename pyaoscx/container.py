@@ -5,13 +5,20 @@ import json
 import logging
 import re
 import time
+from math import isfinite
+
+from requests.exceptions import Timeout
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.response_error import ResponseError
 
 from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
+
+
+STATUS_REQUEST_TIMEOUT = 30
 
 
 class Container(PyaoscxModule):
@@ -79,6 +86,15 @@ class Container(PyaoscxModule):
 
         self.path = "{0}/{1}".format(Container.base_uri, self.name)
 
+    @staticmethod
+    def _reference_name(reference):
+        """Return a resource name from a REST reference or object."""
+        if isinstance(reference, dict):
+            return next(iter(reference), None)
+        if isinstance(reference, str):
+            return reference.rstrip("/").rsplit("/", 1)[-1]
+        return getattr(reference, "name", None)
+
     def _build_isolated_network_uri(self):
         """
         Build the container_isolated_network URI reference from the
@@ -135,6 +151,19 @@ class Container(PyaoscxModule):
         data = self._get_data(depth, selector)
 
         utils.create_attrs(self, data)
+
+        if "image_download_vrf" in data:
+            self.vrf = self._reference_name(data["image_download_vrf"])
+            if self.vrf is not None:
+                data["image_download_vrf"] = self._build_vrf_uri()
+        if "container_isolated_network" in data:
+            self.isolated_network = self._reference_name(
+                data["container_isolated_network"]
+            )
+            if self.isolated_network is not None:
+                data["container_isolated_network"] = (
+                    self._build_isolated_network_uri()
+                )
 
         if selector in self.session.api.configurable_selectors:
             utils.set_config_attrs(
@@ -298,14 +327,15 @@ class Container(PyaoscxModule):
         return "Container, name: '{0}'".format(self.name)
 
     @PyaoscxModule.connected
-    def get_status(self):
+    def get_status(self, timeout=STATUS_REQUEST_TIMEOUT):
         """
         Perform a GET call to read the container's runtime state.
 
+        :param timeout: Requests connect/read timeout in seconds.
         :return: Tuple of (status, status_reason). Status is "operational"
             once the image has been downloaded and the container is running.
         """
-        data = self._get_data(1, "status")
+        data = self._get_data(1, "status", timeout=timeout)
         return data.get("status"), data.get("status_reason", "")
 
     @PyaoscxModule.connected
@@ -316,31 +346,50 @@ class Container(PyaoscxModule):
             download, so the switch reports success long before the container
             is usable.
 
-        :param timeout: Seconds to wait before giving up.
-        :param interval: Seconds between polls.
+        :param timeout: Nonnegative polling budget in seconds. Each HTTP
+            request has a connect/read timeout capped by the remaining
+            budget; responses arriving after the deadline cannot succeed.
+        :param interval: Positive number of seconds between polls.
         :param callback: Optional callable invoked as
-            callback(status, status_reason) each time the status changes.
+            callback(status, status_reason) when either value changes.
         :return: Tuple of (operational, status, status_reason).
         """
+        if not isfinite(timeout) or timeout < 0:
+            raise ParameterError("timeout must be finite and nonnegative")
+        if not isfinite(interval) or interval <= 0:
+            raise ParameterError("interval must be finite and positive")
         deadline = time.monotonic() + timeout
         status = reason = None
-        while time.monotonic() < deadline:
-            new_status, new_reason = self.get_status()
-            if new_status != status:
-                status, reason = new_status, new_reason
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False, status, reason
+            try:
+                new_status, new_reason = self.get_status(
+                    timeout=min(STATUS_REQUEST_TIMEOUT, remaining)
+                )
+            except ResponseError as error:
+                if isinstance(error.__cause__, Timeout):
+                    return False, status, str(error)
+                raise
+            changed = (new_status, new_reason) != (status, reason)
+            status, reason = new_status, new_reason
+            if changed:
                 logging.info(
                     "Container %s status: %s %s", self.name, status, reason
                 )
                 if callback is not None:
                     callback(status, reason)
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return False, status, reason
             if status == "operational":
                 return True, status, reason
             if status and any(
                 hint in status for hint in ("failed", "error", "down")
             ):
                 return False, status, reason
-            time.sleep(interval)
-        return False, status, reason
+            time.sleep(min(interval, remaining))
 
     @PyaoscxModule.deprecated
     def get_uri(self):

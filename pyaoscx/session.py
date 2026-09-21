@@ -348,7 +348,10 @@ class Session:
         )
         return uri
 
-    def request(self, operation, path, params=None, data=None, verify=False):
+    def request(
+        self, operation, path, params=None, data=None, verify=False,
+        timeout=None,
+    ):
         """
         Perform a Request to the switch.
 
@@ -357,6 +360,8 @@ class Session:
         :param params: Extra request parameters.
         :param data: Data to send in the resquest.
         :param verify: If session should verify.
+        :param timeout: Optional Requests connect/read timeout in seconds.
+            None preserves the existing unbounded request behavior.
         :return: response object from the request.
         """
         operations = {
@@ -372,12 +377,14 @@ class Session:
                 " Use any of {1}".format(operation, list(operations.keys))
             )
 
+        request_options = {} if timeout is None else {"timeout": timeout}
         return operations[operation](
             self._build_uri(path),
             verify=verify,
             params=params,
             data=data,
             proxies=self.proxy,
+            **request_options
         )
 
     @classmethod

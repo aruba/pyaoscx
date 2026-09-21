@@ -50,6 +50,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
 def main():
+    """Deploy and verify the container; return a process exit status."""
     # --- Connect to the switch ---
     s = Session(SWITCH_IP, API_VERSION, login_api=LOGIN_API_VERSION)
     s.open(USERNAME, PASSWORD, use_proxy=False)
@@ -94,7 +95,7 @@ def main():
         )
         if not ok:
             print(f"  Container did not start: {status} {reason}")
-            return
+            return 1
         print(f"  Container '{CTR_NAME}' operational.")
 
         # Step 5: Verify
@@ -129,11 +130,14 @@ def main():
 
     except Exception as error:
         print(f"Error: {error}")
+        return 1
 
     finally:
         s.close()
         print("\nDone.")
 
+    return 0
+
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

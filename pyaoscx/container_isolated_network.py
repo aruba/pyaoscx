@@ -4,8 +4,10 @@
 import json
 import logging
 import re
+from copy import deepcopy
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.response_error import ResponseError
 
 from pyaoscx.utils import util as utils
@@ -76,8 +78,12 @@ class ContainerIsolatedNetwork(PyaoscxModule):
 
         :return: Dictionary suitable for the REST API payload.
         """
-        if self.vlan is None or self.ipv4_address is None:
+        if self.vlan is None and self.ipv4_address is None:
             return self.virtual_interfaces
+        if self.vlan is None or self.ipv4_address is None:
+            raise ParameterError(
+                "Both VLAN and IPv4 address are needed to select an interface"
+            )
 
         # Accept either a Vlan object or an integer VLAN ID
         if hasattr(self.vlan, "id"):
@@ -88,11 +94,20 @@ class ContainerIsolatedNetwork(PyaoscxModule):
         vlan_uri = "{0}system/vlans/{1}".format(
             self.session.resource_prefix, vlan_id
         )
-        return {
-            vlan_uri: {
-                "ipv4_address": self.ipv4_address,
-            }
-        }
+        interfaces = deepcopy(self.virtual_interfaces or {})
+        interface_key = next(
+            (
+                key for key in interfaces
+                if str(key).rstrip("/").rsplit("/", 1)[-1] == str(vlan_id)
+            ),
+            vlan_uri,
+        )
+        attributes = interfaces.get(interface_key, {})
+        if interface_key not in interfaces and len(interfaces) == 1:
+            attributes = interfaces.pop(next(iter(interfaces)))
+        attributes["ipv4_address"] = self.ipv4_address
+        interfaces[interface_key] = attributes
+        return interfaces
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -113,6 +128,15 @@ class ContainerIsolatedNetwork(PyaoscxModule):
         data = self._get_data(depth, selector)
 
         utils.create_attrs(self, data)
+
+        if "virtual_interfaces" in data:
+            self.vlan = None
+            self.ipv4_address = None
+            interfaces = self.virtual_interfaces or {}
+            if len(interfaces) == 1:
+                reference, attributes = next(iter(interfaces.items()))
+                self.vlan = int(str(reference).rstrip("/").rsplit("/", 1)[-1])
+                self.ipv4_address = attributes.get("ipv4_address")
 
         if selector in self.session.api.configurable_selectors:
             utils.set_config_attrs(

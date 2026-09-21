@@ -191,7 +191,7 @@ class PyaoscxModule(ABC):
             # Set self.config_attrs and delete unwanted attributes
             utils.set_config_attrs(self, data, "config_attrs", unwanted_attrs)
 
-    def _get_data(self, depth, selector):
+    def _get_data(self, depth, selector, timeout=None):
         """
         Perform a GET call to retrieve data from a switch.
 
@@ -199,6 +199,7 @@ class PyaoscxModule(ABC):
             that references will be retrieved from the switch
         :param selector: Alphanumeric option to select specific information
             to return.
+        :param timeout: Optional Requests connect/read timeout in seconds.
         :return: Retrieved data from the switch.
         """
         depth = depth or self.session.api.default_depth
@@ -214,12 +215,15 @@ class PyaoscxModule(ABC):
             )
 
         payload = {"depth": depth, "selector": selector}
+        request_options = {} if timeout is None else {"timeout": timeout}
 
         try:
-            response = self.session.request("GET", self.path, params=payload)
+            response = self.session.request(
+                "GET", self.path, params=payload, **request_options
+            )
 
         except Exception as e:
-            raise ResponseError("GET", e)
+            raise ResponseError("GET", e) from e
 
         if not utils._response_ok(response, "GET"):
             raise GenericOperationError(response.text, response.status_code)
