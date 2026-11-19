@@ -344,6 +344,7 @@ class BgpRouter(PyaoscxModule):
         send_community=None,
         remote_as=None,
         update_source=None,
+        ebgp_hop_count=None,
     ):
         """
         Perform a POST call to create BGP Neighbors to the associated current
@@ -362,71 +363,95 @@ class BgpRouter(PyaoscxModule):
             soft reconfiguration.
         :param route_reflector_client: Boolean value to determine whether this
             neighbor has route reflector enabled.
-        :param send_community: Boolean value to determine whether this neighbor
-            has send-community enabled.
+        :param send_community: Community strings advertised to the neighbor in
+            the address family: 'both', 'extended', 'standard' or 'none'.
+            A Boolean is also accepted (True is 'both', False is 'none').
         :param remote_as: Integer peer ASN.
         :param update_source: Source address for the neighbor session.
-        :return: BgpRouter object.
+        :param ebgp_hop_count: Integer between 1 and 255, maximum hop count
+            of the EBGP session (CLI 'ebgp-multihop'). 1 disables multihop,
+            255 is the CLI default when no value is given.
+        :return: BgpNeighbor object. When the neighbor already exists, only
+            the given address family is changed in the per-family settings.
         """
-        if (
-            activate is not None
-            or inbound_soft_reconfiguration is not None
-            or route_reflector_client is not None
-            or send_community is not None
-        ):
+        per_af_values = {
+            "activate": activate,
+            "inbound_soft_reconfiguration": inbound_soft_reconfiguration,
+            "route_reflector_client": route_reflector_client,
+            "send_community": send_community,
+        }
+        per_af_values = {
+            key: val for key, val in per_af_values.items() if val is not None
+        }
+
+        if per_af_values:
             if family_type is None:
                 raise VerificationError(
                     "family_type must be provided when at least one of "
                     '"inbound_soft_reconfiguration", "send_community",'
                     '"activate", "route_reflector_client", is enabled'
                 )
+            valid_family_types = ["ipv4-unicast", "ipv6-unicast", "l2vpn-evpn"]
+            if family_type not in valid_family_types:
+                raise VerificationError(
+                    "family_type must be one of: {0}".format(
+                        valid_family_types
+                    )
+                )
+            if (
+                "inbound_soft_reconfiguration" in per_af_values
+                and family_type == "l2vpn-evpn"
+            ):
+                raise VerificationError(
+                    "inbound_soft_reconfiguration is not supported for the "
+                    "l2vpn-evpn address family"
+                )
 
-        _activate = {
-            "ipv4-unicast": False,
-            "ipv6-unicast": False,
-            "l2vpn-evpn": False,
-        }
+        if isinstance(per_af_values.get("send_community"), bool):
+            per_af_values["send_community"] = (
+                "both" if per_af_values["send_community"] else "none"
+            )
 
-        _inbound_soft_reconfiguration = {
-            "ipv4-unicast": False,
-            "ipv6-unicast": False,
-        }
-
-        _route_reflector_client = {
-            "ipv4-unicast": False,
-            "ipv6-unicast": False,
-            "l2vpn-evpn": False,
-        }
-
-        _send_community = {
-            "ipv4-unicast": "none",
-            "ipv6-unicast": "none",
-            "l2vpn-evpn": "none",
+        defaults = {
+            "activate": {
+                "ipv4-unicast": False,
+                "ipv6-unicast": False,
+                "l2vpn-evpn": False,
+            },
+            "inbound_soft_reconfiguration": {
+                "ipv4-unicast": False,
+                "ipv6-unicast": False,
+            },
+            "route_reflector_client": {
+                "ipv4-unicast": False,
+                "ipv6-unicast": False,
+                "l2vpn-evpn": False,
+            },
+            "send_community": {
+                "ipv4-unicast": "none",
+                "ipv6-unicast": "none",
+                "l2vpn-evpn": "none",
+            },
         }
 
         kw = dict()
-
-        if activate is not None:
-            _activate[family_type] = True
-            kw["activate"] = activate
-
-        if inbound_soft_reconfiguration is not None:
-            _inbound_soft_reconfiguration[family_type] = True
-            kw["inbound_soft_reconfiguration"] = inbound_soft_reconfiguration
-
-        if route_reflector_client is not None:
-            _route_reflector_client[family_type] = True
-            kw["route_reflector_client"] = route_reflector_client
-
-        if send_community is not None:
-            _send_community[family_type] = send_community
-            kw["send_community"] = send_community
+        for key, val in per_af_values.items():
+            kw[key] = dict(defaults[key], **{family_type: val})
 
         if update_source:
             kw["update_source"] = update_source
 
         if remote_as:
             kw["remote_as"] = remote_as
+
+        if ebgp_hop_count is not None:
+            if isinstance(ebgp_hop_count, bool) or not (
+                isinstance(ebgp_hop_count, int) and 1 <= ebgp_hop_count <= 255
+            ):
+                raise VerificationError(
+                    "ebgp_hop_count must be an integer between 1 and 255"
+                )
+            kw["ebgp_hop_count"] = ebgp_hop_count
 
         bgp_neighbor_obj = self.session.api.get_module(
             self.session,
@@ -440,6 +465,10 @@ class BgpRouter(PyaoscxModule):
         try:
             bgp_neighbor_obj.get()
             for key, val in kw.items():
+                if key in per_af_values:
+                    # Only change the requested address family
+                    val = dict(getattr(bgp_neighbor_obj, key, None) or {})
+                    val[family_type] = per_af_values[key]
                 setattr(bgp_neighbor_obj, key, val)
         except GenericOperationError:
             pass  # not an error, just doesn't exist yet
