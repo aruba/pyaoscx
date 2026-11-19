@@ -41,6 +41,8 @@ class Interface(PyaoscxModule):
     indices = ["name"]
     resource_uri_name = "interfaces"
 
+    INTER_VXLAN_BRIDGING_MODES = ("deny", "static-evpn", "static-all")
+
     ip6_addresses = ListDescriptor("ip6_addresses")
 
     def __init__(self, session, name, uri=None, ip6_addresses=[], **kwargs):
@@ -1407,7 +1409,11 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.materialized
     def configure_vxlan(
-        self, source_ipv4=None, description=None, dest_udp_port=4789
+        self,
+        source_ipv4=None,
+        description=None,
+        dest_udp_port=4789,
+        inter_vxlan_bridging_mode=None,
     ):
         """
         Configure VXLAN table entry for a logical L3 Interface. If the VXLAN
@@ -1421,6 +1427,9 @@ class Interface(PyaoscxModule):
             to nothing if not specified.
         :param dest_udp_port: Optional Destination UDP Port that the VXLAN
             will use. Default is set to 4789.
+        :param inter_vxlan_bridging_mode: Optional inter-VXLAN bridging mode,
+            one of 'deny', 'static-evpn' or 'static-all'. Left unchanged if
+            not specified.
         :return: True if object was changed.
         """
         # Set Values
@@ -1434,8 +1443,37 @@ class Interface(PyaoscxModule):
         if description is not None:
             self.description = description
 
+        if inter_vxlan_bridging_mode is not None:
+            self.set_inter_vxlan_bridging_mode(inter_vxlan_bridging_mode)
+
         # Apply changes
         return self.apply()
+
+    def set_inter_vxlan_bridging_mode(self, mode):
+        """
+        Set the inter-VXLAN bridging mode of a VXLAN interface (CLI
+            'inter-vxlan-bridging-mode'). Changes are sent on apply().
+
+        :param mode: 'deny' to disable traffic bridging between tunnels on
+            the same L2VNI, 'static-evpn' to enable it between static and
+            dynamic (EVPN) tunnels, or 'static-all' to enable it between all
+            tunnels.
+        """
+        if self.type != "vxlan":
+            raise ParameterError(
+                "inter_vxlan_bridging_mode is only supported on VXLAN "
+                "interfaces, {0} is not a VXLAN interface".format(self.name)
+            )
+        if mode not in self.INTER_VXLAN_BRIDGING_MODES:
+            raise ParameterError(
+                "Invalid inter_vxlan_bridging_mode {0}, valid values are: "
+                "{1}".format(mode, ", ".join(self.INTER_VXLAN_BRIDGING_MODES))
+            )
+        self.inter_vxlan_bridging_mode = mode
+        # The attribute is absent from the GET response until configured, so
+        # make sure it is part of the PUT body.
+        if "inter_vxlan_bridging_mode" not in self.config_attrs:
+            self.config_attrs.append("inter_vxlan_bridging_mode")
 
     def set_vlan_mode(self, vlan_mode):
         """
