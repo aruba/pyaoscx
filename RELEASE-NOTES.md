@@ -48,6 +48,24 @@
   switch with compound keys (`"ipv4-unicast,in"`) that it rejects on PUT.
   They are now converted to nested dictionaries when read (new
   `utils.nest_compound_keys()` helper).
+* Added Network Analytics Engine (NAE) support, removed with the v2 redesign:
+  * `NaeScript` uploads, updates and deletes NAE scripts
+    (`set_script_code()`, `load_script_from_file()`, `set_script_base64()`
+    for a content already encoded in Base64, `get_script_code()`) and reads
+    their validation status and parameters.
+  * `NaeAgent` creates, updates, enables, disables and deletes the agents
+    of a script, with their parameter values keyed by name, encrypted
+    parameters and VRF. It collects the agent status and alerts
+    (`get_status()`: alert level and description, alerts count, errors),
+    the rules and conditions with the number of times they were met and
+    their pending events (`get_conditions()`), the status of all agents in
+    one request (`get_facts()`) and the highest alert level of the switch
+    (`get_aggregated_alert_level()`).
+  * `NaeLiteAgent` and `NaeLiteCondition` manage NAE-Lite agents (CLI
+    `nae-agent lite`): monitors or watches, set and clear conditions and
+    their actions. `NaeLiteAgent.activate()` generates the agent again with
+    the current configuration, and `wait_for_activation()` returns once the
+    generated agent has run or has failed.
 
 # 2.6.0
 
