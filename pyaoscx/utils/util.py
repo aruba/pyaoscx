@@ -168,6 +168,30 @@ l4_ports = {
 r_l4_ports = {v: k for k, v in l4_ports.items()}
 
 
+def nest_compound_keys(data, attributes, separator=","):
+    """
+    Convert the compound keys of the given attributes into nested
+        dictionaries, in place. The switch returns some attributes with
+        compound keys, for example {"ipv4-unicast,in": uri}, but only accepts
+        them as nested dictionaries, {"ipv4-unicast": {"in": uri}}.
+    :param data: Dictionary with the data returned by the switch.
+    :param attributes: Names of the attributes to convert.
+    :param separator: Separator used in the compound keys.
+    """
+    for attribute in attributes:
+        value = data.get(attribute)
+        if not isinstance(value, dict):
+            continue
+        nested = {}
+        for key, item in value.items():
+            parts = key.split(separator) if isinstance(key, str) else [key]
+            level = nested
+            for part in parts[:-1]:
+                level = level.setdefault(part, {})
+            level[parts[-1]] = item
+        data[attribute] = nested
+
+
 def create_attrs(obj, data_dictionary):
     """
     Given a dictionary object creates class attributes. The methods implements
