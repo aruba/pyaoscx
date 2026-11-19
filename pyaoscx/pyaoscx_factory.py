@@ -327,9 +327,9 @@ class PyaoscxFactory(metaclass=Singleton):
                 software_update_vrf = self.__get_vrf_from_switch(
                     software_update_vrf
                 )
-            kwargs[
-                "software_update_vrf"
-            ] = software_update_vrf.get_info_format()
+            kwargs["software_update_vrf"] = (
+                software_update_vrf.get_info_format()
+            )
         isl_port = kwargs.get("isl_port")
         if isl_port:
             if isinstance(isl_port, str):
@@ -391,7 +391,7 @@ class PyaoscxFactory(metaclass=Singleton):
 
         return bgp_router_obj
 
-    def bgp_router_vrf(self, vrf, asn, redistribute):
+    def bgp_router_vrf(self, vrf, asn, redistribute, route_types=None):
         """
         Create a BgpRouter object with a BGP VRF settings for the associated
             BGP ASN. If values differ from existing object, incoming changes
@@ -400,20 +400,24 @@ class PyaoscxFactory(metaclass=Singleton):
         :param vrf: Alphanumeric name of the VRF the BGP ASN belongs to. A Vrf
             object is also accepted.
         :param asn: Integer that represents the Autonomous System Number.
-        :param redistribute: Alphanumeric to specify which types of routes that
-            should be redistributed by BGP. The options are "ipv4-unicast" or
-            "ipv6-unicast".
+        :param redistribute: Alphanumeric to specify the address family in
+            which routes are redistributed by BGP. The options are
+            "ipv4-unicast" or "ipv6-unicast".
+        :param route_types: Optional list of route types to redistribute in
+            the address family: "connected", "local-loopback", "static",
+            "ospf" or "isis". Defaults to ["connected"].
         :return: BgpRouter object.
         """
+        _valid_family_types = ["ipv4-unicast", "ipv6-unicast"]
+        if redistribute not in _valid_family_types:
+            raise VerificationError(
+                "redistribute must be one of: {0}".format(_valid_family_types)
+            )
+
         if isinstance(vrf, str):
             vrf = self.__get_vrf_from_switch(vrf)
 
-        redistribute_data = {}
-
-        if redistribute == "ipv4-unicast":
-            redistribute_data = {"ipv4-unicast": ["connected"]}
-        elif redistribute == "ipv6-unicast":
-            redistribute_data = {"ipv6-unicast": ["connected"]}
+        redistribute_data = {redistribute: list(route_types or ["connected"])}
 
         bgp_router_obj = self.session.api.get_module(
             self.session,
@@ -426,8 +430,10 @@ class PyaoscxFactory(metaclass=Singleton):
         # Try to obtain data; if not, create
         try:
             bgp_router_obj.get()
-            # Change attributes
-            bgp_router_obj.redistribute = redistribute_data
+            # Only change the requested address family
+            merged = dict(getattr(bgp_router_obj, "redistribute", None) or {})
+            merged.update(redistribute_data)
+            bgp_router_obj.redistribute = merged
             # Apply changes
             bgp_router_obj.apply()
         except GenericOperationError:
@@ -469,8 +475,7 @@ class PyaoscxFactory(metaclass=Singleton):
             interface the neighbor will apply to.
         :return: BgpNeighbor object.
         """
-        if family_type is None:
-            _family_type = "l2vpn-evpn"
+        _family_type = family_type or "l2vpn-evpn"
 
         _valid_family_types = ["l2vpn-evpn", "ipv4-unicast", "ipv6-unicast"]
         if _family_type not in _valid_family_types:
@@ -561,16 +566,24 @@ class PyaoscxFactory(metaclass=Singleton):
         # Try to obtain data; if not, create
         try:
             bgp_neighbor_obj.get()
+
+            def _merge_af(attr, value):
+                # Only change the requested address family
+                merged = dict(getattr(bgp_neighbor_obj, attr, None) or {})
+                merged[_family_type] = value
+                setattr(bgp_neighbor_obj, attr, merged)
+
             # Change attributes
             if local_interface != "":
                 bgp_neighbor_obj.local_interface = local_interface
             if family_type is not None:
-                bgp_neighbor_obj.activate = activate
+                _merge_af("activate", True)
             if send_community is not None:
-                bgp_neighbor_obj.send_community = send_community_data
+                _merge_af("send_community", send_community_data[_family_type])
             if reflector is not None:
-                bgp_neighbor_obj.route_reflector_client = (
-                    route_reflector_client
+                _merge_af(
+                    "route_reflector_client",
+                    route_reflector_client[_family_type],
                 )
             # Apply changes
             bgp_neighbor_obj.apply()
