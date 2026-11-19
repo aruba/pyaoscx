@@ -34,15 +34,6 @@ class VrfAddressFamily(PyaoscxModule):
         self.address_family = address_family
         self.parent_vrf = parent_vrf
 
-        # Verify VRF Address Family  doesn't exist already inside VRF
-        for vrf_address_family in self.parent_vrf.address_families:
-            if vrf_address_family.address_family == self.address_family:
-                # Make list element point to current object
-                vrf_address_family = self
-            else:
-                # Add self to vrf_address_families list in parent_vrf
-                self.parent_vrf.address_families.append(self)
-
         self._uri = uri
         # List used to determine attributes related to the VRF Address Family
         # configuration
@@ -62,6 +53,14 @@ class VrfAddressFamily(PyaoscxModule):
         self._uri_indices = uri_indices
         self.base_uri = self.collection_uri.format(**uri_indices)
         self.path = self.object_uri.format(**uri_indices)
+
+        families = self.parent_vrf.address_families
+        for index, family in enumerate(families):
+            if family.address_family == self.address_family:
+                families[index] = self
+                break
+        else:
+            families.append(self)
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -215,7 +214,11 @@ class VrfAddressFamily(PyaoscxModule):
             modified = False
 
         else:
-            post_data = json.dumps(vrf_address_family_data)
+            post_data = json.dumps(
+                dict(
+                    vrf_address_family_data, address_family=self.address_family
+                )
+            )
 
             try:
                 response = self.session.request("PUT", uri, data=post_data)
