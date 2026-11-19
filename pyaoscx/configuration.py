@@ -1,11 +1,13 @@
 # (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import base64
 import json
 import logging
 
 from urllib.parse import quote_plus
 
+from pyaoscx.exceptions.config_upload_error import ConfigUploadError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
@@ -371,6 +373,8 @@ class Configuration:
         config_json=None,
         vrf=None,
         remote_file_tftp_path=None,
+        config_cli=None,
+        operation="replace",
     ):
         """
         Uploads configuration from a configuration file.
@@ -389,9 +393,26 @@ class Configuration:
         :param remote_file_tftp_path: String for TFTP server address and path
             for copying off configuration, must be reachable through provided
             vrf. Defaults to None.
+        :param config_cli: String with the file name and path of a local
+            configuration in CLI format. The content is sent directly in the
+            request payload (no TFTP server needed). Defaults to None.
+        :param operation: String with the operation to perform when uploading
+            a CLI configuration, either 'replace' or 'merge'. Only used with
+            config_cli. Defaults to 'replace'.
         :return: Return boolean True if response is successful.
         """
         success = False
+
+        if config_cli is not None:
+            if remote_file_tftp_path is not None or config_json or config_file:
+                raise VerificationError(
+                    "Upload Config",
+                    "config_cli cannot be combined with config_file, "
+                    "config_json or remote_file_tftp_path",
+                )
+            return self.upload_switch_config_cli_from_local(
+                config_cli, config_name, operation
+            )
 
         if remote_file_tftp_path is not None:
             if vrf is None:
@@ -466,3 +487,75 @@ class Configuration:
             raise GenericOperationError(response.text, response.status_code)
 
         return success
+
+    def upload_switch_config_cli_from_local(
+        self, config_cli, config_name="running-config", operation="replace"
+    ):
+        """
+        Uploads a configuration in CLI format from a local file, sending its
+            content directly in the request payload (PUT /configs/{name}).
+
+        :param config_cli: String with the file name and path of the local
+            configuration in CLI format.
+        :param config_name: String with the configuration to be uploaded to,
+            only 'running-config' or 'startup-config' can be used. Defaults to
+            'running-config'.
+        :param operation: String with the operation to perform, 'replace'
+            replaces the whole configuration, 'merge' merges it into the
+            existing one. Defaults to 'replace'.
+        :return: Return boolean True if response is successful.
+        :raises ConfigUploadError: If the switch rejects the configuration.
+            Its errors attribute holds the list of errors returned by the
+            switch (line, context, command, message). With 'replace' nothing
+            is applied, with 'merge' the valid lines are applied.
+        """
+        if config_name not in ("running-config", "startup-config"):
+            raise VerificationError(
+                "Upload Config",
+                "Only running-config or startup-config "
+                "can be uploaded using CLI format",
+            )
+        if operation not in ("replace", "merge"):
+            raise VerificationError(
+                "Upload Config",
+                "operation must be either 'replace' or 'merge'",
+            )
+
+        with open(config_cli, "rb") as cli_file:
+            cli_content = cli_file.read()
+
+        # The REST API expects the CLI configuration base64 encoded
+        payload = base64.b64encode(cli_content).decode("ascii")
+
+        uri = "configs/{0}".format(config_name)
+        try:
+            response = self.session.request(
+                "PUT",
+                uri,
+                params={"operation": operation},
+                data=payload,
+                headers={"Content-Type": "text/plain"},
+            )
+        except Exception as e:
+            raise ResponseError("PUT", e)
+
+        if not utils._response_ok(response, "PUT"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        # The switch answers HTTP 200 even when commands are rejected, the
+        # outcome is in the body: {"state": "success"|"failure", "errors": []}
+        try:
+            body = json.loads(response.text) if response.text else {}
+        except ValueError:
+            body = {}
+        if (
+            isinstance(body, dict)
+            and body.get("state", "success") != "success"
+        ):
+            raise ConfigUploadError(
+                body.get("errors") or [{"message": response.text}],
+                operation,
+                response.status_code,
+            )
+
+        return True
