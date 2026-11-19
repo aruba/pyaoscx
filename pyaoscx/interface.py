@@ -620,19 +620,15 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclmac_in_cfg.get()
             iface_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
-            iface_data[
-                "aclmac_in_cfg_version"
-            ] = self.aclmac_in_cfg_version
+            iface_data["aclmac_in_cfg_version"] = self.aclmac_in_cfg_version
 
         if "aclmac_out_cfg" in iface_data and self.aclmac_out_cfg:
             # Set values in correct form
             self.aclmac_out_cfg.get()
-            iface_data[
-                "aclmac_out_cfg"
-            ] = self.aclmac_out_cfg.get_info_format()
-            iface_data[
-                "aclmac_out_cfg_version"
-            ] = self.aclmac_out_cfg_version
+            iface_data["aclmac_out_cfg"] = (
+                self.aclmac_out_cfg.get_info_format()
+            )
+            iface_data["aclmac_out_cfg_version"] = self.aclmac_out_cfg_version
 
         if "aclv4_in_cfg" in iface_data and self.aclv4_in_cfg:
             # Set values in correct form
@@ -644,29 +640,27 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv4_out_cfg.get()
             iface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
-            iface_data[
-                "aclv4_out_cfg_version"
-            ] = self.aclv4_out_cfg_version
+            iface_data["aclv4_out_cfg_version"] = self.aclv4_out_cfg_version
 
         if "aclv4_routed_in_cfg" in iface_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
             self.aclv4_routed_in_cfg.get()
-            iface_data[
-                "aclv4_routed_in_cfg"
-            ] = self.aclv4_routed_in_cfg.get_info_format()
-            iface_data[
-                "aclv4_routed_in_cfg_version"
-            ] = self.aclv4_routed_in_cfg_version
+            iface_data["aclv4_routed_in_cfg"] = (
+                self.aclv4_routed_in_cfg.get_info_format()
+            )
+            iface_data["aclv4_routed_in_cfg_version"] = (
+                self.aclv4_routed_in_cfg_version
+            )
 
         if "aclv4_routed_out_cfg" in iface_data and self.aclv4_routed_out_cfg:
             # Set values in correct form
             self.aclv4_routed_out_cfg.get()
-            iface_data[
-                "aclv4_routed_out_cfg"
-            ] = self.aclv4_routed_out_cfg.get_info_format()
-            iface_data[
-                "aclv4_routed_out_cfg_version"
-            ] = self.aclv4_routed_out_cfg_version
+            iface_data["aclv4_routed_out_cfg"] = (
+                self.aclv4_routed_out_cfg.get_info_format()
+            )
+            iface_data["aclv4_routed_out_cfg_version"] = (
+                self.aclv4_routed_out_cfg_version
+            )
 
         if "aclv6_in_cfg" in iface_data and self.aclv6_in_cfg:
             # Set values in correct form
@@ -678,29 +672,27 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv6_out_cfg.get()
             iface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
-            iface_data[
-                "aclv6_out_cfg_version"
-            ] = self.aclv6_out_cfg_version
+            iface_data["aclv6_out_cfg_version"] = self.aclv6_out_cfg_version
 
         if "aclv6_routed_in_cfg" in iface_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
             self.aclv6_routed_in_cfg.get()
-            iface_data[
-                "aclv6_routed_in_cfg"
-            ] = self.aclv6_routed_in_cfg.get_info_format()
-            iface_data[
-                "aclv6_routed_in_cfg_version"
-            ] = self.aclv6_routed_in_cfg_version
+            iface_data["aclv6_routed_in_cfg"] = (
+                self.aclv6_routed_in_cfg.get_info_format()
+            )
+            iface_data["aclv6_routed_in_cfg_version"] = (
+                self.aclv6_routed_in_cfg_version
+            )
 
         if "aclv6_routed_out_cfg" in iface_data and self.aclv6_routed_out_cfg:
             # Set values in correct form
             self.aclv6_routed_out_cfg.get()
-            iface_data[
-                "aclv6_routed_out_cfg"
-            ] = self.aclv6_routed_out_cfg.get_info_format()
-            iface_data[
-                "aclv6_routed_out_cfg_version"
-            ] = self.aclv6_routed_out_cfg_version
+            iface_data["aclv6_routed_out_cfg"] = (
+                self.aclv6_routed_out_cfg.get_info_format()
+            )
+            iface_data["aclv6_routed_out_cfg_version"] = (
+                self.aclv6_routed_out_cfg_version
+            )
 
         uri = "{0}/{1}".format(Interface.base_uri, self.percents_name)
 
@@ -2233,9 +2225,9 @@ class Interface(PyaoscxModule):
             self.port_security["client_limit"] = client_limit
 
         if sticky_mac_learning is not None:
-            self.port_security[
-                "sticky_mac_learning_enable"
-            ] = sticky_mac_learning
+            self.port_security["sticky_mac_learning_enable"] = (
+                sticky_mac_learning
+            )
 
         mac_format = mac_eui48
         mac_format.word_sep = ":"
@@ -2334,14 +2326,14 @@ class Interface(PyaoscxModule):
                 raise ParameterError(
                     "violation_recovery_time must be between 10s and 600s"
                 )
-            self.port_access_security_violation[
-                "recovery_timer"
-            ] = violation_recovery_time
+            self.port_access_security_violation["recovery_timer"] = (
+                violation_recovery_time
+            )
 
         if violation_shutdown_recovery_enable:
-            self.port_access_security_violation[
-                "shutdown_recovery_enable"
-            ] = violation_shutdown_recovery_enable
+            self.port_access_security_violation["shutdown_recovery_enable"] = (
+                violation_shutdown_recovery_enable
+            )
 
         return self.apply()
 
