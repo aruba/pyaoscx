@@ -337,7 +337,15 @@ class Session:
         )
         return uri
 
-    def request(self, operation, path, params=None, data=None, verify=False):
+    def request(
+        self,
+        operation,
+        path,
+        params=None,
+        data=None,
+        verify=False,
+        headers=None,
+    ):
         """
         Perform a Request to the switch.
 
@@ -346,6 +354,8 @@ class Session:
         :param params: Extra request parameters.
         :param data: Data to send in the resquest.
         :param verify: If session should verify.
+        :param headers: Optional dictionary of extra HTTP headers to send
+            with this request only (e.g. a specific Content-Type).
         :return: response object from the request.
         """
         operations = {
@@ -366,6 +376,7 @@ class Session:
             verify=verify,
             params=params,
             data=data,
+            headers=headers,
             proxies=self.proxy,
         )
 
