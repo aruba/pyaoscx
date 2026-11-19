@@ -1,3 +1,27 @@
+# Unreleased
+
+## Notable Changes
+
+* Fixed `PyaoscxFactory.bgp_neighbor()` raising `UnboundLocalError` when
+  `family_type` was given; on an existing neighbor only the requested address
+  family is now changed.
+* Fixed `BgpRouter.create_bgp_neighbors()`: per address family settings
+  (`activate`, `send_community`, `route_reflector_client`,
+  `inbound_soft_reconfiguration`) are now sent as dictionaries keyed by
+  address family, and merged with the existing neighbor configuration.
+* Fixed `BgpNeighbor.update()` failing when no `local_interface` is set, and
+  `BgpNeighbor.create()` sending an empty `local_interface`.
+* `PyaoscxFactory.bgp_router_vrf()` accepts an optional `route_types` list
+  (defaults to `["connected"]`), validates the address family, and keeps the
+  redistribution of other address families.
+* Fixed `BgpNeighbor.update()` sending create-only attributes
+  (`is_peer_group`, `listen_ip_range`, `nbr_interface`, `origin`) in the PUT
+  body.
+* Fixed `BgpNeighbor` registering itself several times in its parent
+  `BgpRouter`, and `BgpNeighbor.delete()` sending extra DELETE requests.
+* `BgpRouter.create_bgp_neighbors()` accepts an `ebgp_hop_count` parameter
+  (CLI `ebgp-multihop`, 1 to 255, 1 disables multihop).
+
 # 2.6.0
 
 ## Notable Changes
