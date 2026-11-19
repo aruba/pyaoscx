@@ -703,6 +703,26 @@ class Interface(PyaoscxModule):
             # Object was not modified
             modified = False
         else:
+            mode = iface_data.get("inter_vxlan_bridging_mode")
+            if mode is not None and mode != self.__original_attributes.get(
+                "inter_vxlan_bridging_mode"
+            ):
+                # PUT silently ignores attributes unknown to the firmware,
+                # while PATCH rejects them with 400 "invalid attribute". The
+                # mode stays in the PUT body, as PUT resets missing attributes.
+                try:
+                    response = self.session.request(
+                        "PATCH",
+                        uri,
+                        data=json.dumps({"inter_vxlan_bridging_mode": mode}),
+                    )
+                except Exception as e:
+                    raise ResponseError("PATCH", e)
+
+                if not utils._response_ok(response, "PATCH"):
+                    raise GenericOperationError(
+                        response.text, response.status_code
+                    )
 
             put_data = json.dumps(iface_data)
 
@@ -1452,7 +1472,10 @@ class Interface(PyaoscxModule):
     def set_inter_vxlan_bridging_mode(self, mode):
         """
         Set the inter-VXLAN bridging mode of a VXLAN interface (CLI
-            'inter-vxlan-bridging-mode'). Changes are sent on apply().
+            'inter-vxlan-bridging-mode'). Changes are sent on apply(), with a
+            PATCH before the PUT: a firmware that does not support the mode
+            then rejects it (HTTP 400 "invalid attribute") and nothing is
+            applied.
 
         :param mode: 'deny' to disable traffic bridging between tunnels on
             the same L2VNI, 'static-evpn' to enable it between static and

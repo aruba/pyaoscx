@@ -15,6 +15,15 @@
   `inter_vxlan_bridging_mode` parameter to `Interface.configure_vxlan()` to
   manage the inter-VXLAN bridging mode (`deny`, `static-evpn`, `static-all`)
   of a VXLAN interface (CLI `inter-vxlan-bridging-mode`).
+  A changed mode is first sent with a PATCH (`Session.request()` now accepts
+  `PATCH`): the PUT used for the other attributes silently ignores attributes
+  unknown to the firmware, while PATCH rejects them, so an unsupported mode
+  raises `GenericOperationError` and nothing is applied.
+* `GenericOperationError` states that the attribute is probably not supported
+  by the switch platform or firmware version when the switch answers HTTP 400
+  `invalid attribute: <name>`. A CLI configuration upload refused with HTTP
+  400, 404, 405 or 415 raises a `GenericOperationError` stating that the CLI
+  format upload is probably not supported by the switch.
 * Fixed `PyaoscxFactory.bgp_neighbor()` raising `UnboundLocalError` when
   `family_type` was given; on an existing neighbor only the requested address
   family is now changed.

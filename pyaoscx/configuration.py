@@ -508,6 +508,9 @@ class Configuration:
             Its errors attribute holds the list of errors returned by the
             switch (line, context, command, message). With 'replace' nothing
             is applied, with 'merge' the valid lines are applied.
+        :raises GenericOperationError: If the upload request is refused. With
+            HTTP 400, 404, 405 or 415 the message states that the CLI format
+            upload is probably not supported by the switch.
         """
         if config_name not in ("running-config", "startup-config"):
             raise VerificationError(
@@ -540,7 +543,18 @@ class Configuration:
             raise ResponseError("PUT", e)
 
         if not utils._response_ok(response, "PUT"):
-            raise GenericOperationError(response.text, response.status_code)
+            message = response.text
+            # Supported firmwares answer 200 even when commands are rejected,
+            # so these codes mean the CLI format upload itself was refused.
+            if response.status_code in (400, 404, 405, 415):
+                message = (
+                    "Uploading a configuration in CLI format is {0}: "
+                    "{1}".format(
+                        GenericOperationError.unsupported_hint,
+                        (response.text or "").strip(),
+                    )
+                )
+            raise GenericOperationError(message, response.status_code)
 
         # The switch answers HTTP 200 even when commands are rejected, the
         # outcome is in the body: {"state": "success"|"failure", "errors": []}

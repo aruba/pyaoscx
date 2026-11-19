@@ -360,6 +360,7 @@ class Session:
         """
         operations = {
             "PUT": self.s.put,
+            "PATCH": self.s.patch,
             "GET": self.s.get,
             "POST": self.s.post,
             "DELETE": self.s.delete,

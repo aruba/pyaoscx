@@ -13,6 +13,7 @@ import json
 
 from pyaoscx.configuration import Configuration
 from pyaoscx.exceptions.config_upload_error import ConfigUploadError
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.verification_error import VerificationError
 
 CLI = "hostname sw1\nvlan 10\n    name TEST\n"
@@ -96,3 +97,17 @@ def test_upload_cli_switch_errors(cli_file):
         "line 34 (interface 1/1/2): 'vlan acess 10': Invalid input: acess; "
         "line 97: 'router osf 1': Invalid input: osf"
     )
+
+
+@pytest.mark.parametrize(
+    "status_code, unsupported",
+    [(400, True), (404, True), (405, True), (415, True), (500, False)],
+)
+def test_upload_cli_refused(cli_file, status_code, unsupported):
+    s = make_session(status_code=status_code, text="Unsupported Media Type")
+    with pytest.raises(GenericOperationError) as exc:
+        Configuration(s).upload_switch_config_cli_from_local(cli_file)
+    assert not isinstance(exc.value, ConfigUploadError)
+    assert exc.value.response_code == status_code
+    assert "Unsupported Media Type" in exc.value.message
+    assert ("probably not supported" in exc.value.message) is unsupported

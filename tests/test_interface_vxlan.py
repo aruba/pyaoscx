@@ -10,6 +10,7 @@ import json
 
 import pytest
 
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.interface import Interface
 
@@ -41,12 +42,13 @@ class FakeSession:
         self.api = FakeApi()
         self.get_data = get_data
         self.requests = []
+        self.put_response = FakeResponse(200)
 
     def request(self, method, uri, params=None, data=None):
         self.requests.append((method, uri, data))
         if method == "GET":
             return FakeResponse(200, self.get_data)
-        return FakeResponse(200)
+        return self.put_response
 
 
 def make_vxlan(get_data):
@@ -69,11 +71,27 @@ def put_bodies(session):
     return [json.loads(d) for m, _, d in session.requests if m == "PUT"]
 
 
+def write_methods(session):
+    return [m for m, _, _ in session.requests if m != "GET"]
+
+
 def test_mode_added_to_put_when_not_configured():
     session, iface = make_vxlan(dict(VXLAN_GET))
     iface.set_inter_vxlan_bridging_mode("static-all")
     assert iface.apply() is True
+    assert write_methods(session) == ["PATCH", "PUT"]
+    patch_body = json.loads(session.requests[-2][2])
+    assert patch_body == {"inter_vxlan_bridging_mode": "static-all"}
     assert put_bodies(session)[-1]["inter_vxlan_bridging_mode"] == "static-all"
+
+
+def test_unchanged_mode_not_patched():
+    data = dict(VXLAN_GET, inter_vxlan_bridging_mode="deny")
+    session, iface = make_vxlan(data)
+    iface.set_inter_vxlan_bridging_mode("deny")
+    iface.description = "new"
+    assert iface.apply() is True
+    assert write_methods(session) == ["PUT"]
 
 
 def test_change_already_configured_mode():
@@ -99,3 +117,25 @@ def test_non_vxlan_interface_rejected():
     iface.get()
     with pytest.raises(ParameterError):
         iface.set_inter_vxlan_bridging_mode("deny")
+
+
+@pytest.mark.parametrize(
+    "text, unsupported",
+    [
+        # Answer of a firmware that does not know the attribute
+        ("invalid attribute: inter_vxlan_bridging_mode\n", True),
+        ("unknown string: allow, valid strings are: deny\n", False),
+    ],
+)
+def test_mode_rejected_by_switch(text, unsupported):
+    session, iface = make_vxlan(dict(VXLAN_GET))
+    session.put_response = FakeResponse(400)
+    session.put_response.text = text
+    iface.set_inter_vxlan_bridging_mode("static-all")
+    with pytest.raises(GenericOperationError) as exc:
+        iface.apply()
+    assert exc.value.response_code == 400
+    assert exc.value.message.startswith(text.strip())
+    assert ("probably not supported" in exc.value.message) is unsupported
+    # Nothing is applied when the mode is rejected
+    assert write_methods(session) == ["PATCH"]
