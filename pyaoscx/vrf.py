@@ -175,9 +175,7 @@ class Vrf(PyaoscxModule):
 
             # Set Address Families if any
             # Adds address_families to parent Vrf object
-            address_families = VrfAddressFamily.get_all(self.session, self)
-            for address_family in address_families.values():
-                self.address_families.append(address_family)
+            VrfAddressFamily.get_all(self.session, self)
 
         # Clean OSPF Routers settings
         if "ospfv2" in device.capabilities and self.ospf_routers == []:
@@ -568,7 +566,6 @@ class Vrf(PyaoscxModule):
             except GenericOperationError:
                 # Create vrf_address_family inside switch
                 vrf_address_family.apply()
-            self.address_families.append(vrf_address_family)
 
         # Apply changes inside switch
         self.apply()
