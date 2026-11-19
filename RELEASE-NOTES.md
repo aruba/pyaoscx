@@ -26,6 +26,14 @@
   switch with compound keys (`"ipv4-unicast,in"`) that it rejects on PUT.
   They are now converted to nested dictionaries when read (new
   `utils.nest_compound_keys()` helper).
+* `BgpRouter.networks_route_maps` and `BgpNeighbor.ORF_prefix_list` are also
+  converted from compound keys to nested dictionaries, so that BGP routers
+  and neighbors using them can be updated.
+* Fixed `BgpNeighbor` URIs for unnumbered neighbors, which are named after
+  their interface (for example `1/1/3`): the name is now encoded.
+* Fixed `AggregateAddress`: `from_uri()` parsed the index of the URI
+  wrongly, the object was never registered in a `BgpRouter` without
+  aggregate addresses, and `delete()` sent extra DELETE requests.
 
 # 2.6.0
 

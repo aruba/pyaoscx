@@ -31,7 +31,7 @@ class BgpRouter(PyaoscxModule):
 
     collection_uri = "system/vrfs/{name}/bgp_routers"
     # Attributes returned with compound keys, but written as nested dicts
-    compound_key_attrs = ("redistribute_route_map",)
+    compound_key_attrs = ("redistribute_route_map", "networks_route_maps")
     object_uri = collection_uri + "/{asn}"
 
     def __init__(self, session, asn, parent_vrf, uri=None, **kwargs):

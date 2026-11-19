@@ -5,6 +5,8 @@ import json
 import logging
 import re
 
+from urllib.parse import quote, unquote
+
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
@@ -22,7 +24,7 @@ class BgpNeighbor(PyaoscxModule):
     indices = ["ip_or_ifname_or_group_name"]
     resource_uri_name = "bgp_neighbors"
     # Attributes returned with compound keys, but written as nested dicts
-    compound_key_attrs = ("route_maps",)
+    compound_key_attrs = ("route_maps", "ORF_prefix_list")
     create_only_attrs = (
         "is_peer_group",
         "listen_ip_range",
@@ -55,6 +57,14 @@ class BgpNeighbor(PyaoscxModule):
         utils.set_creation_attrs(self, **kwargs)
         # Attribute used to know if object was changed recently
         self.__modified = False
+
+    @property
+    def uri_name(self):
+        """
+        Neighbor name as used in URIs. Unnumbered neighbors are named after
+            their interface, for example 1/1/3, so the name is encoded.
+        """
+        return quote(str(self.ip_or_ifname_or_group_name), safe="")
 
     def __set_bgp_router(self, parent_bgp_router):
         """
@@ -113,7 +123,7 @@ class BgpNeighbor(PyaoscxModule):
 
         payload = {"depth": depth, "selector": selector}
 
-        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.uri_name)
 
         try:
             response = self.session.request("GET", uri, params=payload)
@@ -266,7 +276,7 @@ class BgpNeighbor(PyaoscxModule):
             bgp_neighbor_data.pop(key, None)
             original_attributes.pop(key, None)
 
-        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.uri_name)
 
         # Compare dictionaries
         if bgp_neighbor_data == original_attributes:
@@ -342,7 +352,7 @@ class BgpNeighbor(PyaoscxModule):
         Perform DELETE call to delete BGP Neighbor table entry.
         """
 
-        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.uri_name)
 
         try:
             response = self.session.request("DELETE", uri)
@@ -411,7 +421,7 @@ class BgpNeighbor(PyaoscxModule):
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)bgp_neighbors/(?P<index>.+)")
-        index = index_pattern.match(uri).group("index")
+        index = unquote(index_pattern.match(uri).group("index"))
 
         # Create BGP object
         bgp_obj = BgpNeighbor(session, index, parent_bgp_router, uri=uri)
@@ -432,7 +442,7 @@ class BgpNeighbor(PyaoscxModule):
             self._uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix,
                 self.base_uri,
-                self.ip_or_ifname_or_group_name,
+                self.uri_name,
             )
 
         return self._uri

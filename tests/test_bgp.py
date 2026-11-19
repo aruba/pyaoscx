@@ -329,3 +329,70 @@ def test_router_put_sends_nested_redistribute_route_map(monkeypatch):
     assert requests[-1][2]["redistribute_route_map"] == {
         "ipv4-unicast": {"connected": rm}
     }
+
+
+def test_unnumbered_neighbor_name_is_encoded_in_uris():
+    requests = []
+    session = make_session(requests)
+    session.resource_prefix = "/rest/v10.09/"
+    router = make_router(session)
+    nbr = BgpNeighbor(session, "1/1/3", parent_bgp_router=router)
+    nbr.remote_as = 65000
+    nbr.config_attrs = ["remote_as"]
+
+    nbr.update()
+    nbr.delete()
+    path = "system/vrfs/default/bgp_routers/65000/bgp_neighbors/1%2F1%2F3"
+    assert [r[:2] for r in requests] == [("PUT", path), ("DELETE", path)]
+
+    name, from_uri = BgpNeighbor.from_uri(
+        session, router, "/rest/v10.09/" + path
+    )
+    assert name == from_uri.ip_or_ifname_or_group_name == "1/1/3"
+
+
+@pytest.mark.parametrize(
+    "index, family, prefix",
+    [
+        ("ipv4-unicast,10.2.0.0%2F16", "ipv4-unicast", "10.2.0.0/16"),
+        (
+            "ipv6-unicast,2001%3Adb8%3A%3A%2F32",
+            "ipv6-unicast",
+            "2001:db8::/32",
+        ),
+    ],
+)
+def test_aggregate_address_from_uri(index, family, prefix):
+    from pyaoscx.aggregate_address import AggregateAddress
+
+    router = make_router(make_session())
+    uri = "/rest/v10.09/system/vrfs/default/bgp_routers/65000/"
+    key, agg = AggregateAddress.from_uri(
+        make_session(), router, uri + "aggregate_addresses/" + index
+    )
+    assert (agg.address_family, agg.ip_prefix) == (family, prefix)
+    assert key == "{0},{1}".format(family, prefix)
+
+
+def test_aggregate_address_registered_once_and_deleted_once():
+    from pyaoscx.aggregate_address import AggregateAddress
+
+    requests = []
+    session = make_session(requests)
+    session.api.compound_index_separator = ","
+    router = make_router(session)
+    first = AggregateAddress(session, "ipv4-unicast", "10.0.0.0/8", router)
+    other = AggregateAddress(session, "ipv6-unicast", "2001:db8::/32", router)
+    again = AggregateAddress(session, "ipv4-unicast", "10.0.0.0/8", router)
+    assert list(router.aggregate_addresses) == [again, other]
+    assert first not in router.aggregate_addresses
+
+    again.delete()
+    assert [r[:2] for r in requests] == [
+        (
+            "DELETE",
+            "system/vrfs/default/bgp_routers/65000/aggregate_addresses/"
+            "ipv4-unicast,10.0.0.0%2F8",
+        )
+    ]
+    assert list(router.aggregate_addresses) == [other]

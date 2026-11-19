@@ -81,16 +81,18 @@ class AggregateAddress(PyaoscxModule):
             self.__parent_bgp_router.base_uri, self.__parent_bgp_router.asn
         )
 
-        for address in self.__parent_bgp_router.aggregate_addresses:
+        addresses = self.__parent_bgp_router.aggregate_addresses
+        for index, address in enumerate(addresses):
             if (
                 address.address_family == self.address_family
                 and address.ip_prefix == self.ip_prefix
             ):
                 # Make list element point to current object
-                address = self
-            else:
-                # Add self to Aggregate Addresses list in parent BGP Router
-                self.__parent_bgp_router.aggregate_addresses.append(self)
+                list.__setitem__(addresses, index, self)
+                break
+        else:
+            # Add self to Aggregate Addresses list in parent BGP Router
+            addresses.append(self)
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -326,13 +328,15 @@ class AggregateAddress(PyaoscxModule):
 
         logging.info("SUCCESS: Deleting %s", self)
 
-        # Delete back reference from BGP Router
-        for address in self.__parent_bgp_router.aggregate_addresses:
+        # Delete back reference from BGP Router. list.remove is used because
+        # the reference list remove() would send another DELETE request.
+        addresses = self.__parent_bgp_router.aggregate_addresses
+        for address in list(addresses):
             if (
                 address.address_family == self.address_family
                 and address.ip_prefix == self.ip_prefix
             ):
-                self.__parent_bgp_router.aggregate_addresses.remove(address)
+                list.remove(addresses, address)
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
@@ -378,12 +382,14 @@ class AggregateAddress(PyaoscxModule):
         :return: tuple containing both the Aggregate
             Address object and the Aggregate Address' ID.
         """
-        # Obtain ID from URI
+        # Obtain ID from URI, for example
+        # .../aggregate_addresses/ipv4-unicast,10.2.0.0%2F16
         index_pattern = re.compile(
-            r"(.*)aggregate_addresses/(?P<index1>.+)[,./-](?P<index2>.+)"
+            r"(.*)aggregate_addresses/(?P<index1>[^,/]+),(?P<index2>[^/]+)$"
         )
-        index1 = index_pattern.match(uri).group("index1")
-        index2 = index_pattern.match(uri).group("index2")
+        match = index_pattern.match(uri)
+        index1 = match.group("index1")
+        index2 = unquote_plus(match.group("index2"))
 
         # Create Create a AggregateAddress object
         aggr_address = AggregateAddress(
