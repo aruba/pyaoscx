@@ -21,6 +21,11 @@
   `BgpRouter`, and `BgpNeighbor.delete()` sending extra DELETE requests.
 * `BgpRouter.create_bgp_neighbors()` accepts an `ebgp_hop_count` parameter
   (CLI `ebgp-multihop`, 1 to 255, 1 disables multihop).
+* Fixed `BgpRouter` and `BgpNeighbor` updates failing once a route map is
+  applied: `redistribute_route_map` and `route_maps` are returned by the
+  switch with compound keys (`"ipv4-unicast,in"`) that it rejects on PUT.
+  They are now converted to nested dictionaries when read (new
+  `utils.nest_compound_keys()` helper).
 
 # 2.6.0
 

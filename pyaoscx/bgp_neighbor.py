@@ -21,6 +21,8 @@ class BgpNeighbor(PyaoscxModule):
 
     indices = ["ip_or_ifname_or_group_name"]
     resource_uri_name = "bgp_neighbors"
+    # Attributes returned with compound keys, but written as nested dicts
+    compound_key_attrs = ("route_maps",)
     create_only_attrs = (
         "is_peer_group",
         "listen_ip_range",
@@ -125,6 +127,7 @@ class BgpNeighbor(PyaoscxModule):
         data = json.loads(response.text)
 
         # Add dictionary as attributes for the object
+        utils.nest_compound_keys(data, self.compound_key_attrs)
         utils.create_attrs(self, data)
 
         # Determines if the BGP Neighbor is configurable

@@ -280,3 +280,52 @@ def test_create_bgp_neighbors_invalid_ebgp_hop_count(neighbor_calls, value):
     with pytest.raises(VerificationError):
         router.create_bgp_neighbors("10.0.0.1", ebgp_hop_count=value)
     assert not neighbor_calls["applied"]
+
+
+def test_nest_compound_keys():
+    from pyaoscx.utils.util import nest_compound_keys
+
+    data = {
+        "route_maps": {"ipv4-unicast,in": "A", "ipv4-unicast,out": "B"},
+        "redistribute_route_map": {"ipv6-unicast": {"static": "C"}},
+        "activate": {"ipv4-unicast": True},
+        "other": None,
+    }
+    nest_compound_keys(
+        data, ("route_maps", "redistribute_route_map", "other", "missing")
+    )
+    assert data == {
+        "route_maps": {"ipv4-unicast": {"in": "A", "out": "B"}},
+        "redistribute_route_map": {"ipv6-unicast": {"static": "C"}},
+        "activate": {"ipv4-unicast": True},
+        "other": None,
+    }
+
+
+def test_router_put_sends_nested_redistribute_route_map(monkeypatch):
+    requests = []
+    session = make_session(requests)
+    session.api.configurable_selectors = ["writable"]
+    rm = "/rest/v10.09/system/route_maps/RM"
+    router = make_router(session)
+    monkeypatch.setattr(
+        router,
+        "_get_data",
+        lambda depth, selector: {
+            "redistribute": {"ipv4-unicast": ["static"]},
+            "redistribute_route_map": {"ipv4-unicast,connected": rm},
+        },
+    )
+    monkeypatch.setattr(BgpNeighbor, "get_all", lambda *a: {})
+    monkeypatch.setattr(
+        "pyaoscx.bgp_router.AggregateAddress.get_all", lambda *a: {}
+    )
+    router.get()
+    assert router.redistribute_route_map == {"ipv4-unicast": {"connected": rm}}
+
+    assert router.update() is False
+    router.redistribute = {"ipv4-unicast": []}
+    assert router.update() is True
+    assert requests[-1][2]["redistribute_route_map"] == {
+        "ipv4-unicast": {"connected": rm}
+    }

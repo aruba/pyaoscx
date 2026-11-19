@@ -30,6 +30,8 @@ class BgpRouter(PyaoscxModule):
     aggregate_addresses = ListDescriptor("aggregate_addresses")
 
     collection_uri = "system/vrfs/{name}/bgp_routers"
+    # Attributes returned with compound keys, but written as nested dicts
+    compound_key_attrs = ("redistribute_route_map",)
     object_uri = collection_uri + "/{asn}"
 
     def __init__(self, session, asn, parent_vrf, uri=None, **kwargs):
@@ -90,6 +92,7 @@ class BgpRouter(PyaoscxModule):
         if "aggregate_addresses" in data:
             data.pop("aggregate_addresses")
 
+        utils.nest_compound_keys(data, self.compound_key_attrs)
         # Add dictionary as attributes for the object
         utils.create_attrs(self, data)
 
