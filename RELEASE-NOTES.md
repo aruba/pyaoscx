@@ -11,6 +11,10 @@
   When the switch rejects commands (HTTP 200 with `"state": "failure"`),
   a new `ConfigUploadError` is raised; its `errors` attribute holds the
   switch errors (`line`, `context`, `command`, `message`).
+* Added `Interface.set_inter_vxlan_bridging_mode()` and an optional
+  `inter_vxlan_bridging_mode` parameter to `Interface.configure_vxlan()` to
+  manage the inter-VXLAN bridging mode (`deny`, `static-evpn`, `static-all`)
+  of a VXLAN interface (CLI `inter-vxlan-bridging-mode`).
 
 # 2.6.0
 
