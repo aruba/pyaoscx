@@ -5,6 +5,8 @@ import json
 import logging
 import re
 
+from urllib.parse import quote, unquote
+
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.verification_error import VerificationError
@@ -21,6 +23,14 @@ class BgpNeighbor(PyaoscxModule):
 
     indices = ["ip_or_ifname_or_group_name"]
     resource_uri_name = "bgp_neighbors"
+    # Attributes returned with compound keys, but written as nested dicts
+    compound_key_attrs = ("route_maps", "ORF_prefix_list")
+    create_only_attrs = (
+        "is_peer_group",
+        "listen_ip_range",
+        "nbr_interface",
+        "origin",
+    )
 
     def __init__(
         self,
@@ -48,6 +58,14 @@ class BgpNeighbor(PyaoscxModule):
         # Attribute used to know if object was changed recently
         self.__modified = False
 
+    @property
+    def uri_name(self):
+        """
+        Neighbor name as used in URIs. Unnumbered neighbors are named after
+            their interface, for example 1/1/3, so the name is encoded.
+        """
+        return quote(str(self.ip_or_ifname_or_group_name), safe="")
+
     def __set_bgp_router(self, parent_bgp_router):
         """
         Set parent BgpRouter object as an attribute for the BGP class
@@ -63,16 +81,18 @@ class BgpNeighbor(PyaoscxModule):
             self.__parent_bgp_router.base_uri, self.__parent_bgp_router.asn
         )
 
-        for bgp_ngh in self.__parent_bgp_router.bgp_neighbors:
+        neighbors = self.__parent_bgp_router.bgp_neighbors
+        for index, bgp_ngh in enumerate(neighbors):
             if (
                 bgp_ngh.ip_or_ifname_or_group_name
                 == self.ip_or_ifname_or_group_name
             ):
                 # Make list element point to current object
-                bgp_ngh = self
-            else:
-                # Add self to BGP Neighbors list in parent BGP Router
-                self.__parent_bgp_router.bgp_neighbors.append(self)
+                list.__setitem__(neighbors, index, self)
+                break
+        else:
+            # Add self to BGP Neighbors list in parent BGP Router
+            neighbors.append(self)
 
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
@@ -103,7 +123,7 @@ class BgpNeighbor(PyaoscxModule):
 
         payload = {"depth": depth, "selector": selector}
 
-        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.uri_name)
 
         try:
             response = self.session.request("GET", uri, params=payload)
@@ -117,6 +137,7 @@ class BgpNeighbor(PyaoscxModule):
         data = json.loads(response.text)
 
         # Add dictionary as attributes for the object
+        utils.nest_compound_keys(data, self.compound_key_attrs)
         utils.create_attrs(self, data)
 
         # Determines if the BGP Neighbor is configurable
@@ -216,6 +237,26 @@ class BgpNeighbor(PyaoscxModule):
         self.__modified = modified
         return modified
 
+    def __set_local_interface_data(self, data, creating=False):
+        """
+        Replace the local_interface attribute in the request body by its URI
+            reference. An empty value is removed on creation and sent as None
+            on update, to keep the comparison with the GET data stable.
+
+        :param data: Dictionary with the request body.
+        :param creating: True when building a POST body.
+        """
+        local_interface = getattr(self, "local_interface", None)
+        if not local_interface:
+            if creating:
+                data.pop("local_interface", None)
+            elif "local_interface" in data:
+                data["local_interface"] = None
+        elif not isinstance(local_interface, str):
+            data["local_interface"] = self.session.api.get_index(
+                local_interface
+            )
+
     @PyaoscxModule.connected
     def update(self):
         """
@@ -228,17 +269,17 @@ class BgpNeighbor(PyaoscxModule):
         modified = False
 
         bgp_neighbor_data = utils.get_attrs(self, self.config_attrs)
+        self.__set_local_interface_data(bgp_neighbor_data)
+        original_attributes = dict(self.__original_attributes)
+        # These attributes can only be set on creation, PUT rejects them
+        for key in self.create_only_attrs:
+            bgp_neighbor_data.pop(key, None)
+            original_attributes.pop(key, None)
 
-        # Get ISL port uri
-        if self.local_interface is not None:
-            bgp_neighbor_data[
-                "local_interface"
-            ] = self.local_interface.get_info_format()
-
-        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.uri_name)
 
         # Compare dictionaries
-        if bgp_neighbor_data == self.__original_attributes:
+        if bgp_neighbor_data == original_attributes:
             # Object was not modified
             modified = False
 
@@ -272,23 +313,17 @@ class BgpNeighbor(PyaoscxModule):
         :return: Boolean, True if entry was created
         """
         bgp_neighbor_data = utils.get_attrs(self, self.config_attrs)
-        bgp_neighbor_data[
-            "ip_or_ifname_or_group_name"
-        ] = self.ip_or_ifname_or_group_name
+        bgp_neighbor_data["ip_or_ifname_or_group_name"] = (
+            self.ip_or_ifname_or_group_name
+        )
 
-        if hasattr(self, "local_interface"):
-
-            # If local interface is NOT a string
-            if not isinstance(self.local_interface, str):
-                if not self.local_interface.materialized:
-                    raise VerificationError(
-                        "Local Interface", "Object not materialized"
-                    )
-
-                # Get ISL port uri
-                bgp_neighbor_data[
-                    "local_interface"
-                ] = self.local_interface.get_info_format()
+        local_interface = getattr(self, "local_interface", None)
+        if local_interface and not isinstance(local_interface, str):
+            if not local_interface.materialized:
+                raise VerificationError(
+                    "Local Interface", "Object not materialized"
+                )
+        self.__set_local_interface_data(bgp_neighbor_data, creating=True)
 
         post_data = json.dumps(bgp_neighbor_data)
 
@@ -317,7 +352,7 @@ class BgpNeighbor(PyaoscxModule):
         Perform DELETE call to delete BGP Neighbor table entry.
         """
 
-        uri = "{0}/{1}".format(self.base_uri, self.ip_or_ifname_or_group_name)
+        uri = "{0}/{1}".format(self.base_uri, self.uri_name)
 
         try:
             response = self.session.request("DELETE", uri)
@@ -330,13 +365,15 @@ class BgpNeighbor(PyaoscxModule):
 
         logging.info("SUCCESS: Deleting %s", self)
 
-        # Delete back reference from BGP_Routers
-        for neighbor in self.__parent_bgp_router.bgp_neighbors:
+        # Delete back reference from BGP_Routers. list.remove is used because
+        # the reference list remove() would send another DELETE request.
+        neighbors = self.__parent_bgp_router.bgp_neighbors
+        for neighbor in list(neighbors):
             if (
                 neighbor.ip_or_ifname_or_group_name
                 == self.ip_or_ifname_or_group_name
             ):
-                self.__parent_bgp_router.bgp_neighbors.remove(neighbor)
+                list.remove(neighbors, neighbor)
 
         # Delete object attributes
         utils.delete_attrs(self, self.config_attrs)
@@ -384,7 +421,7 @@ class BgpNeighbor(PyaoscxModule):
         """
         # Obtain ID from URI
         index_pattern = re.compile(r"(.*)bgp_neighbors/(?P<index>.+)")
-        index = index_pattern.match(uri).group("index")
+        index = unquote(index_pattern.match(uri).group("index"))
 
         # Create BGP object
         bgp_obj = BgpNeighbor(session, index, parent_bgp_router, uri=uri)
@@ -405,7 +442,7 @@ class BgpNeighbor(PyaoscxModule):
             self._uri = "{0}{1}/{2}".format(
                 self.session.resource_prefix,
                 self.base_uri,
-                self.ip_or_ifname_or_group_name,
+                self.uri_name,
             )
 
         return self._uri
