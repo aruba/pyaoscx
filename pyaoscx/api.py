@@ -169,6 +169,8 @@ class API(ABC):
             "Vni": "vni",
             "Evpn": "evpn",
             "EvpnVlan": "evpn_vlan",
+            "Evpn": "evpn",
+            "EvpnVlan": "evpn_vlan",
         }
         if name not in module_names:
             raise ParameterError(

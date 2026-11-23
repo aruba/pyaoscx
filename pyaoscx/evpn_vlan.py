@@ -14,9 +14,9 @@ from pyaoscx.pyaoscx_module import PyaoscxModule
 
 class EvpnVlan(PyaoscxModule):
     """
-    Provide configuration management for the per-VLAN EVPN settings on AOS-CX
+    Provide configuration management for per-VLAN EVPN settings on AOS-CX
         devices. These resources live under system/evpn/evpn_vlans and are
-        indexed by the VLAN ID.
+        indexed by the VLAN ID. The VLAN must already exist.
     """
 
     collection_uri = "system/evpn/evpn_vlans"
@@ -27,8 +27,7 @@ class EvpnVlan(PyaoscxModule):
 
     def __init__(self, session, vlan, **kwargs):
         self.session = session
-        # The index is the VLAN ID, represented as a string by the REST API
-        self.vlan = str(vlan)
+        self.vlan = vlan
         self.config_attrs = []
         self.materialized = False
         self._original_attributes = {}
@@ -45,8 +44,8 @@ class EvpnVlan(PyaoscxModule):
     @PyaoscxModule.connected
     def get(self, depth=None, selector=None):
         """
-        Perform a GET call to retrieve data for an EVPN VLAN table entry and
-            fill the object with the incoming attributes.
+        Perform a GET call to retrieve data for a per-VLAN EVPN table entry
+            and fill the object with the incoming attributes.
 
         :param depth: Integer deciding how many levels into the API JSON that
             references will be returned.
@@ -55,6 +54,7 @@ class EvpnVlan(PyaoscxModule):
         :return: Returns True if there is not an exception raised.
         """
         logging.info("Retrieving %s from switch", self)
+        # The vlan attribute is a reference on the switch, keep the VLAN ID
         self._get_and_copy_data(depth, selector, self.indices)
         self.materialized = True
         return True
@@ -62,8 +62,8 @@ class EvpnVlan(PyaoscxModule):
     @classmethod
     def get_all(cls, session):
         """
-        Perform a GET call to retrieve all EVPN VLAN entries and create a
-            dictionary containing each respective EVPN VLAN.
+        Perform a GET call to retrieve all per-VLAN EVPN entries and create a
+            dictionary containing each respective entry.
 
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
@@ -85,15 +85,15 @@ class EvpnVlan(PyaoscxModule):
 
         collection = {}
         for uri in data.values():
-            vlan_id, evpn_vlan = cls.from_uri(session, uri)
-            collection[vlan_id] = evpn_vlan
+            vlan, evpn_vlan = cls.from_uri(session, uri)
+            collection[vlan] = evpn_vlan
 
         return collection
 
     @classmethod
     def from_uri(cls, session, uri):
         """
-        Create an EvpnVlan object given an EVPN VLAN URI.
+        Create an EvpnVlan object given a per-VLAN EVPN URI.
 
         :param cls: Object's class.
         :param session: pyaoscx.Session object used to represent a logical
@@ -101,15 +101,15 @@ class EvpnVlan(PyaoscxModule):
         :param uri: a String with a URI.
         :return: Tuple with the VLAN ID and the EvpnVlan object.
         """
-        # The URI ends with the VLAN ID, e.g. system/evpn/evpn_vlans/204
-        vlan_id = uri.rstrip("/").split("/")[-1]
-        evpn_vlan = cls(session, vlan_id)
-        return vlan_id, evpn_vlan
+        # The URI ends with the VLAN ID, e.g. system/evpn/evpn_vlans/190
+        vlan = int(uri.rstrip("/").split("/")[-1])
+        return vlan, cls(session, vlan)
 
     @PyaoscxModule.connected
     def apply(self):
         """
-        Main method used to either create or update an EVPN VLAN table entry.
+        Main method used to either create or update a per-VLAN EVPN table
+            entry.
 
         :return: True if the object was modified.
         """
@@ -120,7 +120,8 @@ class EvpnVlan(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing EVPN VLAN entry.
+        Perform a PUT call to apply changes to an existing per-VLAN EVPN
+            entry.
 
         :return: True if object was modified and a PUT request was made.
         """
@@ -131,15 +132,12 @@ class EvpnVlan(PyaoscxModule):
     @PyaoscxModule.connected
     def create(self):
         """
-        Perform a POST call to create a new EVPN VLAN entry using the object's
-            attributes as POST body. Exception is raised if object is unable
-            to be created.
+        Perform a POST call to create a new per-VLAN EVPN entry. Exception is
+            raised if the object is unable to be created.
 
         :return: Boolean, True if entry was created.
         """
         data = utils.get_attrs(self, self.config_attrs)
-        # The REST API expects the "vlan" attribute as a URI reference to the
-        # VLAN resource (the plain VLAN ID is rejected with a 500 error).
         data["vlan"] = "{0}system/vlans/{1}".format(
             self.session.resource_prefix, self.vlan
         )
@@ -149,7 +147,7 @@ class EvpnVlan(PyaoscxModule):
     @PyaoscxModule.connected
     def delete(self):
         """
-        Perform a DELETE call to erase the EVPN VLAN table entry.
+        Perform a DELETE call to erase the per-VLAN EVPN table entry.
         """
         self._send_data(self.path, None, "DELETE", "Delete")
         utils.delete_attrs(self, self.config_attrs)
@@ -157,7 +155,7 @@ class EvpnVlan(PyaoscxModule):
     @PyaoscxModule.deprecated
     def get_uri(self):
         """
-        Method used to obtain the specific EVPN VLAN URI.
+        Method used to obtain the specific per-VLAN EVPN URI.
 
         :return: Object's URI.
         """
