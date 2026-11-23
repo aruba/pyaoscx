@@ -395,6 +395,63 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
         return modified
 
+    def set_virtual_mac(self, virtual_mac):
+        """
+        Perform a PUT request to set or remove the global virtual MAC of the
+            device (virtual-mac command). EVPN advertises it as the router
+            MAC of the symmetric IRB routes.
+
+        :param virtual_mac: MAC address in the xx:xx:xx:xx:xx:xx format, or
+            None to remove the global virtual MAC.
+        :return modified: Returns True if the virtual MAC was modified.
+        """
+        logging.info("Setting the global virtual MAC")
+
+        if virtual_mac is not None:
+            virtual_mac = virtual_mac.lower()
+
+        selector = self.session.api.default_selector
+        payload = {
+            "depth": self.session.api.default_depth,
+            "selector": selector,
+        }
+        try:
+            response = self.session.request(
+                "GET", Device.base_uri, params=payload
+            )
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        config_data = json.loads(response.text)
+
+        current = config_data.get("virtual_mac")
+        if current is not None:
+            current = current.lower()
+        if current == virtual_mac:
+            return False
+
+        if virtual_mac is None:
+            config_data.pop("virtual_mac", None)
+        else:
+            config_data["virtual_mac"] = virtual_mac
+
+        try:
+            response = self.session.request(
+                "PUT", Device.base_uri, data=json.dumps(config_data)
+            )
+        except Exception as e:
+            raise ResponseError("PUT", e)
+
+        if not utils._response_ok(response, "PUT"):
+            raise GenericOperationError(
+                response.text, response.status_code, "SET VIRTUAL MAC"
+            )
+
+        return True
+
     def boot_firmware(self, partition_name="primary"):
         """
         Perform a POST request to Boot the AOS-CX switch with image present
