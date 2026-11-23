@@ -2,8 +2,9 @@
 # Apache License 2.0
 
 """
-Offline unit tests for traffic classes (Class, ClassEntry) and port access
-roles (PortAccessRole).
+Offline unit tests for traffic classes (Class, ClassEntry), port access roles
+(PortAccessRole) and per interface port access authentication settings
+(PortAccessAuthConfiguration).
 """
 
 import json
@@ -11,6 +12,10 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from pyaoscx.class_entry import ClassEntry
+from pyaoscx.port_access_auth_configuration import (
+    PortAccessAuthConfiguration,
+)
+from pyaoscx.port_access_gbp import PortAccessGbp
 from pyaoscx.port_access_role import PortAccessRole
 from pyaoscx.traffic_class import Class
 
@@ -143,4 +148,77 @@ def test_port_access_role_create_and_update():
             "system/port_access_roles/fabric_user1",
             {"auth_mode": "client-mode", "reauth_period": 800},
         )
+    ]
+
+
+def test_auth_configuration_create_under_encoded_interface():
+    session = make_session({"authentication_method": "dot1x"})
+    config = PortAccessAuthConfiguration(
+        session, "1/1/2", authentication_method="dot1x", eapol_timeout=10
+    )
+    assert config.path == (
+        "system/interfaces/1%2F1%2F2/port_access_auth_configurations/dot1x"
+    )
+    assert config.create() is True
+    assert written(session, "POST") == [
+        (
+            "system/interfaces/1%2F1%2F2/port_access_auth_configurations",
+            {"eapol_timeout": 10, "authentication_method": "dot1x"},
+        )
+    ]
+
+
+def test_auth_configuration_update_never_sends_read_only_attributes():
+    session = make_session(
+        {
+            "authentication_method": "mac-auth",
+            "is_persona": False,
+            "quiet_period": 60,
+        }
+    )
+    config = PortAccessAuthConfiguration(
+        session, "1/1/2", authentication_method="mac-auth"
+    )
+    config.get()
+    assert config.config_attrs == ["quiet_period"]
+    assert config.update() is False
+    config.quiet_period = 30
+    assert config.update() is True
+    assert written(session, "PUT") == [
+        (
+            "system/interfaces/1%2F1%2F2/port_access_auth_configurations/"
+            "mac-auth",
+            {"quiet_period": 30},
+        )
+    ]
+
+
+def test_auth_configuration_from_uri():
+    method, config = PortAccessAuthConfiguration.from_uri(
+        MagicMock(),
+        "/rest/v10.16/system/interfaces/1%2F1%2F2/"
+        "port_access_auth_configurations/mac-auth",
+    )
+    assert method == "mac-auth"
+    assert config.interface_name == "1/1/2"
+    assert config.path.endswith(
+        "1%2F1%2F2/port_access_auth_configurations/mac-auth"
+    )
+
+
+def test_class_update_cfg_version_starts_from_null():
+    session = make_session({"cfg_version": None})
+    traffic_class = Class(session, "c1", "gbp-ipv4")
+    assert traffic_class.update_cfg_version() == 1
+    assert written(session, "PATCH") == [
+        ("system/classes/c1,gbp-ipv4", {"cfg_version": 1})
+    ]
+
+
+def test_policy_update_cfg_version_increments():
+    session = make_session({"cfg_version": 3})
+    policy = PortAccessGbp(session, "pol1")
+    assert policy.update_cfg_version() == 4
+    assert written(session, "PATCH") == [
+        ("system/port_access_gbps/pol1", {"cfg_version": 4})
     ]

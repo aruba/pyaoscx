@@ -10,6 +10,7 @@ from pyaoscx.exceptions.response_error import ResponseError
 
 from pyaoscx.utils import util as utils
 
+from pyaoscx.port_access_policy_common import increment_cfg_version
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
@@ -215,6 +216,18 @@ class Class(PyaoscxModule):
 
         logging.info("SUCCESS: Deleting %s", self)
         utils.delete_attrs(self, self.config_attrs)
+
+    @PyaoscxModule.connected
+    def update_cfg_version(self):
+        """
+        Increment the cfg_version of the class so that the switch applies its
+            entries. Call it after the entries were created, modified or
+            deleted.
+
+        :return: The new cfg_version.
+        """
+        self.cfg_version = increment_cfg_version(self.session, self.path)
+        return self.cfg_version
 
     @classmethod
     def from_response(cls, session, response_data):

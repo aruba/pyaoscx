@@ -161,23 +161,34 @@ class RadiusServer(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to an existing RADIUS server.
+        Perform a PATCH call to apply changes to an existing RADIUS server.
+            Only the attributes that differ from the switch are sent: the
+            switch returns the ClearPass password encrypted and rejects it
+            when it is sent back, while a PUT without it would erase the
+            ClearPass settings.
 
-        :return: True if Object was modified and a PUT request was made.
+        :return: True if Object was modified and a PATCH request was made.
         """
         server_data = utils.get_attrs(self, self.config_attrs)
 
-        if server_data == self._original_attributes:
+        changed_data = {
+            key: value
+            for key, value in server_data.items()
+            if self._original_attributes.get(key) != value
+        }
+        if not changed_data:
             return False
 
-        post_data = json.dumps(server_data)
+        patch_data = json.dumps(changed_data)
 
         try:
-            response = self.session.request("PUT", self.path, data=post_data)
+            response = self.session.request(
+                "PATCH", self.path, data=patch_data
+            )
         except Exception as e:
-            raise ResponseError("PUT", e)
+            raise ResponseError("PATCH", e)
 
-        if not utils._response_ok(response, "PUT"):
+        if not utils._response_ok(response, "PATCH"):
             raise GenericOperationError(response.text, response.status_code)
 
         logging.info("SUCCESS: Updating %s", self)

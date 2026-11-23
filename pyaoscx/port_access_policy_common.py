@@ -27,6 +27,45 @@ from pyaoscx.utils import util as utils
 from pyaoscx.pyaoscx_module import PyaoscxModule
 
 
+def increment_cfg_version(session, path):
+    """
+    Increment the cfg_version of a resource holding entries (traffic class,
+        port access policy). The switch only applies the entries of such a
+        resource when its cfg_version changes; until then the running-config
+        reports the user configuration as "currently being processed".
+
+    :param session: pyaoscx.Session object.
+    :param path: Path of the resource, for example
+        "system/classes/my_class,gbp-ipv4".
+    :return: The new cfg_version.
+    """
+    try:
+        response = session.request(
+            "GET",
+            path,
+            params={"attributes": "cfg_version", "selector": "configuration"},
+        )
+    except Exception as e:
+        raise ResponseError("GET", e)
+
+    if not utils._response_ok(response, "GET"):
+        raise GenericOperationError(response.text, response.status_code)
+
+    new_version = (json.loads(response.text).get("cfg_version") or 0) + 1
+
+    try:
+        response = session.request(
+            "PATCH", path, data=json.dumps({"cfg_version": new_version})
+        )
+    except Exception as e:
+        raise ResponseError("PATCH", e)
+
+    if not utils._response_ok(response, "PATCH"):
+        raise GenericOperationError(response.text, response.status_code)
+
+    return new_version
+
+
 class PortAccessPolicyContainer(PyaoscxModule):
     """
     Base class for a Port Access policy family container, indexed by name.
@@ -217,6 +256,18 @@ class PortAccessPolicyContainer(PyaoscxModule):
 
         logging.info("SUCCESS: Deleting %s", self)
         utils.delete_attrs(self, self.config_attrs)
+
+    @PyaoscxModule.connected
+    def update_cfg_version(self):
+        """
+        Increment the cfg_version of the policy so that the switch applies
+            its entries. Call it after the entries were created, modified or
+            deleted.
+
+        :return: The new cfg_version.
+        """
+        self.cfg_version = increment_cfg_version(self.session, self.path)
+        return self.cfg_version
 
     @classmethod
     def from_response(cls, session, response_data):

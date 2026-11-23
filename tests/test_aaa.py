@@ -12,6 +12,10 @@ import json
 from unittest.mock import MagicMock
 
 from pyaoscx.aaa_server_group import AaaServerGroup
+from pyaoscx.aaa import Aaa
+from pyaoscx.radius_dynamic_authorization import (
+    RadiusDynamicAuthorization,
+)
 from pyaoscx.radius_server import RadiusServer
 from pyaoscx.tacacs_server import TacacsServer
 
@@ -168,17 +172,31 @@ def test_radius_update_idempotent():
     assert not [c for c in session.calls if c["method"] == "PUT"]
 
 
-def test_radius_update_changed_uses_put():
-    session = make_session(get_body={"timeout": 5})
+def test_radius_update_changed_uses_patch():
+    session = make_session(get_body={"timeout": 5, "passkey": "AQBap-enc"})
     server = RadiusServer(
         session, fake_vrf("default"), "192.0.2.50", 1812, "udp"
     )
     server.get(selector="writable")
     server.timeout = 20
     assert server.update() is True
-    puts = [c for c in session.calls if c["method"] == "PUT"]
-    assert len(puts) == 1
-    assert puts[0]["data"] == {"timeout": 20}
+    patches = [c for c in session.calls if c["method"] == "PATCH"]
+    assert len(patches) == 1
+    assert patches[0]["data"] == {"timeout": 20}
+    assert not [c for c in session.calls if c["method"] == "PUT"]
+
+
+def test_radius_update_never_resends_unchanged_clearpass():
+    clearpass = {"user_id": "user", "password": "AQBap-encrypted-password"}
+    session = make_session(get_body={"timeout": 5, "clearpass": clearpass})
+    server = RadiusServer(
+        session, fake_vrf("default"), "192.0.2.50", 1812, "udp"
+    )
+    server.get(selector="writable")
+    server.timeout = 20
+    server.update()
+    patches = [c for c in session.calls if c["method"] == "PATCH"]
+    assert "clearpass" not in patches[0]["data"]
 
 
 def test_radius_get_pops_indices():
@@ -260,3 +278,57 @@ def test_tacacs_get_all():
     session = make_session(get_body=body)
     result = TacacsServer.get_all(session, fake_vrf("default"))
     assert "192.0.2.60,49" in result
+
+
+def test_aaa_update_preserves_other_system_attributes():
+    session = make_session(
+        get_body={
+            "aaa": {"fail_through": False},
+            "virtual_mac": "02:00:00:00:00:04",
+        }
+    )
+    aaa = Aaa(session)
+    aaa.get()
+    aaa.aaa["fail_through"] = True
+    assert aaa.update() is True
+    puts = [c for c in session.calls if c["method"] == "PUT"]
+    assert puts == [
+        {
+            "method": "PUT",
+            "path": "system",
+            "data": {
+                "aaa": {"fail_through": True},
+                "virtual_mac": "02:00:00:00:00:04",
+            },
+        }
+    ]
+
+
+def test_aaa_update_removes_a_setting():
+    session = make_session(
+        get_body={"aaa": {"dot1x_radius_server_group": "grp", "x": 1}}
+    )
+    aaa = Aaa(session)
+    aaa.get()
+    del aaa.aaa["dot1x_radius_server_group"]
+    assert aaa.update() is True
+    puts = [c for c in session.calls if c["method"] == "PUT"]
+    assert puts[0]["data"] == {"aaa": {"x": 1}}
+
+
+def test_radius_dynamic_authorization_update_keeps_system_config():
+    session = make_session(
+        get_body={
+            "radius_dynamic_authorization": {"enable": False},
+            "GBP_enable": True,
+        }
+    )
+    dynauth = RadiusDynamicAuthorization(session)
+    dynauth.get()
+    dynauth.radius_dynamic_authorization["enable"] = True
+    assert dynauth.update() is True
+    puts = [c for c in session.calls if c["method"] == "PUT"]
+    assert puts[0]["data"] == {
+        "radius_dynamic_authorization": {"enable": True},
+        "GBP_enable": True,
+    }

@@ -436,56 +436,13 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
     def _set_system_attribute(self, name, value, operation, normalize=None):
         """
-        Read the writable configuration of /system and PUT it back with one
-            attribute set to a new value, only when that value differs.
+        Set one attribute of /system, see utils.set_system_attribute().
 
-        :param name: Name of the /system attribute.
-        :param value: New value, or None to remove the attribute.
-        :param operation: Operation name reported on a failed PUT.
-        :param normalize: Optional callable applied to the current value
-            before comparing it with the new one.
         :return modified: Returns True if a PUT request was made.
         """
-        payload = {
-            "depth": self.session.api.default_depth,
-            "selector": self.session.api.default_selector,
-        }
-        try:
-            response = self.session.request(
-                "GET", Device.base_uri, params=payload
-            )
-        except Exception as e:
-            raise ResponseError("GET", e)
-
-        if not utils._response_ok(response, "GET"):
-            raise GenericOperationError(response.text, response.status_code)
-
-        config_data = json.loads(response.text)
-
-        current = config_data.get(name)
-        if normalize is not None:
-            current = normalize(current)
-        if current == value:
-            return False
-
-        if value is None:
-            config_data.pop(name, None)
-        else:
-            config_data[name] = value
-
-        try:
-            response = self.session.request(
-                "PUT", Device.base_uri, data=json.dumps(config_data)
-            )
-        except Exception as e:
-            raise ResponseError("PUT", e)
-
-        if not utils._response_ok(response, "PUT"):
-            raise GenericOperationError(
-                response.text, response.status_code, operation
-            )
-
-        return True
+        return utils.set_system_attribute(
+            self.session, name, value, operation, normalize=normalize
+        )
 
     def boot_firmware(self, partition_name="primary"):
         """

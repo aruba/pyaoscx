@@ -1,6 +1,7 @@
 # (C) Copyright 2019-2024 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import json
 import os
 import re
 
@@ -310,6 +311,63 @@ def set_config_attrs(
             new_config_attrs = list(filter((element).__ne__, new_config_attrs))
     # Set config attributes list with new values
     obj.__setattr__(config_attrs, new_config_attrs)
+
+
+def set_system_attribute(session, name, value, operation, normalize=None):
+    """
+    Read the whole writable configuration of /system and PUT it back with one
+        attribute set to a new value, only when that value differs. A PUT
+        replaces the whole system resource: sending only the modified
+        attribute would reset every other one (virtual MAC, NTP, GBP, ...) to
+        its default value, and a PATCH cannot remove a key of a dictionary
+        attribute such as aaa.
+
+    :param session: pyaoscx.Session object.
+    :param name: Name of the /system attribute.
+    :param value: New value, or None to remove the attribute.
+    :param operation: Operation name reported on a failed PUT.
+    :param normalize: Optional callable applied to the current value before
+        comparing it with the new one.
+    :return modified: Returns True if a PUT request was made.
+    """
+    payload = {
+        "depth": session.api.default_depth,
+        "selector": session.api.default_selector,
+    }
+    try:
+        response = session.request("GET", "system", params=payload)
+    except Exception as e:
+        raise ResponseError("GET", e)
+
+    if not _response_ok(response, "GET"):
+        raise GenericOperationError(response.text, response.status_code)
+
+    config_data = json.loads(response.text)
+
+    current = config_data.get(name)
+    if normalize is not None:
+        current = normalize(current)
+    if current == value:
+        return False
+
+    if value is None:
+        config_data.pop(name, None)
+    else:
+        config_data[name] = value
+
+    try:
+        response = session.request(
+            "PUT", "system", data=json.dumps(config_data)
+        )
+    except Exception as e:
+        raise ResponseError("PUT", e)
+
+    if not _response_ok(response, "PUT"):
+        raise GenericOperationError(
+            response.text, response.status_code, operation
+        )
+
+    return True
 
 
 def _response_ok(response, call_type):

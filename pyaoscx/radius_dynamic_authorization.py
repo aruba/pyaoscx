@@ -69,7 +69,7 @@ class RadiusDynamicAuthorization(PyaoscxModule):
     @PyaoscxModule.connected
     def apply(self):
         """
-        Apply the configured values with a PUT to the system resource.
+        Apply the configured values to the system resource.
         """
         modified = self.update()
         self.__modified = modified
@@ -78,22 +78,23 @@ class RadiusDynamicAuthorization(PyaoscxModule):
     @PyaoscxModule.connected
     def update(self):
         """
-        Perform a PUT call to apply changes to the global settings.
+        Apply changes to the global settings. The whole writable
+            configuration of the system resource is sent back with a PUT (see
+            utils.set_system_attribute()): a PUT of this attribute alone would
+            reset every other system attribute, and a PATCH cannot remove one
+            of its keys.
         """
         data = {self._attr: self.radius_dynamic_authorization}
 
         if data == self._original_attributes:
             return False
 
-        try:
-            response = self.session.request(
-                "PUT", self.path, data=json.dumps(data)
-            )
-        except Exception as e:
-            raise ResponseError("PUT", e)
-
-        if not utils._response_ok(response, "PUT"):
-            raise GenericOperationError(response.text, response.status_code)
+        utils.set_system_attribute(
+            self.session,
+            self._attr,
+            getattr(self, self._attr),
+            "UPDATE RADIUS DYNAMIC AUTHORIZATION",
+        )
 
         logging.info("SUCCESS: Updating %s", self)
         self._original_attributes = {

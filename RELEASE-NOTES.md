@@ -62,6 +62,25 @@
   switch with compound keys (`"ipv4-unicast,in"`) that it rejects on PUT.
   They are now converted to nested dictionaries when read (new
   `utils.nest_compound_keys()` helper).
+* Added the `PortAccessAuthConfiguration` class to manage the per interface
+  port access authentication settings (CLI `aaa authentication port-access
+  dot1x authenticator | mac-auth` of an interface,
+  `system/interfaces/{name}/port_access_auth_configurations/{method}`),
+  required by the `aoscx_port_access_auth` module.
+* Added `update_cfg_version()` to `Class` and to the port access policies
+  (`PortAccessGbp`, `PortAccessAbp`, `PortAccessPolicy`): the switch only
+  applies the entries of a traffic class or policy when its `cfg_version`
+  changes (until then the running-config reports the user configuration as
+  "currently being processed").
+* Fixed `Aaa.update()` and `RadiusDynamicAuthorization.update()`: they sent a
+  PUT of `/system` holding only their attribute, which reset every other
+  system attribute (virtual MAC, NTP, GBP, ...) to its default value. They
+  now send back the whole writable system configuration, like
+  `Device.set_virtual_mac()`, through the new `utils.set_system_attribute()`
+  helper.
+* `RadiusServer.update()` now sends a PATCH with only the modified attributes
+  instead of a PUT: the switch rejects the encrypted ClearPass password when
+  it is sent back, while a PUT without it erases the ClearPass settings.
 
 # 2.6.0
 
