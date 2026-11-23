@@ -5,6 +5,10 @@
 * Added `Device.set_virtual_mac()` to set or remove the global virtual MAC
   (CLI `virtual-mac`), advertised by EVPN as the router MAC of the symmetric
   IRB routes (`virtual_mac` attribute of `PUT /system`).
+* Added `Device.set_gbp_enable()` to enable or disable Group Based Policy
+  enforcement (CLI `gbp enable`, `GBP_enable` attribute of `PUT /system`).
+* Added the `GbpRole` class to create, update or delete Group Based Policy
+  roles (CLI `gbp role <name> <id>`, `system/gbp_role_name_id_maps`).
 
 # 2.6.0
 
