@@ -168,7 +168,7 @@ class API(ABC):
             "CaptivePortalProfile": "captive_portal_profile",
             "PortAccessRole": "port_access_role",
             "PortAccessVlanGroup": "port_access_vlan_group",
-            "Class": "class",
+            "Class": "traffic_class",
             "ClassEntry": "class_entry",
             "PortAccessGbp": "port_access_gbp",
             "PortAccessAbp": "port_access_abp",
