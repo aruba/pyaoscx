@@ -173,6 +173,7 @@ class API(ABC):
             "PortAccessGbp": "port_access_gbp",
             "PortAccessAbp": "port_access_abp",
             "PortAccessPolicy": "port_access_policy",
+            "GbpRole": "gbp_role",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
