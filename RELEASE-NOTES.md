@@ -11,6 +11,16 @@
   When the switch rejects commands (HTTP 200 with `"state": "failure"`),
   a new `ConfigUploadError` is raised; its `errors` attribute holds the
   switch errors (`line`, `context`, `command`, `message`).
+* Added `Interface.set_ip_unnumbered()`, the read-only `Interface.ip_unnumbered`
+  property and an optional `ip_unnumbered` parameter to
+  `Interface.configure_l3()` to make a routed port or L3 LAG borrow the
+  primary IPv4 address of a loopback interface (CLI
+  `ip unnumbered interface loopback <n>`, `unnumbered` attribute of
+  `/system/interfaces/{name}`). As the switch REST API does not check it, the
+  SDK raises `ParameterError` when the interface is not routed, when the
+  lender is not an existing loopback or is not in the same VRF. A new lender
+  is first sent with a PATCH, so a firmware that does not know the attribute
+  rejects it instead of silently ignoring it.
 * Added `Interface.set_inter_vxlan_bridging_mode()` and an optional
   `inter_vxlan_bridging_mode` parameter to `Interface.configure_vxlan()` to
   manage the inter-VXLAN bridging mode (`deny`, `static-evpn`, `static-all`)

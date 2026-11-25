@@ -703,18 +703,27 @@ class Interface(PyaoscxModule):
             # Object was not modified
             modified = False
         else:
+            # PUT silently ignores attributes unknown to the firmware, while
+            # PATCH rejects them with 400 "invalid attribute". Changed values
+            # of these attributes are therefore sent with a PATCH first; they
+            # stay in the PUT body, as PUT resets missing attributes.
+            patch_data = {}
             mode = iface_data.get("inter_vxlan_bridging_mode")
             if mode is not None and mode != self.__original_attributes.get(
                 "inter_vxlan_bridging_mode"
             ):
-                # PUT silently ignores attributes unknown to the firmware,
-                # while PATCH rejects them with 400 "invalid attribute". The
-                # mode stays in the PUT body, as PUT resets missing attributes.
+                patch_data["inter_vxlan_bridging_mode"] = mode
+            unnumbered = iface_data.get("unnumbered")
+            if unnumbered and unnumbered != self.__original_attributes.get(
+                "unnumbered"
+            ):
+                patch_data["unnumbered"] = unnumbered
+            if patch_data:
                 try:
                     response = self.session.request(
                         "PATCH",
                         uri,
-                        data=json.dumps({"inter_vxlan_bridging_mode": mode}),
+                        data=json.dumps(patch_data),
                     )
                 except Exception as e:
                     raise ResponseError("PATCH", e)
@@ -1048,6 +1057,7 @@ class Interface(PyaoscxModule):
         description=None,
         fallback_enabled=None,
         mc_lag=None,
+        ip_unnumbered=None,
     ):
         """
         Configure an Interface object, if not materialized, materialize it and
@@ -1072,6 +1082,11 @@ class Interface(PyaoscxModule):
             nothing if not specified.
         :param fallback_enabled: Boolean to set the LAG's LACP fallback mode.
         :param mc_lag: Boolean to set the LAG as a multi-chassis LAG.
+        :param ip_unnumbered: Optional loopback interface (name such as
+            'loopback0' or Interface object), in the same VRF, whose primary
+            IPv4 address is borrowed by the interface (CLI 'ip unnumbered
+            interface loopback <n>'). An empty string removes the IP
+            unnumbered configuration. Left unchanged if not specified.
         :return: True if object was changed.
         """
         # Set Physical Ports
@@ -1162,8 +1177,93 @@ class Interface(PyaoscxModule):
         self.vlan_tag = None
         self.origin = "configuration"
 
+        if ip_unnumbered is not None:
+            self.set_ip_unnumbered(ip_unnumbered)
+
         # Apply Changes inside Switch
         return self.apply() or ipv6_configured
+
+    @property
+    def ip_unnumbered(self):
+        """
+        Name of the interface lending its primary IPv4 address to this
+            interface (CLI 'ip unnumbered'), or None if not configured.
+        """
+        unnumbered = getattr(self, "unnumbered", None) or {}
+        lender = unnumbered.get("ipv4_address_owner_interface")
+        if isinstance(lender, dict):
+            # With depth > 1 the switch returns the lender itself
+            return lender.get("name")
+        if lender:
+            return unquote_plus(lender.rstrip("/").split("/")[-1])
+        return None
+
+    @PyaoscxModule.materialized
+    def set_ip_unnumbered(self, lender):
+        """
+        Make a routed port or L3 LAG borrow the primary IPv4 address of a
+            loopback interface (CLI 'ip unnumbered interface loopback <n>').
+            Changes are sent on apply(). The switch ignores the borrowed
+            address while a static IPv4 address is configured on the
+            interface.
+
+        :param lender: Name of the loopback interface (e.g. 'loopback0') or
+            Interface object. It must exist and be attached to the same VRF
+            as this interface. None or an empty string removes the IP
+            unnumbered configuration.
+        """
+        if not lender:
+            self.unnumbered = {}
+        else:
+            if self.__is_special_type and self.type != "lag":
+                raise ParameterError(
+                    "IP unnumbered is only supported on routed ports and L3 "
+                    "LAGs, not on {0}".format(self.name)
+                )
+            if not getattr(self, "routing", False):
+                raise ParameterError(
+                    "IP unnumbered requires {0} to be a routed (L3) "
+                    "interface".format(self.name)
+                )
+            if isinstance(lender, str):
+                lender = Interface(self.session, lender)
+            if lender.type != "loopback":
+                raise ParameterError(
+                    "The IP unnumbered lender must be a loopback interface, "
+                    "not {0}".format(lender.name)
+                )
+            if not lender.materialized:
+                try:
+                    lender.get()
+                except GenericOperationError as e:
+                    raise ParameterError(
+                        "The IP unnumbered lender {0} does not exist on the "
+                        "switch: {1}".format(lender.name, e)
+                    )
+
+            def vrf_name(vrf):
+                if vrf is None:
+                    return "default"
+                return vrf if isinstance(vrf, str) else vrf.name
+
+            own_vrf = vrf_name(getattr(self, "vrf", None))
+            lender_vrf = vrf_name(getattr(lender, "vrf", None))
+            if own_vrf != lender_vrf:
+                raise ParameterError(
+                    "The IP unnumbered lender {0} is in VRF {1}, it must be "
+                    "in the same VRF as {2} ({3})".format(
+                        lender.name, lender_vrf, self.name, own_vrf
+                    )
+                )
+            self.unnumbered = {
+                "ipv4_address_owner_interface": "{0}{1}/{2}".format(
+                    self.session.resource_prefix,
+                    Interface.base_uri,
+                    lender.percents_name,
+                )
+            }
+        if "unnumbered" not in self.config_attrs:
+            self.config_attrs.append("unnumbered")
 
     def configure_svi(
         self,
