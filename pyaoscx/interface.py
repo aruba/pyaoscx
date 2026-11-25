@@ -41,6 +41,8 @@ class Interface(PyaoscxModule):
     indices = ["name"]
     resource_uri_name = "interfaces"
 
+    INTER_VXLAN_BRIDGING_MODES = ("deny", "static-evpn", "static-all")
+
     ip6_addresses = ListDescriptor("ip6_addresses")
 
     def __init__(self, session, name, uri=None, ip6_addresses=[], **kwargs):
@@ -620,19 +622,15 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclmac_in_cfg.get()
             iface_data["aclmac_in_cfg"] = self.aclmac_in_cfg.get_info_format()
-            iface_data[
-                "aclmac_in_cfg_version"
-            ] = self.aclmac_in_cfg_version
+            iface_data["aclmac_in_cfg_version"] = self.aclmac_in_cfg_version
 
         if "aclmac_out_cfg" in iface_data and self.aclmac_out_cfg:
             # Set values in correct form
             self.aclmac_out_cfg.get()
-            iface_data[
-                "aclmac_out_cfg"
-            ] = self.aclmac_out_cfg.get_info_format()
-            iface_data[
-                "aclmac_out_cfg_version"
-            ] = self.aclmac_out_cfg_version
+            iface_data["aclmac_out_cfg"] = (
+                self.aclmac_out_cfg.get_info_format()
+            )
+            iface_data["aclmac_out_cfg_version"] = self.aclmac_out_cfg_version
 
         if "aclv4_in_cfg" in iface_data and self.aclv4_in_cfg:
             # Set values in correct form
@@ -644,29 +642,27 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv4_out_cfg.get()
             iface_data["aclv4_out_cfg"] = self.aclv4_out_cfg.get_info_format()
-            iface_data[
-                "aclv4_out_cfg_version"
-            ] = self.aclv4_out_cfg_version
+            iface_data["aclv4_out_cfg_version"] = self.aclv4_out_cfg_version
 
         if "aclv4_routed_in_cfg" in iface_data and self.aclv4_routed_in_cfg:
             # Set values in correct form
             self.aclv4_routed_in_cfg.get()
-            iface_data[
-                "aclv4_routed_in_cfg"
-            ] = self.aclv4_routed_in_cfg.get_info_format()
-            iface_data[
-                "aclv4_routed_in_cfg_version"
-            ] = self.aclv4_routed_in_cfg_version
+            iface_data["aclv4_routed_in_cfg"] = (
+                self.aclv4_routed_in_cfg.get_info_format()
+            )
+            iface_data["aclv4_routed_in_cfg_version"] = (
+                self.aclv4_routed_in_cfg_version
+            )
 
         if "aclv4_routed_out_cfg" in iface_data and self.aclv4_routed_out_cfg:
             # Set values in correct form
             self.aclv4_routed_out_cfg.get()
-            iface_data[
-                "aclv4_routed_out_cfg"
-            ] = self.aclv4_routed_out_cfg.get_info_format()
-            iface_data[
-                "aclv4_routed_out_cfg_version"
-            ] = self.aclv4_routed_out_cfg_version
+            iface_data["aclv4_routed_out_cfg"] = (
+                self.aclv4_routed_out_cfg.get_info_format()
+            )
+            iface_data["aclv4_routed_out_cfg_version"] = (
+                self.aclv4_routed_out_cfg_version
+            )
 
         if "aclv6_in_cfg" in iface_data and self.aclv6_in_cfg:
             # Set values in correct form
@@ -678,29 +674,27 @@ class Interface(PyaoscxModule):
             # Set values in correct form
             self.aclv6_out_cfg.get()
             iface_data["aclv6_out_cfg"] = self.aclv6_out_cfg.get_info_format()
-            iface_data[
-                "aclv6_out_cfg_version"
-            ] = self.aclv6_out_cfg_version
+            iface_data["aclv6_out_cfg_version"] = self.aclv6_out_cfg_version
 
         if "aclv6_routed_in_cfg" in iface_data and self.aclv6_routed_in_cfg:
             # Set values in correct form
             self.aclv6_routed_in_cfg.get()
-            iface_data[
-                "aclv6_routed_in_cfg"
-            ] = self.aclv6_routed_in_cfg.get_info_format()
-            iface_data[
-                "aclv6_routed_in_cfg_version"
-            ] = self.aclv6_routed_in_cfg_version
+            iface_data["aclv6_routed_in_cfg"] = (
+                self.aclv6_routed_in_cfg.get_info_format()
+            )
+            iface_data["aclv6_routed_in_cfg_version"] = (
+                self.aclv6_routed_in_cfg_version
+            )
 
         if "aclv6_routed_out_cfg" in iface_data and self.aclv6_routed_out_cfg:
             # Set values in correct form
             self.aclv6_routed_out_cfg.get()
-            iface_data[
-                "aclv6_routed_out_cfg"
-            ] = self.aclv6_routed_out_cfg.get_info_format()
-            iface_data[
-                "aclv6_routed_out_cfg_version"
-            ] = self.aclv6_routed_out_cfg_version
+            iface_data["aclv6_routed_out_cfg"] = (
+                self.aclv6_routed_out_cfg.get_info_format()
+            )
+            iface_data["aclv6_routed_out_cfg_version"] = (
+                self.aclv6_routed_out_cfg_version
+            )
 
         uri = "{0}/{1}".format(Interface.base_uri, self.percents_name)
 
@@ -709,6 +703,35 @@ class Interface(PyaoscxModule):
             # Object was not modified
             modified = False
         else:
+            # PUT silently ignores attributes unknown to the firmware, while
+            # PATCH rejects them with 400 "invalid attribute". Changed values
+            # of these attributes are therefore sent with a PATCH first; they
+            # stay in the PUT body, as PUT resets missing attributes.
+            patch_data = {}
+            mode = iface_data.get("inter_vxlan_bridging_mode")
+            if mode is not None and mode != self.__original_attributes.get(
+                "inter_vxlan_bridging_mode"
+            ):
+                patch_data["inter_vxlan_bridging_mode"] = mode
+            unnumbered = iface_data.get("unnumbered")
+            if unnumbered and unnumbered != self.__original_attributes.get(
+                "unnumbered"
+            ):
+                patch_data["unnumbered"] = unnumbered
+            if patch_data:
+                try:
+                    response = self.session.request(
+                        "PATCH",
+                        uri,
+                        data=json.dumps(patch_data),
+                    )
+                except Exception as e:
+                    raise ResponseError("PATCH", e)
+
+                if not utils._response_ok(response, "PATCH"):
+                    raise GenericOperationError(
+                        response.text, response.status_code
+                    )
 
             put_data = json.dumps(iface_data)
 
@@ -1034,6 +1057,7 @@ class Interface(PyaoscxModule):
         description=None,
         fallback_enabled=None,
         mc_lag=None,
+        ip_unnumbered=None,
     ):
         """
         Configure an Interface object, if not materialized, materialize it and
@@ -1058,6 +1082,11 @@ class Interface(PyaoscxModule):
             nothing if not specified.
         :param fallback_enabled: Boolean to set the LAG's LACP fallback mode.
         :param mc_lag: Boolean to set the LAG as a multi-chassis LAG.
+        :param ip_unnumbered: Optional loopback interface (name such as
+            'loopback0' or Interface object), in the same VRF, whose primary
+            IPv4 address is borrowed by the interface (CLI 'ip unnumbered
+            interface loopback <n>'). An empty string removes the IP
+            unnumbered configuration. Left unchanged if not specified.
         :return: True if object was changed.
         """
         # Set Physical Ports
@@ -1148,8 +1177,93 @@ class Interface(PyaoscxModule):
         self.vlan_tag = None
         self.origin = "configuration"
 
+        if ip_unnumbered is not None:
+            self.set_ip_unnumbered(ip_unnumbered)
+
         # Apply Changes inside Switch
         return self.apply() or ipv6_configured
+
+    @property
+    def ip_unnumbered(self):
+        """
+        Name of the interface lending its primary IPv4 address to this
+            interface (CLI 'ip unnumbered'), or None if not configured.
+        """
+        unnumbered = getattr(self, "unnumbered", None) or {}
+        lender = unnumbered.get("ipv4_address_owner_interface")
+        if isinstance(lender, dict):
+            # With depth > 1 the switch returns the lender itself
+            return lender.get("name")
+        if lender:
+            return unquote_plus(lender.rstrip("/").split("/")[-1])
+        return None
+
+    @PyaoscxModule.materialized
+    def set_ip_unnumbered(self, lender):
+        """
+        Make a routed port or L3 LAG borrow the primary IPv4 address of a
+            loopback interface (CLI 'ip unnumbered interface loopback <n>').
+            Changes are sent on apply(). The switch ignores the borrowed
+            address while a static IPv4 address is configured on the
+            interface.
+
+        :param lender: Name of the loopback interface (e.g. 'loopback0') or
+            Interface object. It must exist and be attached to the same VRF
+            as this interface. None or an empty string removes the IP
+            unnumbered configuration.
+        """
+        if not lender:
+            self.unnumbered = {}
+        else:
+            if self.__is_special_type and self.type != "lag":
+                raise ParameterError(
+                    "IP unnumbered is only supported on routed ports and L3 "
+                    "LAGs, not on {0}".format(self.name)
+                )
+            if not getattr(self, "routing", False):
+                raise ParameterError(
+                    "IP unnumbered requires {0} to be a routed (L3) "
+                    "interface".format(self.name)
+                )
+            if isinstance(lender, str):
+                lender = Interface(self.session, lender)
+            if lender.type != "loopback":
+                raise ParameterError(
+                    "The IP unnumbered lender must be a loopback interface, "
+                    "not {0}".format(lender.name)
+                )
+            if not lender.materialized:
+                try:
+                    lender.get()
+                except GenericOperationError as e:
+                    raise ParameterError(
+                        "The IP unnumbered lender {0} does not exist on the "
+                        "switch: {1}".format(lender.name, e)
+                    )
+
+            def vrf_name(vrf):
+                if vrf is None:
+                    return "default"
+                return vrf if isinstance(vrf, str) else vrf.name
+
+            own_vrf = vrf_name(getattr(self, "vrf", None))
+            lender_vrf = vrf_name(getattr(lender, "vrf", None))
+            if own_vrf != lender_vrf:
+                raise ParameterError(
+                    "The IP unnumbered lender {0} is in VRF {1}, it must be "
+                    "in the same VRF as {2} ({3})".format(
+                        lender.name, lender_vrf, self.name, own_vrf
+                    )
+                )
+            self.unnumbered = {
+                "ipv4_address_owner_interface": "{0}{1}/{2}".format(
+                    self.session.resource_prefix,
+                    Interface.base_uri,
+                    lender.percents_name,
+                )
+            }
+        if "unnumbered" not in self.config_attrs:
+            self.config_attrs.append("unnumbered")
 
     def configure_svi(
         self,
@@ -1415,7 +1529,11 @@ class Interface(PyaoscxModule):
 
     @PyaoscxModule.materialized
     def configure_vxlan(
-        self, source_ipv4=None, description=None, dest_udp_port=4789
+        self,
+        source_ipv4=None,
+        description=None,
+        dest_udp_port=4789,
+        inter_vxlan_bridging_mode=None,
     ):
         """
         Configure VXLAN table entry for a logical L3 Interface. If the VXLAN
@@ -1429,6 +1547,9 @@ class Interface(PyaoscxModule):
             to nothing if not specified.
         :param dest_udp_port: Optional Destination UDP Port that the VXLAN
             will use. Default is set to 4789.
+        :param inter_vxlan_bridging_mode: Optional inter-VXLAN bridging mode,
+            one of 'deny', 'static-evpn' or 'static-all'. Left unchanged if
+            not specified.
         :return: True if object was changed.
         """
         # Set Values
@@ -1442,8 +1563,40 @@ class Interface(PyaoscxModule):
         if description is not None:
             self.description = description
 
+        if inter_vxlan_bridging_mode is not None:
+            self.set_inter_vxlan_bridging_mode(inter_vxlan_bridging_mode)
+
         # Apply changes
         return self.apply()
+
+    def set_inter_vxlan_bridging_mode(self, mode):
+        """
+        Set the inter-VXLAN bridging mode of a VXLAN interface (CLI
+            'inter-vxlan-bridging-mode'). Changes are sent on apply(), with a
+            PATCH before the PUT: a firmware that does not support the mode
+            then rejects it (HTTP 400 "invalid attribute") and nothing is
+            applied.
+
+        :param mode: 'deny' to disable traffic bridging between tunnels on
+            the same L2VNI, 'static-evpn' to enable it between static and
+            dynamic (EVPN) tunnels, or 'static-all' to enable it between all
+            tunnels.
+        """
+        if self.type != "vxlan":
+            raise ParameterError(
+                "inter_vxlan_bridging_mode is only supported on VXLAN "
+                "interfaces, {0} is not a VXLAN interface".format(self.name)
+            )
+        if mode not in self.INTER_VXLAN_BRIDGING_MODES:
+            raise ParameterError(
+                "Invalid inter_vxlan_bridging_mode {0}, valid values are: "
+                "{1}".format(mode, ", ".join(self.INTER_VXLAN_BRIDGING_MODES))
+            )
+        self.inter_vxlan_bridging_mode = mode
+        # The attribute is absent from the GET response until configured, so
+        # make sure it is part of the PUT body.
+        if "inter_vxlan_bridging_mode" not in self.config_attrs:
+            self.config_attrs.append("inter_vxlan_bridging_mode")
 
     def set_vlan_mode(self, vlan_mode):
         """
@@ -2233,9 +2386,9 @@ class Interface(PyaoscxModule):
             self.port_security["client_limit"] = client_limit
 
         if sticky_mac_learning is not None:
-            self.port_security[
-                "sticky_mac_learning_enable"
-            ] = sticky_mac_learning
+            self.port_security["sticky_mac_learning_enable"] = (
+                sticky_mac_learning
+            )
 
         mac_format = mac_eui48
         mac_format.word_sep = ":"
@@ -2334,14 +2487,14 @@ class Interface(PyaoscxModule):
                 raise ParameterError(
                     "violation_recovery_time must be between 10s and 600s"
                 )
-            self.port_access_security_violation[
-                "recovery_timer"
-            ] = violation_recovery_time
+            self.port_access_security_violation["recovery_timer"] = (
+                violation_recovery_time
+            )
 
         if violation_shutdown_recovery_enable:
-            self.port_access_security_violation[
-                "shutdown_recovery_enable"
-            ] = violation_shutdown_recovery_enable
+            self.port_access_security_violation["shutdown_recovery_enable"] = (
+                violation_shutdown_recovery_enable
+            )
 
         return self.apply()
 
