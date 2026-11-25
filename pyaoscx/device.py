@@ -395,6 +395,55 @@ class Device(PyaoscxFactory, metaclass=Singleton):
 
         return modified
 
+    def set_virtual_mac(self, virtual_mac):
+        """
+        Perform a PUT request to set or remove the global virtual MAC of the
+            device (virtual-mac command). EVPN advertises it as the router
+            MAC of the symmetric IRB routes.
+
+        :param virtual_mac: MAC address in the xx:xx:xx:xx:xx:xx format, or
+            None to remove the global virtual MAC.
+        :return modified: Returns True if the virtual MAC was modified.
+        """
+        logging.info("Setting the global virtual MAC")
+
+        if virtual_mac is not None:
+            virtual_mac = virtual_mac.lower()
+
+        return self._set_system_attribute(
+            "virtual_mac",
+            virtual_mac,
+            "SET VIRTUAL MAC",
+            normalize=lambda mac: mac.lower() if mac is not None else None,
+        )
+
+    def set_gbp_enable(self, enable):
+        """
+        Perform a PUT request to enable or disable Group Based Policy
+            enforcement on the device (gbp enable command).
+
+        :param enable: True to enable GBP enforcement, False to disable it.
+        :return modified: Returns True if the GBP state was modified.
+        """
+        logging.info("Setting the GBP enforcement state")
+
+        return self._set_system_attribute(
+            "GBP_enable",
+            bool(enable),
+            "SET GBP ENABLE",
+            normalize=bool,
+        )
+
+    def _set_system_attribute(self, name, value, operation, normalize=None):
+        """
+        Set one attribute of /system, see utils.set_system_attribute().
+
+        :return modified: Returns True if a PUT request was made.
+        """
+        return utils.set_system_attribute(
+            self.session, name, value, operation, normalize=normalize
+        )
+
     def boot_firmware(self, partition_name="primary"):
         """
         Perform a POST request to Boot the AOS-CX switch with image present

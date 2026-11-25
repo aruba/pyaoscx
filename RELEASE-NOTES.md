@@ -1,3 +1,87 @@
+# Unreleased
+
+## Notable Changes
+
+* Added the `Class` (`pyaoscx.traffic_class`) and `ClassEntry`
+  (`pyaoscx.class_entry`) classes to manage traffic classes and their entries
+  (CLI `class ip|ipv6|mac|gbp-ip|gbp-ipv6|gbp-mac|abp-ip|abp-ipv6`,
+  `system/classes/{name},{type}`), required by the `aoscx_class` module.
+* Added the `PortAccessRole` class to manage local port access roles (CLI
+  `port-access role <name>`, `system/port_access_roles`), required by the
+  `aoscx_port_access_role` module.
+* Added `Device.set_virtual_mac()` to set or remove the global virtual MAC
+  (CLI `virtual-mac`), advertised by EVPN as the router MAC of the symmetric
+  IRB routes (`virtual_mac` attribute of `PUT /system`).
+* Added `Device.set_gbp_enable()` to enable or disable Group Based Policy
+  enforcement (CLI `gbp enable`, `GBP_enable` attribute of `PUT /system`).
+* Added the `GbpRole` class to create, update or delete Group Based Policy
+  roles (CLI `gbp role <name> <id>`, `system/gbp_role_name_id_maps`).
+* Added `Configuration.upload_switch_config_cli_from_local()` and the
+  `config_cli` / `operation` parameters of
+  `Configuration.upload_switch_config()` to upload a local configuration in
+  CLI format directly in the request payload (`PUT /configs/{name}`, no TFTP
+  server needed), with `replace` (default) or `merge` operation.
+  `Session.request()` accepts an optional `headers` parameter.
+  When the switch rejects commands (HTTP 200 with `"state": "failure"`),
+  a new `ConfigUploadError` is raised; its `errors` attribute holds the
+  switch errors (`line`, `context`, `command`, `message`).
+* Added `Interface.set_inter_vxlan_bridging_mode()` and an optional
+  `inter_vxlan_bridging_mode` parameter to `Interface.configure_vxlan()` to
+  manage the inter-VXLAN bridging mode (`deny`, `static-evpn`, `static-all`)
+  of a VXLAN interface (CLI `inter-vxlan-bridging-mode`).
+  A changed mode is first sent with a PATCH (`Session.request()` now accepts
+  `PATCH`): the PUT used for the other attributes silently ignores attributes
+  unknown to the firmware, while PATCH rejects them, so an unsupported mode
+  raises `GenericOperationError` and nothing is applied.
+* `GenericOperationError` states that the attribute is probably not supported
+  by the switch platform or firmware version when the switch answers HTTP 400
+  `invalid attribute: <name>`. A CLI configuration upload refused with HTTP
+  400, 404, 405 or 415 raises a `GenericOperationError` stating that the CLI
+  format upload is probably not supported by the switch.
+* Fixed `PyaoscxFactory.bgp_neighbor()` raising `UnboundLocalError` when
+  `family_type` was given; on an existing neighbor only the requested address
+  family is now changed.
+* Fixed `BgpRouter.create_bgp_neighbors()`: per address family settings
+  (`activate`, `send_community`, `route_reflector_client`,
+  `inbound_soft_reconfiguration`) are now sent as dictionaries keyed by
+  address family, and merged with the existing neighbor configuration.
+* Fixed `BgpNeighbor.update()` failing when no `local_interface` is set, and
+  `BgpNeighbor.create()` sending an empty `local_interface`.
+* `PyaoscxFactory.bgp_router_vrf()` accepts an optional `route_types` list
+  (defaults to `["connected"]`), validates the address family, and keeps the
+  redistribution of other address families.
+* Fixed `BgpNeighbor.update()` sending create-only attributes
+  (`is_peer_group`, `listen_ip_range`, `nbr_interface`, `origin`) in the PUT
+  body.
+* Fixed `BgpNeighbor` registering itself several times in its parent
+  `BgpRouter`, and `BgpNeighbor.delete()` sending extra DELETE requests.
+* `BgpRouter.create_bgp_neighbors()` accepts an `ebgp_hop_count` parameter
+  (CLI `ebgp-multihop`, 1 to 255, 1 disables multihop).
+* Fixed `BgpRouter` and `BgpNeighbor` updates failing once a route map is
+  applied: `redistribute_route_map` and `route_maps` are returned by the
+  switch with compound keys (`"ipv4-unicast,in"`) that it rejects on PUT.
+  They are now converted to nested dictionaries when read (new
+  `utils.nest_compound_keys()` helper).
+* Added the `PortAccessAuthConfiguration` class to manage the per interface
+  port access authentication settings (CLI `aaa authentication port-access
+  dot1x authenticator | mac-auth` of an interface,
+  `system/interfaces/{name}/port_access_auth_configurations/{method}`),
+  required by the `aoscx_port_access_auth` module.
+* Added `update_cfg_version()` to `Class` and to the port access policies
+  (`PortAccessGbp`, `PortAccessAbp`, `PortAccessPolicy`): the switch only
+  applies the entries of a traffic class or policy when its `cfg_version`
+  changes (until then the running-config reports the user configuration as
+  "currently being processed").
+* Fixed `Aaa.update()` and `RadiusDynamicAuthorization.update()`: they sent a
+  PUT of `/system` holding only their attribute, which reset every other
+  system attribute (virtual MAC, NTP, GBP, ...) to its default value. They
+  now send back the whole writable system configuration, like
+  `Device.set_virtual_mac()`, through the new `utils.set_system_attribute()`
+  helper.
+* `RadiusServer.update()` now sends a PATCH with only the modified attributes
+  instead of a PUT: the switch rejects the encrypted ClearPass password when
+  it is sent back, while a PUT without it erases the ClearPass settings.
+
 # 2.6.0
 
 ## Notable Changes
