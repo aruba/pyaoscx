@@ -161,6 +161,7 @@ class API(ABC):
                 "radius_dynamic_authorization_client"
             ),
             "Aaa": "aaa",
+            "PortAccessAuthConfiguration": "port_access_auth_configuration",
             "LLDPNeighbor": "lldp_neighbor",
             "Mac": "mac",
             "StaticMac": "static_mac",
