@@ -471,9 +471,60 @@ class Device(PyaoscxFactory, metaclass=Singleton):
         if self.get_internal_vlan_range() == (start, end):
             return False
 
+        self._patch_internal_vlan_range(start, end - start + 1)
+        return True
+
+    @PyaoscxModule.connected
+    def delete_internal_vlan_range(self):
+        """
+        Perform a PATCH request to remove the VLAN range reserved for
+            internal use (CLI 'no system internal-vlan-range'). As the CLI,
+            and unlike the switch REST API, the removal is refused while
+            routing is enabled on a port or LAG, as these use the internal
+            VLANs.
+
+        :return modified: Returns True if the range was removed.
+        :raises ParameterError: When routing is enabled on a port or LAG.
+        :raises UnsupportedCapabilityError: When the platform does not
+            support a configurable internal VLAN range.
+        """
+        logging.info("Removing the internal VLAN range")
+
+        if self.get_internal_vlan_range() is None:
+            return False
+
+        uri = "{0}/interfaces?depth=2&attributes=name,type,routing".format(
+            Device.base_uri
+        )
+        try:
+            response = self.session.request("GET", uri)
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        routed = sorted(
+            name
+            for name, data in json.loads(response.text).items()
+            if data.get("routing") and data.get("type") in ("system", "lag")
+        )
+        if routed:
+            raise ParameterError(
+                "The internal VLAN range cannot be removed while routing is "
+                "enabled on: {0}".format(", ".join(routed))
+            )
+
+        self._patch_internal_vlan_range(None, None)
+        return True
+
+    def _patch_internal_vlan_range(self, base, size):
+        """
+        Send the internal VLAN range with a PATCH; None values remove it.
+        """
         data = {
-            "internal_vlan_range_base": start,
-            "internal_vlan_range_size": end - start + 1,
+            "internal_vlan_range_base": base,
+            "internal_vlan_range_size": size,
         }
         try:
             response = self.session.request(
@@ -486,7 +537,6 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             raise GenericOperationError(
                 response.text, response.status_code, "SET INTERNAL VLAN RANGE"
             )
-        return True
 
     @PyaoscxModule.connected
     def get_interface_groups(self):

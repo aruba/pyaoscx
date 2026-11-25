@@ -10,6 +10,9 @@
   and refuse to enable routing on a port until a range is configured. The
   range is sent with a PATCH; `UnsupportedCapabilityError` is raised on
   platforms without a configurable range (6300, 6400, 8360, ...).
+  `Device.delete_internal_vlan_range()` removes the range (CLI
+  `no system internal-vlan-range`); as the CLI, and unlike the switch REST
+  API, it raises `ParameterError` while routing is enabled on a port or LAG.
 * Added `Device.get_interface_groups()` and
   `Device.set_interface_group_speed()` to read and set the permitted
   transceiver speed of an interface group (CLI

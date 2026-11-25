@@ -103,6 +103,61 @@ def test_internal_vlan_range_unsupported_platform():
     assert writes(device, "PATCH") == []
 
 
+def delete_device(interfaces):
+    return make_device(
+        {
+            "system?attributes=internal": (
+                200,
+                {
+                    "internal_vlan_range_base": 3000,
+                    "internal_vlan_range_size": 1000,
+                },
+            ),
+            "system/interfaces?": (200, interfaces),
+        }
+    )
+
+
+def test_delete_internal_vlan_range():
+    device = delete_device(
+        {
+            "loopback0": {"type": "loopback", "routing": True},
+            "1/1/1": {"type": "system", "routing": False},
+            "vlan10": {"type": "vlan", "routing": True},
+        }
+    )
+    assert device.delete_internal_vlan_range() is True
+    assert writes(device, "PATCH") == [
+        (
+            "system",
+            {
+                "internal_vlan_range_base": None,
+                "internal_vlan_range_size": None,
+            },
+        )
+    ]
+
+
+def test_delete_absent_internal_vlan_range_is_noop():
+    device = range_device(
+        {"internal_vlan_range_base": 0, "internal_vlan_range_size": 0}
+    )
+    assert device.delete_internal_vlan_range() is False
+    assert writes(device, "PATCH") == []
+
+
+def test_delete_internal_vlan_range_refused_with_routed_ports():
+    device = delete_device(
+        {
+            "1/1/23": {"type": "system", "routing": True},
+            "lag1": {"type": "lag", "routing": True},
+        }
+    )
+    with pytest.raises(ParameterError, match="1/1/23, lag1"):
+        device.delete_internal_vlan_range()
+    assert writes(device, "PATCH") == []
+
+
 SUBSYSTEMS = {
     "chassis,1": {"interface_group_info": {}},
     "line_card,1/1": {
