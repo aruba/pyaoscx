@@ -174,6 +174,9 @@ class API(ABC):
             "PortAccessAbp": "port_access_abp",
             "PortAccessPolicy": "port_access_policy",
             "GbpRole": "gbp_role",
+            "AaaServerGroup": "aaa_server_group",
+            "RadiusServer": "radius_server",
+            "TacacsServer": "tacacs_server",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
         }
