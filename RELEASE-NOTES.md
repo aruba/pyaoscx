@@ -1,3 +1,11 @@
+# Unreleased
+
+## Notable Changes
+
+* Added `Device.set_virtual_mac()` to set or remove the global virtual MAC
+  (CLI `virtual-mac`), advertised by EVPN as the router MAC of the symmetric
+  IRB routes (`virtual_mac` attribute of `PUT /system`).
+
 # 2.6.0
 
 ## Notable Changes
