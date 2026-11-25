@@ -8,7 +8,11 @@ import json
 from urllib.parse import quote_plus
 
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.unsupported_capability_error import (
+    UnsupportedCapabilityError,
+)
 from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.utils import util as utils
@@ -394,6 +398,240 @@ class Device(PyaoscxFactory, metaclass=Singleton):
             modified = True
 
         return modified
+
+    INTERNAL_VLAN_RANGE_ATTRS = (
+        "internal_vlan_range_base",
+        "internal_vlan_range_size",
+    )
+
+    @PyaoscxModule.connected
+    def get_internal_vlan_range(self):
+        """
+        Perform a GET request to read the VLAN range reserved for internal
+            use (CLI 'system internal-vlan-range start <id> end <id>').
+            Platforms such as the 6200 do not reserve any internal VLAN by
+            default and refuse to enable routing on a port until a range is
+            configured.
+
+        :return: (start, end) tuple, or None when no range is configured.
+        :raises UnsupportedCapabilityError: When the platform does not
+            support a configurable internal VLAN range.
+        """
+        uri = "{0}?attributes={1}".format(
+            Device.base_uri, ",".join(self.INTERNAL_VLAN_RANGE_ATTRS)
+        )
+        try:
+            response = self.session.request("GET", uri)
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if response.status_code == 400 and "not found" in response.text:
+            raise UnsupportedCapabilityError(
+                "The internal VLAN range is not supported on this platform"
+            )
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        data = json.loads(response.text)
+        base = data.get("internal_vlan_range_base")
+        size = data.get("internal_vlan_range_size")
+        if not base or not size:
+            return None
+        return base, base + size - 1
+
+    @PyaoscxModule.connected
+    def set_internal_vlan_range(self, start, end):
+        """
+        Perform a PATCH request to set the VLAN range reserved for internal
+            use (CLI 'system internal-vlan-range start <id> end <id>'). The
+            switch stores it as a base VLAN and a size.
+
+        :param start: First VLAN ID of the range.
+        :param end: Last VLAN ID of the range.
+        :return modified: Returns True if the range was modified.
+        :raises ParameterError: When the range is not within 2-4094 or
+            start is greater than end.
+        :raises UnsupportedCapabilityError: When the platform does not
+            support a configurable internal VLAN range.
+        """
+        logging.info("Setting the internal VLAN range")
+
+        for value in (start, end):
+            if isinstance(value, bool) or not isinstance(value, int):
+                raise ParameterError(
+                    "Internal VLAN range bounds must be integers"
+                )
+        if not 2 <= start <= end <= 4094:
+            raise ParameterError(
+                "Invalid internal VLAN range {0}-{1}: the bounds must be "
+                "within 2-4094 and start must not be greater than "
+                "end".format(start, end)
+            )
+
+        if self.get_internal_vlan_range() == (start, end):
+            return False
+
+        data = {
+            "internal_vlan_range_base": start,
+            "internal_vlan_range_size": end - start + 1,
+        }
+        try:
+            response = self.session.request(
+                "PATCH", Device.base_uri, data=json.dumps(data)
+            )
+        except Exception as e:
+            raise ResponseError("PATCH", e)
+
+        if not utils._response_ok(response, "PATCH"):
+            raise GenericOperationError(
+                response.text, response.status_code, "SET INTERNAL VLAN RANGE"
+            )
+        return True
+
+    @PyaoscxModule.connected
+    def get_interface_groups(self):
+        """
+        Perform a GET request to read the interface groups of the device
+            (CLI 'show system interface-group'). An interface group is a set
+            of ports of a line card or chassis sharing the same permitted
+            transceiver speed.
+
+        :return: Dictionary keyed by subsystem name (for example
+            'line_card,1/1'), then by group number (string), with:
+            'speed': configured speed or None when the default applies,
+            'applied_speed': speed in use,
+            'default_speed': factory default speed,
+            'speeds': dictionary of the permitted group speeds with the
+            supported port speeds. Subsystems without interface groups are
+            omitted.
+        """
+        attributes = [
+            "interface_group_speed",
+            "interface_group_applied_speed",
+            "interface_group_default_speed",
+            "interface_group_info",
+        ]
+        uri = "{0}/subsystems?attributes={1}&depth=2".format(
+            Device.base_uri, ",".join(attributes)
+        )
+        try:
+            response = self.session.request("GET", uri)
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        groups = {}
+        for subsystem, data in json.loads(response.text).items():
+            info = data.get("interface_group_info") or {}
+            if not info:
+                continue
+            configured = data.get("interface_group_speed") or {}
+            applied = data.get("interface_group_applied_speed") or {}
+            default = data.get("interface_group_default_speed") or {}
+            groups[subsystem] = {
+                group: {
+                    "speed": configured.get(group),
+                    "applied_speed": applied.get(group),
+                    "default_speed": default.get(group),
+                    "speeds": speeds,
+                }
+                for group, speeds in info.items()
+            }
+        return groups
+
+    @PyaoscxModule.connected
+    def set_interface_group_speed(self, group, speed, line_module=None):
+        """
+        Perform a PUT request to set the permitted transceiver speed of an
+            interface group (CLI 'system interface-group <group> speed
+            <speed>', or 'system interface-group <group> line-module
+            <line_module> speed <speed>' on modular switches). Changing the
+            speed of a group resets all its ports.
+
+        :param group: Interface group number.
+        :param speed: Speed such as '10g' or '25g', as listed by
+            get_interface_groups(), or None to restore the default speed.
+        :param line_module: Line module of the group, for example '1/3'.
+            Optional when only one subsystem has this group.
+        :return modified: Returns True if the group speed was modified.
+        :raises ParameterError: When the group or speed does not exist on
+            the device or the line module is ambiguous.
+        """
+        logging.info("Setting the speed of interface group %s", group)
+
+        group = str(group)
+        groups = self.get_interface_groups()
+        if line_module is not None:
+            subsystem = "line_card,{0}".format(line_module)
+            if group not in groups.get(subsystem, {}):
+                raise ParameterError(
+                    "Interface group {0} does not exist on line module "
+                    "{1}".format(group, line_module)
+                )
+        else:
+            candidates = [name for name in groups if group in groups[name]]
+            if not candidates:
+                raise ParameterError(
+                    "Interface group {0} does not exist on this "
+                    "device".format(group)
+                )
+            if len(candidates) > 1:
+                raise ParameterError(
+                    "Interface group {0} exists on several subsystems ({1}), "
+                    "set line_module".format(group, ", ".join(candidates))
+                )
+            subsystem = candidates[0]
+
+        current = groups[subsystem][group]
+        if speed is not None and speed not in current["speeds"]:
+            raise ParameterError(
+                "Invalid speed {0} for interface group {1}, valid values "
+                "are: {2}".format(
+                    speed, group, ", ".join(sorted(current["speeds"]))
+                )
+            )
+        if current["speed"] == speed:
+            return False
+
+        uri = "{0}/subsystems/{1}".format(
+            Device.base_uri, quote_plus(subsystem, safe=",")
+        )
+        try:
+            response = self.session.request(
+                "GET", uri, params={"selector": "configuration"}
+            )
+        except Exception as e:
+            raise ResponseError("GET", e)
+
+        if not utils._response_ok(response, "GET"):
+            raise GenericOperationError(response.text, response.status_code)
+
+        # A PATCH merges the dictionary and cannot remove a group, so the
+        # whole subsystem configuration is sent back with a PUT.
+        config_data = json.loads(response.text)
+        configured = dict(config_data.get("interface_group_speed") or {})
+        if speed is None:
+            configured.pop(group, None)
+        else:
+            configured[group] = speed
+        config_data["interface_group_speed"] = configured
+
+        try:
+            response = self.session.request(
+                "PUT", uri, data=json.dumps(config_data)
+            )
+        except Exception as e:
+            raise ResponseError("PUT", e)
+
+        if not utils._response_ok(response, "PUT"):
+            raise GenericOperationError(
+                response.text,
+                response.status_code,
+                "SET INTERFACE GROUP SPEED",
+            )
+        return True
 
     def boot_firmware(self, partition_name="primary"):
         """

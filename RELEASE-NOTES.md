@@ -2,6 +2,24 @@
 
 ## Notable Changes
 
+* Added `Device.get_internal_vlan_range()` and
+  `Device.set_internal_vlan_range()` to read and set the VLAN range reserved
+  for internal use (CLI `system internal-vlan-range start <id> end <id>`,
+  `internal_vlan_range_base` / `internal_vlan_range_size` attributes of
+  `/system`). Platforms such as the 6200 reserve no internal VLAN by default
+  and refuse to enable routing on a port until a range is configured. The
+  range is sent with a PATCH; `UnsupportedCapabilityError` is raised on
+  platforms without a configurable range (6300, 6400, 8360, ...).
+* Added `Device.get_interface_groups()` and
+  `Device.set_interface_group_speed()` to read and set the permitted
+  transceiver speed of an interface group (CLI
+  `system interface-group <n> [line-module <slot>] speed <speed>`,
+  `interface_group_*` attributes of `/system/subsystems/{type},{name}`).
+  The group and speed are checked against the `interface_group_info` of the
+  switch; `line_module` is required when several line modules have the group.
+  A speed of `None` restores the default speed. The subsystem configuration
+  is sent back with a PUT, as a PATCH cannot remove a group from the
+  dictionary.
 * Added `Configuration.upload_switch_config_cli_from_local()` and the
   `config_cli` / `operation` parameters of
   `Configuration.upload_switch_config()` to upload a local configuration in
