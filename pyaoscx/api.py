@@ -167,6 +167,10 @@ class API(ABC):
             "QueueProfileEntry": "queue_profile_entry",
             "TunnelEndpoint": "tunnel_endpoint",
             "Vni": "vni",
+            "NaeScript": "nae_script",
+            "NaeAgent": "nae_agent",
+            "NaeLiteAgent": "nae_lite_agent",
+            "NaeLiteCondition": "nae_lite_condition",
         }
         if name not in module_names:
             raise ParameterError(
