@@ -8,7 +8,11 @@ class GenericOperationError(PyaoscxError):
     """
     PYAOSCX Generic Operation Error Exception.
     """
+
     base_msg = "GENERIC OPERATION ERROR"
+    unsupported_hint = (
+        "probably not supported by this switch platform or firmware version"
+    )
 
     def __init__(self, *args):
         self.message = None
@@ -20,6 +24,16 @@ class GenericOperationError(PyaoscxError):
                 self.response_code = args[1]
             if len(args) > 2:
                 self.extra_info = ", ".join(str(a) for a in args[2:])
+        # The switch answers 400 "invalid attribute: <name>" when its
+        # firmware does not know an attribute of the request body.
+        if (
+            self.response_code == 400
+            and isinstance(self.message, str)
+            and "invalid attribute" in self.message.lower()
+        ):
+            self.message = "{0} (attribute {1})".format(
+                self.message.strip(), self.unsupported_hint
+            )
 
     def __str__(self):
         msg_parts = [self.base_msg]
