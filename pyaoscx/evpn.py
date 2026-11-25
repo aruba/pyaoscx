@@ -3,6 +3,8 @@
 
 import logging
 
+from pyaoscx.exceptions.parameter_error import ParameterError
+
 from pyaoscx.utils import util as utils
 
 from pyaoscx.pyaoscx_module import PyaoscxModule
@@ -17,6 +19,8 @@ class Evpn(PyaoscxModule):
 
     base_uri = "system/evpn"
     path = "system/evpn"
+
+    DYN_VXLAN_TUNNEL_BRIDGING_MODES = ("no-bridging", "ibgp-ebgp")
 
     def __init__(self, session, uri=None, **kwargs):
         self.session = session
@@ -93,8 +97,50 @@ class Evpn(PyaoscxModule):
         :return: True if Object was modified and a PUT request was made.
         """
         put_data = utils.get_attrs(self, self.config_attrs)
+        # PUT silently ignores attributes unknown to the firmware, while
+        # PATCH rejects them with HTTP 400. A changed bridging mode is
+        # therefore sent with a PATCH first; it stays in the PUT body, as PUT
+        # resets missing attributes.
+        mode = put_data.get("dyn_vxlan_tunnel_bridging_mode")
+        if mode is not None and mode != self._original_attributes.get(
+            "dyn_vxlan_tunnel_bridging_mode"
+        ):
+            self._send_data(
+                self.path,
+                {"dyn_vxlan_tunnel_bridging_mode": mode},
+                "PATCH",
+                "Update",
+            )
         self.__modified = self._put_data(put_data)
         return self.__modified
+
+    def set_dyn_vxlan_tunnel_bridging_mode(self, mode):
+        """
+        Set the bridging mode between dynamic (EVPN) VXLAN tunnels (CLI
+            'dyn-vxlan-tunnel-bridging-mode' in the EVPN context). Changes are
+            sent on update(), with a PATCH before the PUT: a firmware that
+            does not support the mode then rejects it (HTTP 400) and nothing
+            is applied.
+
+        :param mode: 'no-bridging' (default, CLI
+            'no dyn-vxlan-tunnel-bridging-mode ibgp-ebgp') puts all EVPN
+            tunnels in the same broadcast group, or 'ibgp-ebgp' (CLI
+            'dyn-vxlan-tunnel-bridging-mode ibgp-ebgp') puts iBGP and eBGP
+            tunnels in different broadcast groups and permits bridging
+            between them.
+        """
+        if mode not in self.DYN_VXLAN_TUNNEL_BRIDGING_MODES:
+            raise ParameterError(
+                "Invalid dyn_vxlan_tunnel_bridging_mode {0}, valid values "
+                "are: {1}".format(
+                    mode, ", ".join(self.DYN_VXLAN_TUNNEL_BRIDGING_MODES)
+                )
+            )
+        self.dyn_vxlan_tunnel_bridging_mode = mode
+        # The attribute is absent from the GET response of a firmware that
+        # does not support it, so make sure it is part of the request body.
+        if "dyn_vxlan_tunnel_bridging_mode" not in self.config_attrs:
+            self.config_attrs.append("dyn_vxlan_tunnel_bridging_mode")
 
     @PyaoscxModule.connected
     def create(self):

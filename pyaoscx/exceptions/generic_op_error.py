@@ -24,12 +24,16 @@ class GenericOperationError(PyaoscxError):
                 self.response_code = args[1]
             if len(args) > 2:
                 self.extra_info = ", ".join(str(a) for a in args[2:])
-        # The switch answers 400 "invalid attribute: <name>" when its
-        # firmware does not know an attribute of the request body.
+        # The switch answers 400 "invalid attribute: <name>" or "cannot
+        # modify the attribute: <name>, reason: Non-configurable column" when
+        # its firmware does not know an attribute of the request body.
         if (
             self.response_code == 400
             and isinstance(self.message, str)
-            and "invalid attribute" in self.message.lower()
+            and (
+                "invalid attribute" in self.message.lower()
+                or "non-configurable column" in self.message.lower()
+            )
         ):
             self.message = "{0} (attribute {1})".format(
                 self.message.strip(), self.unsupported_hint

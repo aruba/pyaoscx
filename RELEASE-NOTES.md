@@ -19,9 +19,18 @@
   `PATCH`): the PUT used for the other attributes silently ignores attributes
   unknown to the firmware, while PATCH rejects them, so an unsupported mode
   raises `GenericOperationError` and nothing is applied.
+* Added `Evpn.set_dyn_vxlan_tunnel_bridging_mode()` to manage the bridging
+  mode between dynamic (EVPN) VXLAN tunnels (CLI
+  `dyn-vxlan-tunnel-bridging-mode ibgp-ebgp` in the EVPN context,
+  `dyn_vxlan_tunnel_bridging_mode` attribute of `/system/evpn`): `ibgp-ebgp`
+  puts iBGP and eBGP tunnels in different broadcast groups and permits
+  bridging between them, `no-bridging` (default) puts all EVPN tunnels in the
+  same broadcast group. A changed mode is first sent with a PATCH, so a
+  firmware that does not support it rejects it and nothing is applied.
 * `GenericOperationError` states that the attribute is probably not supported
   by the switch platform or firmware version when the switch answers HTTP 400
-  `invalid attribute: <name>`. A CLI configuration upload refused with HTTP
+  `invalid attribute: <name>` or `cannot modify the attribute: <name>,
+  reason: Non-configurable column`. A CLI configuration upload refused with HTTP
   400, 404, 405 or 415 raises a `GenericOperationError` stating that the CLI
   format upload is probably not supported by the switch.
 * Fixed `PyaoscxFactory.bgp_neighbor()` raising `UnboundLocalError` when

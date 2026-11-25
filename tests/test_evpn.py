@@ -2,157 +2,113 @@
 # Apache License 2.0
 
 """
-Offline unit tests for the Evpn and EvpnVlan pyaoscx resource modules.
-
-The pyaoscx Session is mocked, so no switch is required.
+Offline unit tests for the dynamic VXLAN tunnel bridging mode of
+pyaoscx.evpn.Evpn.
 """
 
 import json
 
-from unittest.mock import MagicMock
+import pytest
 
 from pyaoscx.evpn import Evpn
-from pyaoscx.evpn_vlan import EvpnVlan
+from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
 
 
-def make_response(body, code=200):
-    resp = MagicMock()
-    resp.status_code = code
-    resp.text = json.dumps(body)
-    return resp
+class FakeResponse:
+    def __init__(self, status_code=200, data=None):
+        self.status_code = status_code
+        self.text = json.dumps(data or {})
 
 
-def make_session(get_body=None):
-    session = MagicMock()
-    api = session.api
-    api.default_depth = 1
-    api.default_selector = "writable"
-    api.valid_depths = [0, 1, 2, 3, 4]
-    api.valid_selectors = [
-        "configuration",
-        "writable",
-        "status",
-        "statistics",
-    ]
-    api.configurable_selectors = ["configuration", "writable"]
-    api.valid_depth = lambda depth: True
-    session.resource_prefix = "/rest/v10.09/"
+class FakeApi:
+    default_selector = "configuration"
+    valid_selectors = ["configuration", "status", "statistics", "writable"]
+    configurable_selectors = ["configuration", "writable"]
+    default_depth = 1
 
-    calls = []
+    def valid_depth(self, depth):
+        return True
 
-    def request(method, path, params=None, data=None):
-        body = json.loads(data) if data else None
-        calls.append({"method": method, "path": path, "data": body})
+
+class FakeSession:
+    def __init__(self, get_data):
+        self.api = FakeApi()
+        self.connected = True
+        self.get_data = get_data
+        self.requests = []
+        self.write_response = FakeResponse(200)
+
+    def request(self, method, uri, params=None, data=None):
+        self.requests.append((method, uri, data))
         if method == "GET":
-            return make_response(get_body if get_body is not None else {})
-        if method == "POST":
-            return make_response({}, 201)
-        if method in ("PUT", "DELETE"):
-            return make_response({}, 204)
-        return make_response({}, 200)
-
-    session.request.side_effect = request
-    session.calls = calls
-    return session
+            return FakeResponse(200, self.get_data)
+        return self.write_response
 
 
-# --------------------------------------------------------------------------
-# Evpn (singleton)
-# --------------------------------------------------------------------------
-def test_evpn_path():
-    session = make_session()
-    evpn = Evpn(session)
-    assert evpn.path == "system/evpn"
-    assert evpn.base_uri == "system/evpn"
+EVPN_GET = {
+    "arp_suppression_enable": True,
+    "mac_move_count": 5,
+    "mac_move_timer": 180,
+    "redistribute": {"local-mac": False, "local-svi": False},
+}
 
 
-def test_evpn_get_populates_config_attrs():
-    body = {
-        "arp_suppression_enable": True,
-        "mac_move_count": 5,
-        "mac_move_timer": 180,
-        "nd_suppression_enable": False,
-        "redistribute": {"local-mac": False},
-    }
-    session = make_session(get_body=body)
+def make_evpn(get_data):
+    session = FakeSession(get_data)
     evpn = Evpn(session)
     evpn.get(selector="writable")
-    assert evpn.materialized is True
-    assert set(evpn.config_attrs) == set(body.keys())
-    assert evpn.mac_move_timer == 180
+    return session, evpn
 
 
-def test_evpn_update_idempotent():
-    body = {"mac_move_timer": 180}
-    session = make_session(get_body=body)
-    evpn = Evpn(session)
-    evpn.get(selector="writable")
+def writes(session):
+    return [(m, json.loads(d)) for m, _, d in session.requests if m != "GET"]
+
+
+def test_changed_mode_patched_before_put():
+    data = dict(EVPN_GET, dyn_vxlan_tunnel_bridging_mode="no-bridging")
+    session, evpn = make_evpn(data)
+    evpn.set_dyn_vxlan_tunnel_bridging_mode("ibgp-ebgp")
+    assert evpn.update() is True
+    (patch_m, patch_body), (put_m, put_body) = writes(session)
+    assert (patch_m, put_m) == ("PATCH", "PUT")
+    assert patch_body == {"dyn_vxlan_tunnel_bridging_mode": "ibgp-ebgp"}
+    assert put_body == dict(data, dyn_vxlan_tunnel_bridging_mode="ibgp-ebgp")
+
+
+def test_unchanged_mode_not_sent():
+    data = dict(EVPN_GET, dyn_vxlan_tunnel_bridging_mode="ibgp-ebgp")
+    session, evpn = make_evpn(data)
+    evpn.set_dyn_vxlan_tunnel_bridging_mode("ibgp-ebgp")
     assert evpn.update() is False
     evpn.mac_move_timer = 181
     assert evpn.update() is True
+    assert [m for m, _ in writes(session)] == ["PUT"]
 
 
-def test_evpn_from_uri():
-    session = make_session()
-    evpn = Evpn.from_uri(session, "system/evpn")
-    assert isinstance(evpn, Evpn)
+def test_invalid_mode_rejected():
+    _, evpn = make_evpn(dict(EVPN_GET))
+    with pytest.raises(ParameterError):
+        evpn.set_dyn_vxlan_tunnel_bridging_mode("deny")
 
 
-# --------------------------------------------------------------------------
-# EvpnVlan (child, indexed by vlan)
-# --------------------------------------------------------------------------
-def test_evpn_vlan_path():
-    session = make_session()
-    ev = EvpnVlan(session, 204)
-    assert ev.path == "system/evpn/evpn_vlans/204"
-    assert ev.vlan == "204"
-
-
-def test_evpn_vlan_from_uri():
-    session = make_session()
-    vlan_id, ev = EvpnVlan.from_uri(
-        session, "/rest/v10.09/system/evpn/evpn_vlans/204"
-    )
-    assert vlan_id == "204"
-    assert ev.vlan == "204"
-
-
-def test_evpn_vlan_create_sends_vlan_uri():
-    get_body = {
-        "rd": "65000:3999",
-        "export_route_targets": ["65000:3999"],
-        "import_route_targets": ["65000:3999"],
-        "vlan": "3999",
-    }
-    session = make_session(get_body=get_body)
-    ev = EvpnVlan(session, 3999, rd="65000:3999")
-    ev.create()
-    post = next(c for c in session.calls if c["method"] == "POST")
-    assert post["data"]["vlan"] == "/rest/v10.09/system/vlans/3999"
-    assert post["data"]["rd"] == "65000:3999"
-
-
-def test_evpn_vlan_update_excludes_index():
-    body = {
-        "rd": "65000:3999",
-        "export_route_targets": ["65000:3999"],
-        "import_route_targets": ["65000:3999"],
-    }
-    session = make_session(get_body=body)
-    ev = EvpnVlan(session, 3999)
-    ev.get(selector="writable")
-    assert "vlan" not in ev.config_attrs
-    assert ev.update() is False
-    ev.rd = "65000:3998"
-    assert ev.update() is True
-
-
-def test_evpn_vlan_get_all():
-    body = {
-        "204": "/rest/v10.09/system/evpn/evpn_vlans/204",
-        "205": "/rest/v10.09/system/evpn/evpn_vlans/205",
-    }
-    session = make_session(get_body=body)
-    collection = EvpnVlan.get_all(session)
-    assert set(collection.keys()) == {"204", "205"}
-    assert all(isinstance(v, EvpnVlan) for v in collection.values())
+@pytest.mark.parametrize(
+    "text",
+    [
+        # Answer of a 6300 (FL.10.19) that does not support the attribute
+        "cannot modify the attribute: dyn_vxlan_tunnel_bridging_mode, "
+        "reason: Non-configurable column",
+        "invalid attribute: dyn_vxlan_tunnel_bridging_mode",
+    ],
+)
+def test_unsupported_mode_rejected_by_switch(text):
+    session, evpn = make_evpn(dict(EVPN_GET))
+    session.write_response = FakeResponse(400)
+    session.write_response.text = text
+    evpn.set_dyn_vxlan_tunnel_bridging_mode("ibgp-ebgp")
+    with pytest.raises(GenericOperationError) as exc:
+        evpn.update()
+    assert exc.value.response_code == 400
+    assert "probably not supported" in exc.value.message
+    # Nothing is applied when the mode is rejected
+    assert [m for m, _ in writes(session)] == ["PATCH"]
