@@ -1,11 +1,16 @@
 # (C) Copyright 2024 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import ipaddress
 import json
 import logging
 
 from pyaoscx.exceptions.response_error import ResponseError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
+from pyaoscx.exceptions.parameter_error import ParameterError
+from pyaoscx.exceptions.unsupported_capability_error import (
+    UnsupportedCapabilityError,
+)
 
 from pyaoscx.utils import util as utils
 
@@ -24,6 +29,17 @@ class EvpnVlan(PyaoscxModule):
 
     indices = ["vlan"]
     resource_uri_name = "evpn_vlans"
+
+    # Suppression feature -> (attribute prefix, IP version of the exemptions)
+    SUPPRESSION_FEATURES = {
+        "arp": ("arp_suppression", 4),
+        "arp_extended": ("arp_suppression_extended", 4),
+        "nd": ("nd_suppression", 6),
+        "nd_extended": ("nd_suppression_extended", 6),
+    }
+    SUPPRESSION_CONFIGS = ("enable", "disable")
+    # Same limit as the CLI, per VLAN and per feature
+    MAX_SUPPRESSION_IP_EXEMPTIONS = 256
 
     def __init__(self, session, vlan, **kwargs):
         self.session = session
@@ -126,6 +142,7 @@ class EvpnVlan(PyaoscxModule):
         :return: True if object was modified and a PUT request was made.
         """
         data = utils.get_attrs(self, self.config_attrs)
+        self.check_suppression(data)
         self.__modified = self._put_data(data)
         return self.__modified
 
@@ -138,6 +155,7 @@ class EvpnVlan(PyaoscxModule):
         :return: Boolean, True if entry was created.
         """
         data = utils.get_attrs(self, self.config_attrs)
+        self.check_suppression(data)
         data["vlan"] = "{0}system/vlans/{1}".format(
             self.session.resource_prefix, self.vlan
         )
@@ -151,6 +169,141 @@ class EvpnVlan(PyaoscxModule):
         """
         self._send_data(self.path, None, "DELETE", "Delete")
         utils.delete_attrs(self, self.config_attrs)
+
+    def _suppression_attrs(self, feature):
+        """
+        Return the config and IP exemption attribute names of a suppression
+            feature and its IP version.
+
+        :param feature: 'arp', 'arp_extended', 'nd' or 'nd_extended'.
+        :return: Tuple (config attribute, exemption attribute, IP version).
+        """
+        if feature not in self.SUPPRESSION_FEATURES:
+            raise ParameterError(
+                "Invalid suppression feature {0}, valid values are: "
+                "{1}".format(feature, ", ".join(self.SUPPRESSION_FEATURES))
+            )
+        prefix, version = self.SUPPRESSION_FEATURES[feature]
+        return prefix + "_config", prefix + "_ip_exemption", version
+
+    def _use_attribute(self, attr):
+        """
+        Make sure an attribute is part of the request body. A firmware that
+            does not know the attribute does not return it and PUT would
+            silently ignore it, so an existing entry is refused.
+
+        :param attr: Name of the attribute.
+        """
+        if attr in self.config_attrs:
+            return
+        if self.materialized:
+            raise UnsupportedCapabilityError(
+                "The attribute {0} of the EVPN VLAN {1} is not supported by "
+                "this switch firmware".format(attr, self.vlan)
+            )
+        self.config_attrs.append(attr)
+
+    def check_suppression(self, data=None):
+        """
+        Mirror the CLI: a suppression feature and its extended version cannot
+            be enabled together on a VLAN. Only a change is refused, as the
+            switch may already hold such a configuration.
+
+        :param data: Request body, the current attributes by default.
+        """
+        if data is None:
+            data = utils.get_attrs(self, self.config_attrs)
+        for plain, extended in (
+            ("arp", "arp_extended"),
+            ("nd", "nd_extended"),
+        ):
+            attrs = [self._suppression_attrs(f)[0] for f in (plain, extended)]
+            if all(data.get(a) == "enable" for a in attrs) and any(
+                data.get(a) != self._original_attributes.get(a) for a in attrs
+            ):
+                raise ParameterError(
+                    "{0} and {1} cannot be enabled together on the VLAN "
+                    "{2}, disable one of them".format(
+                        attrs[0], attrs[1], self.vlan
+                    )
+                )
+
+    def set_suppression(self, feature, config):
+        """
+        Override the global EVPN suppression mode for this VLAN (CLI
+            'arp-suppression', 'arp-suppression-extended', 'nd-suppression'
+            and 'nd-suppression-extended' with 'enable' or 'disable' in the
+            'evpn' / 'vlan' context). Changes are sent on apply() or
+            update().
+
+        :param feature: 'arp', 'arp_extended', 'nd' or 'nd_extended'. The
+            extended versions also suppress on L2 VLANs, and cannot be
+            enabled together with the plain version.
+        :param config: 'enable' or 'disable' to override the global setting,
+            or None to follow it (CLI 'no <feature>').
+        :return: True if the value differs from the current one.
+        """
+        attr, _, _ = self._suppression_attrs(feature)
+        if config is not None and config not in self.SUPPRESSION_CONFIGS:
+            raise ParameterError(
+                "Invalid {0} {1}, valid values are: {2} or None".format(
+                    attr, config, ", ".join(self.SUPPRESSION_CONFIGS)
+                )
+            )
+        self._use_attribute(attr)
+        changed = getattr(self, attr, None) != config
+        setattr(self, attr, config)
+        return changed
+
+    def set_suppression_ip_exemption(self, feature, addresses):
+        """
+        Set the IP addresses excluded from a suppression feature, so that
+            their requests are flooded in the fabric (CLI
+            'arp-suppression exclude <ip>' and 'nd-suppression exclude <ip>'
+            in the 'evpn' / 'vlan' context). The list replaces the current
+            one; changes are sent on apply() or update().
+
+        :param feature: 'arp', 'arp_extended', 'nd' or 'nd_extended'. ARP
+            features take IPv4 addresses, ND features IPv6 addresses.
+        :param addresses: List of IP addresses, an empty list removes all
+            exclusions. Order and duplicates are ignored.
+        :return: True if the set of addresses differs from the current one.
+        """
+        _, attr, version = self._suppression_attrs(feature)
+        wanted = set()
+        for address in addresses or []:
+            try:
+                ip = ipaddress.ip_address(str(address).strip())
+            except ValueError:
+                raise ParameterError(
+                    "Invalid IP address {0} for {1}".format(address, attr)
+                )
+            if ip.version != version:
+                raise ParameterError(
+                    "{0} takes IPv{1} addresses, got {2}".format(
+                        attr, version, address
+                    )
+                )
+            wanted.add(ip)
+        if len(wanted) > self.MAX_SUPPRESSION_IP_EXEMPTIONS:
+            raise ParameterError(
+                "{0} accepts at most {1} addresses, got {2}".format(
+                    attr, self.MAX_SUPPRESSION_IP_EXEMPTIONS, len(wanted)
+                )
+            )
+        self._use_attribute(attr)
+        current = set()
+        for address in getattr(self, attr, None) or []:
+            try:
+                current.add(ipaddress.ip_address(address))
+            except ValueError:
+                pass
+        if current == wanted:
+            return False
+        # The switch rejects duplicates with an internal error: send each
+        # address once.
+        setattr(self, attr, sorted(str(ip) for ip in wanted))
+        return True
 
     @PyaoscxModule.deprecated
     def get_uri(self):

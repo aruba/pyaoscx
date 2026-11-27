@@ -27,6 +27,24 @@
   bridging between them, `no-bridging` (default) puts all EVPN tunnels in the
   same broadcast group. A changed mode is first sent with a PATCH, so a
   firmware that does not support it rejects it and nothing is applied.
+* Added `EvpnVlan.set_suppression()` and
+  `EvpnVlan.set_suppression_ip_exemption()` to manage ARP and ND suppression
+  per VLAN, including the extended versions (CLI `arp-suppression`,
+  `arp-suppression-extended`, `nd-suppression` and
+  `nd-suppression-extended` with `enable` or `disable`, and
+  `arp-suppression exclude <ip>` / `nd-suppression exclude <ip>`, in the
+  `evpn` / `vlan` context; `*_suppression_config` and
+  `*_suppression_ip_exemption` attributes of `/system/evpn/evpn_vlans`).
+  A VLAN setting overrides the global one, `None` follows it again. The
+  exclusion list replaces the current one, is compared regardless of order
+  and duplicates (the switch answers HTTP 500 to a duplicate), takes IPv4
+  addresses for ARP and IPv6 addresses for ND, with at most 256 entries.
+  As the CLI, and unlike the switch REST API, `EvpnVlan.check_suppression()`
+  and `Evpn.check_suppression()`, called by `update()`, raise
+  `ParameterError` when a suppression and its extended version would be
+  enabled together. The extended global switches are the
+  `arp_suppression_extended_enable` and `nd_suppression_extended_enable`
+  attributes of `Evpn`.
 * `GenericOperationError` states that the attribute is probably not supported
   by the switch platform or firmware version when the switch answers HTTP 400
   `invalid attribute: <name>` or `cannot modify the attribute: <name>,

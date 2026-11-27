@@ -97,6 +97,7 @@ class Evpn(PyaoscxModule):
         :return: True if Object was modified and a PUT request was made.
         """
         put_data = utils.get_attrs(self, self.config_attrs)
+        self.check_suppression(put_data)
         # PUT silently ignores attributes unknown to the firmware, while
         # PATCH rejects them with HTTP 400. A changed bridging mode is
         # therefore sent with a PATCH first; it stays in the PUT body, as PUT
@@ -113,6 +114,34 @@ class Evpn(PyaoscxModule):
             )
         self.__modified = self._put_data(put_data)
         return self.__modified
+
+    def check_suppression(self, data=None):
+        """
+        Mirror the CLI: ARP (or ND) suppression and its extended version
+            cannot be enabled together. Only a change is refused, as the
+            switch may already hold such a configuration.
+
+        :param data: Request body, the current attributes by default.
+        """
+        if data is None:
+            data = utils.get_attrs(self, self.config_attrs)
+        for plain, extended in (
+            ("arp_suppression_enable", "arp_suppression_extended_enable"),
+            ("nd_suppression_enable", "nd_suppression_extended_enable"),
+        ):
+            if (
+                data.get(plain)
+                and data.get(extended)
+                and (
+                    data.get(plain) != self._original_attributes.get(plain)
+                    or data.get(extended)
+                    != self._original_attributes.get(extended)
+                )
+            ):
+                raise ParameterError(
+                    "{0} and {1} cannot be enabled together, disable one of "
+                    "them".format(plain, extended)
+                )
 
     def set_dyn_vxlan_tunnel_bridging_mode(self, mode):
         """
