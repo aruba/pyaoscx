@@ -1,6 +1,7 @@
 # (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import ipaddress
 import json
 import logging
 import re
@@ -17,6 +18,9 @@ from netaddr.core import AddrFormatError
 from pyaoscx.exceptions.generic_op_error import GenericOperationError
 from pyaoscx.exceptions.parameter_error import ParameterError
 from pyaoscx.exceptions.response_error import ResponseError
+from pyaoscx.exceptions.unsupported_capability_error import (
+    UnsupportedCapabilityError,
+)
 from pyaoscx.exceptions.verification_error import VerificationError
 
 from pyaoscx.utils import util as utils
@@ -40,6 +44,8 @@ class Interface(PyaoscxModule):
     base_uri = "system/interfaces"
     indices = ["name"]
     resource_uri_name = "interfaces"
+
+    MAX_LOCAL_PROXY_ARP_EXEMPTIONS = 256
 
     ip6_addresses = ListDescriptor("ip6_addresses")
 
@@ -1150,6 +1156,56 @@ class Interface(PyaoscxModule):
 
         # Apply Changes inside Switch
         return self.apply() or ipv6_configured
+
+    @PyaoscxModule.materialized
+    def set_local_proxy_arp_ip_exemption(self, addresses):
+        """
+        Set the IPv4 addresses excluded from local proxy ARP on this
+            interface (CLI 'ip local-proxy-arp exclude <ip_address>' in the
+            'interface vlan <id>' context). The list replaces the current
+            one; changes are sent on apply() or update().
+
+        :param addresses: List of IPv4 addresses, an empty list removes all
+            exclusions. Order and duplicates are ignored.
+        :return: True if the set of addresses differs from the current one.
+        """
+        attr = "local_proxy_arp_ip_exemption"
+        wanted = set()
+        for address in addresses or []:
+            try:
+                ip = ipaddress.ip_address(str(address).strip())
+            except ValueError:
+                raise ParameterError(
+                    "Invalid IP address {0} for {1}".format(address, attr)
+                )
+            if ip.version != 4:
+                raise ParameterError(
+                    "{0} takes IPv4 addresses, got {1}".format(attr, address)
+                )
+            wanted.add(ip)
+        if len(wanted) > self.MAX_LOCAL_PROXY_ARP_EXEMPTIONS:
+            raise ParameterError(
+                "{0} accepts at most {1} addresses, got {2}".format(
+                    attr, self.MAX_LOCAL_PROXY_ARP_EXEMPTIONS, len(wanted)
+                )
+            )
+        # A firmware that does not know the attribute does not return it and
+        # PUT would silently ignore it.
+        if attr not in self.config_attrs:
+            raise UnsupportedCapabilityError(
+                "The attribute {0} of the interface {1} is not supported by "
+                "this switch firmware".format(attr, self.name)
+            )
+        current = {
+            ipaddress.ip_address(address)
+            for address in getattr(self, attr, None) or []
+        }
+        if current == wanted:
+            return False
+        # The switch rejects duplicates with an internal error: send each
+        # address once.
+        setattr(self, attr, sorted(str(ip) for ip in wanted))
+        return True
 
     def configure_svi(
         self,
