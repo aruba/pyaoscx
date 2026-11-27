@@ -1,3 +1,18 @@
+# Unreleased
+
+## Notable Changes
+
+* Added `Interface.set_local_proxy_arp_ip_exemption()` to manage the IPv4
+  addresses excluded from local proxy ARP on an interface (CLI
+  `ip local-proxy-arp exclude <ip_address>` in the `interface vlan <id>`
+  context; `local_proxy_arp_ip_exemption` attribute of
+  `/system/interfaces`). The list replaces the current one, is compared
+  regardless of order and duplicates, takes IPv4 addresses only (the switch
+  REST API also accepts IPv6 ones, the CLI does not) with at most 256 entries,
+  and an empty list removes all the exclusions. Changes are sent on `apply()`.
+  A firmware that does not return the attribute raises
+  `UnsupportedCapabilityError`.
+
 # 2.6.0
 
 ## Notable Changes
