@@ -1,6 +1,7 @@
 # (C) Copyright 2019-2023 Hewlett Packard Enterprise Development LP.
 # Apache License 2.0
 
+import ipaddress
 import json
 import logging
 import re
@@ -171,8 +172,14 @@ class Ipv6(PyaoscxModule):
         data = json.loads(response.text)
 
         ipv6_dict = {}
-        # Get all URI elements in the form of a list
-        uri_list = session.api.get_uri_from_data(data)
+        # Some firmware (e.g. 6200 ML.10.16) answer a GET on an empty
+        # ip6_addresses collection with the parent interface itself, so only
+        # keep the entries keyed by an IPv6 address and pointing to a URI
+        uri_list = [
+            uri
+            for key, uri in data.items()
+            if isinstance(uri, str) and cls._is_ipv6_key(key)
+        ]
 
         for uri in uri_list:
             # Create a Ipv6 object
@@ -332,6 +339,21 @@ class Ipv6(PyaoscxModule):
         ipv6_arr = session.api.get_keys(response_data, Ipv6.resource_uri_name)
         address = ipv6_arr[0]
         return Ipv6(session, address, parent_int)
+
+    @staticmethod
+    def _is_ipv6_key(key):
+        """
+        Check whether a key of an ip6_addresses collection is an IPv6
+            address (with or without prefix length, URL-encoded or not).
+
+        :param key: String, key of the collection.
+        :return: Boolean, True if the key is an IPv6 address.
+        """
+        try:
+            address = ipaddress.ip_interface(unquote_plus(str(key)))
+        except ValueError:
+            return False
+        return address.version == 6
 
     @classmethod
     def from_uri(cls, session, parent_int, uri):
