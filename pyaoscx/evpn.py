@@ -1,0 +1,216 @@
+# (C) Copyright 2024 Hewlett Packard Enterprise Development LP.
+# Apache License 2.0
+
+import logging
+
+from pyaoscx.exceptions.parameter_error import ParameterError
+
+from pyaoscx.utils import util as utils
+
+from pyaoscx.pyaoscx_module import PyaoscxModule
+
+
+class Evpn(PyaoscxModule):
+    """
+    Provide configuration management for the global EVPN (Ethernet VPN)
+        settings on AOS-CX devices. This is a singleton resource located at
+        system/evpn.
+    """
+
+    base_uri = "system/evpn"
+    path = "system/evpn"
+
+    DYN_VXLAN_TUNNEL_BRIDGING_MODES = ("no-bridging", "ibgp-ebgp")
+
+    def __init__(self, session, uri=None, **kwargs):
+        self.session = session
+        # List used to determine attributes related to the EVPN configuration
+        self.config_attrs = []
+        self.materialized = False
+        # Attribute dictionary used to manage the original data
+        # obtained from the GET
+        self._original_attributes = {}
+        # Set arguments needed for correct creation
+        utils.set_creation_attrs(self, **kwargs)
+        # Attribute used to know if object was changed recently
+        self.__modified = False
+
+    @property
+    def modified(self):
+        return self.__modified
+
+    @PyaoscxModule.connected
+    def get(self, depth=None, selector=None):
+        """
+        Perform a GET call to retrieve data for the EVPN configuration and
+            fill the class with the incoming attributes.
+
+        :param depth: Integer deciding how many levels into the API JSON that
+            references will be returned.
+        :param selector: Alphanumeric option to select specific information to
+            return.
+        :return: Returns True if there is not an exception raised.
+        """
+        logging.info("Retrieving %s from switch", self)
+        # this is common for all PyaoscxModule derived classes
+        self._get_and_copy_data(depth, selector)
+        # Sets object as materialized
+        self.materialized = True
+        return True
+
+    @classmethod
+    def get_all(cls, session):
+        """
+        Not applicable for EVPN, it is a singleton resource.
+        """
+
+    @classmethod
+    def from_uri(cls, session, uri):
+        """
+        Create an Evpn object given an EVPN URI.
+
+        :param cls: Object's class.
+        :param session: pyaoscx.Session object used to represent a logical
+            connection to the device.
+        :param uri: a String with a URI.
+        :return: Evpn object.
+        """
+        return cls(session, uri=uri)
+
+    @PyaoscxModule.connected
+    def apply(self):
+        """
+        Main method used to update the global EVPN configuration. Since EVPN
+            is a singleton it always exists, so this calls update().
+
+        :return: True if object was modified.
+        """
+        if self.materialized:
+            return self.update()
+        return self.create()
+
+    @PyaoscxModule.connected
+    def update(self):
+        """
+        Perform a PUT call to apply changes to the EVPN configuration.
+
+        :return: True if Object was modified and a PUT request was made.
+        """
+        put_data = utils.get_attrs(self, self.config_attrs)
+        self.check_suppression(put_data)
+        # PUT silently ignores attributes unknown to the firmware, while
+        # PATCH rejects them with HTTP 400. A changed bridging mode is
+        # therefore sent with a PATCH first; it stays in the PUT body, as PUT
+        # resets missing attributes.
+        mode = put_data.get("dyn_vxlan_tunnel_bridging_mode")
+        if mode is not None and mode != self._original_attributes.get(
+            "dyn_vxlan_tunnel_bridging_mode"
+        ):
+            self._send_data(
+                self.path,
+                {"dyn_vxlan_tunnel_bridging_mode": mode},
+                "PATCH",
+                "Update",
+            )
+        self.__modified = self._put_data(put_data)
+        return self.__modified
+
+    def check_suppression(self, data=None):
+        """
+        Mirror the CLI: ARP (or ND) suppression and its extended version
+            cannot be enabled together. Only a change is refused, as the
+            switch may already hold such a configuration.
+
+        :param data: Request body, the current attributes by default.
+        """
+        if data is None:
+            data = utils.get_attrs(self, self.config_attrs)
+        for plain, extended in (
+            ("arp_suppression_enable", "arp_suppression_extended_enable"),
+            ("nd_suppression_enable", "nd_suppression_extended_enable"),
+        ):
+            if (
+                data.get(plain)
+                and data.get(extended)
+                and (
+                    data.get(plain) != self._original_attributes.get(plain)
+                    or data.get(extended)
+                    != self._original_attributes.get(extended)
+                )
+            ):
+                raise ParameterError(
+                    "{0} and {1} cannot be enabled together, disable one of "
+                    "them".format(plain, extended)
+                )
+
+    def set_dyn_vxlan_tunnel_bridging_mode(self, mode):
+        """
+        Set the bridging mode between dynamic (EVPN) VXLAN tunnels (CLI
+            'dyn-vxlan-tunnel-bridging-mode' in the EVPN context). Changes are
+            sent on update(), with a PATCH before the PUT: a firmware that
+            does not support the mode then rejects it (HTTP 400) and nothing
+            is applied.
+
+        :param mode: 'no-bridging' (default, CLI
+            'no dyn-vxlan-tunnel-bridging-mode ibgp-ebgp') puts all EVPN
+            tunnels in the same broadcast group, or 'ibgp-ebgp' (CLI
+            'dyn-vxlan-tunnel-bridging-mode ibgp-ebgp') puts iBGP and eBGP
+            tunnels in different broadcast groups and permits bridging
+            between them.
+        """
+        if mode not in self.DYN_VXLAN_TUNNEL_BRIDGING_MODES:
+            raise ParameterError(
+                "Invalid dyn_vxlan_tunnel_bridging_mode {0}, valid values "
+                "are: {1}".format(
+                    mode, ", ".join(self.DYN_VXLAN_TUNNEL_BRIDGING_MODES)
+                )
+            )
+        self.dyn_vxlan_tunnel_bridging_mode = mode
+        # The attribute is absent from the GET response of a firmware that
+        # does not support it, so make sure it is part of the request body.
+        if "dyn_vxlan_tunnel_bridging_mode" not in self.config_attrs:
+            self.config_attrs.append("dyn_vxlan_tunnel_bridging_mode")
+
+    @PyaoscxModule.connected
+    def create(self):
+        """
+        Perform a POST call to set the EVPN configuration. Only returns if no
+            exception is raised.
+
+        :return: True if entry was created.
+        """
+        post_data = utils.get_attrs(self, self.config_attrs)
+        self.__modified = self._post_data(post_data)
+        return self.__modified
+
+    @PyaoscxModule.connected
+    def delete(self):
+        """
+        Perform DELETE call to reset the EVPN configuration.
+        """
+        self._send_data(self.path, None, "DELETE", "Delete")
+        utils.delete_attrs(self, self.config_attrs)
+
+    @PyaoscxModule.deprecated
+    def get_uri(self):
+        """
+        Method used to obtain the specific EVPN URI.
+
+        :return: Object's URI.
+        """
+        return self.path
+
+    @PyaoscxModule.deprecated
+    def get_info_format(self):
+        """
+        Not applicable for EVPN.
+        """
+
+    @PyaoscxModule.deprecated
+    def was_modified(self):
+        """
+        Getter method for the __modified attribute.
+
+        :return: True if the object was recently modified.
+        """
+        return self.modified

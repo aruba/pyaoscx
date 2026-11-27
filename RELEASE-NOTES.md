@@ -1,3 +1,81 @@
+# Unreleased
+
+## Notable Changes
+
+* Added `Configuration.upload_switch_config_cli_from_local()` and the
+  `config_cli` / `operation` parameters of
+  `Configuration.upload_switch_config()` to upload a local configuration in
+  CLI format directly in the request payload (`PUT /configs/{name}`, no TFTP
+  server needed), with `replace` (default) or `merge` operation.
+  `Session.request()` accepts an optional `headers` parameter.
+  When the switch rejects commands (HTTP 200 with `"state": "failure"`),
+  a new `ConfigUploadError` is raised; its `errors` attribute holds the
+  switch errors (`line`, `context`, `command`, `message`).
+* Added `Interface.set_inter_vxlan_bridging_mode()` and an optional
+  `inter_vxlan_bridging_mode` parameter to `Interface.configure_vxlan()` to
+  manage the inter-VXLAN bridging mode (`deny`, `static-evpn`, `static-all`)
+  of a VXLAN interface (CLI `inter-vxlan-bridging-mode`).
+  A changed mode is first sent with a PATCH (`Session.request()` now accepts
+  `PATCH`): the PUT used for the other attributes silently ignores attributes
+  unknown to the firmware, while PATCH rejects them, so an unsupported mode
+  raises `GenericOperationError` and nothing is applied.
+* Added `Evpn.set_dyn_vxlan_tunnel_bridging_mode()` to manage the bridging
+  mode between dynamic (EVPN) VXLAN tunnels (CLI
+  `dyn-vxlan-tunnel-bridging-mode ibgp-ebgp` in the EVPN context,
+  `dyn_vxlan_tunnel_bridging_mode` attribute of `/system/evpn`): `ibgp-ebgp`
+  puts iBGP and eBGP tunnels in different broadcast groups and permits
+  bridging between them, `no-bridging` (default) puts all EVPN tunnels in the
+  same broadcast group. A changed mode is first sent with a PATCH, so a
+  firmware that does not support it rejects it and nothing is applied.
+* Added `EvpnVlan.set_suppression()` and
+  `EvpnVlan.set_suppression_ip_exemption()` to manage ARP and ND suppression
+  per VLAN, including the extended versions (CLI `arp-suppression`,
+  `arp-suppression-extended`, `nd-suppression` and
+  `nd-suppression-extended` with `enable` or `disable`, and
+  `arp-suppression exclude <ip>` / `nd-suppression exclude <ip>`, in the
+  `evpn` / `vlan` context; `*_suppression_config` and
+  `*_suppression_ip_exemption` attributes of `/system/evpn/evpn_vlans`).
+  A VLAN setting overrides the global one, `None` follows it again. The
+  exclusion list replaces the current one, is compared regardless of order
+  and duplicates (the switch answers HTTP 500 to a duplicate), takes IPv4
+  addresses for ARP and IPv6 addresses for ND, with at most 256 entries.
+  As the CLI, and unlike the switch REST API, `EvpnVlan.check_suppression()`
+  and `Evpn.check_suppression()`, called by `update()`, raise
+  `ParameterError` when a suppression and its extended version would be
+  enabled together. The extended global switches are the
+  `arp_suppression_extended_enable` and `nd_suppression_extended_enable`
+  attributes of `Evpn`.
+* `GenericOperationError` states that the attribute is probably not supported
+  by the switch platform or firmware version when the switch answers HTTP 400
+  `invalid attribute: <name>` or `cannot modify the attribute: <name>,
+  reason: Non-configurable column`. A CLI configuration upload refused with HTTP
+  400, 404, 405 or 415 raises a `GenericOperationError` stating that the CLI
+  format upload is probably not supported by the switch.
+* Fixed `PyaoscxFactory.bgp_neighbor()` raising `UnboundLocalError` when
+  `family_type` was given; on an existing neighbor only the requested address
+  family is now changed.
+* Fixed `BgpRouter.create_bgp_neighbors()`: per address family settings
+  (`activate`, `send_community`, `route_reflector_client`,
+  `inbound_soft_reconfiguration`) are now sent as dictionaries keyed by
+  address family, and merged with the existing neighbor configuration.
+* Fixed `BgpNeighbor.update()` failing when no `local_interface` is set, and
+  `BgpNeighbor.create()` sending an empty `local_interface`.
+* `PyaoscxFactory.bgp_router_vrf()` accepts an optional `route_types` list
+  (defaults to `["connected"]`), validates the address family, and keeps the
+  redistribution of other address families.
+* Fixed `BgpNeighbor.update()` sending create-only attributes
+  (`is_peer_group`, `listen_ip_range`, `nbr_interface`, `origin`) in the PUT
+  body.
+* Fixed `BgpNeighbor` registering itself several times in its parent
+  `BgpRouter`, and `BgpNeighbor.delete()` sending extra DELETE requests.
+* `BgpRouter.create_bgp_neighbors()` accepts an `ebgp_hop_count` parameter
+  (CLI `ebgp-multihop`, 1 to 255, 1 disables multihop).
+* Fixed `BgpRouter` and `BgpNeighbor` updates failing once a route map is
+  applied: `redistribute_route_map` and `route_maps` are returned by the
+  switch with compound keys (`"ipv4-unicast,in"`) that it rejects on PUT.
+  They are now converted to nested dictionaries when read (new
+  `utils.nest_compound_keys()` helper).
+
 # 2.6.0
 
 ## Notable Changes
